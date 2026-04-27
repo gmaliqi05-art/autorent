@@ -83,11 +83,20 @@ function HeroSection({ settings }: { settings: ReturnType<typeof useHomepageSett
   return (
     <section className="relative min-h-[100svh] flex items-center">
       <div className="absolute inset-0">
-        <img
-          src={hero.image_url || 'https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop'}
-          alt="Premium car"
-          className="w-full h-full object-cover object-center"
-        />
+        <picture>
+          {hero.image_url_mobile && (
+            <source media="(max-width: 1023px)" srcSet={hero.image_url_mobile} />
+          )}
+          <img
+            src={hero.image_url || 'https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop'}
+            alt="Premium car"
+            className="w-full h-full object-cover hero-image-responsive"
+            style={{
+              ['--hero-pos-mobile' as string]: hero.image_position_mobile || '70% center',
+              ['--hero-pos-desktop' as string]: hero.image_position_desktop || 'center',
+            }}
+          />
+        </picture>
         <div className="absolute inset-0 bg-dark-950" style={{ opacity: Math.max((opacity / 100) - 0.15, 0.35) }} />
         <div className="absolute inset-0 hero-gradient" />
       </div>

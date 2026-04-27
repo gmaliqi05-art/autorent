@@ -243,6 +243,9 @@ export interface HomepageSetting {
 
 export interface HeroSettings {
   image_url: string;
+  image_url_mobile?: string;
+  image_position_mobile?: string;
+  image_position_desktop?: string;
   title_line1: string;
   title_line2: string;
   subtitle: string;

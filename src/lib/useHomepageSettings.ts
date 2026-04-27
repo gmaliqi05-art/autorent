@@ -4,6 +4,9 @@ import type { HeroSettings, LogoSettings, NavbarSettings, SectionsSettings } fro
 
 const defaultHero: HeroSettings = {
   image_url: 'https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop',
+  image_url_mobile: '',
+  image_position_mobile: '70% center',
+  image_position_desktop: 'center',
   title_line1: 'Udhetoni me stil,',
   title_line2: 'rezervoni me lehte.',
   subtitle: 'Qindra automjete premium nga kompanite me te besueshme ne Kosove, Shqiperi dhe Maqedoni te Veriut.',

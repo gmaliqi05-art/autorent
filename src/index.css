@@ -142,6 +142,15 @@ body {
               radial-gradient(ellipse at 80% 20%, rgba(240, 104, 6, 0.08) 0%, transparent 50%);
 }
 
+.hero-image-responsive {
+  object-position: var(--hero-pos-mobile, 70% center);
+}
+@media (min-width: 1024px) {
+  .hero-image-responsive {
+    object-position: var(--hero-pos-desktop, center);
+  }
+}
+
 input:focus, select:focus, textarea:focus {
   outline: none;
 }

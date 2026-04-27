@@ -29,8 +29,10 @@ export default function AdminHomepage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
+  const [uploadingHeroMobile, setUploadingHeroMobile] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const heroFileRef = useRef<HTMLInputElement>(null);
+  const heroMobileFileRef = useRef<HTMLInputElement>(null);
   const logoFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadAll(); }, []);
@@ -80,6 +82,15 @@ export default function AdminHomepage() {
     const url = await uploadFile(file, `hero/${Date.now()}-${file.name}`);
     if (url) setHero(h => ({ ...h, image_url: url }));
     setUploadingHero(false);
+  }
+
+  async function handleHeroMobileImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingHeroMobile(true);
+    const url = await uploadFile(file, `hero/mobile-${Date.now()}-${file.name}`);
+    if (url) setHero(h => ({ ...h, image_url_mobile: url }));
+    setUploadingHeroMobile(false);
   }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -153,6 +164,9 @@ export default function AdminHomepage() {
               uploadingHero={uploadingHero}
               heroFileRef={heroFileRef}
               onUpload={handleHeroImageUpload}
+              uploadingHeroMobile={uploadingHeroMobile}
+              heroMobileFileRef={heroMobileFileRef}
+              onUploadMobile={handleHeroMobileImageUpload}
               inputClass={inputClass}
               labelClass={labelClass}
             />
@@ -235,11 +249,14 @@ interface HeroEditorProps {
   uploadingHero: boolean;
   heroFileRef: React.RefObject<HTMLInputElement | null>;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  uploadingHeroMobile: boolean;
+  heroMobileFileRef: React.RefObject<HTMLInputElement | null>;
+  onUploadMobile: (e: React.ChangeEvent<HTMLInputElement>) => void;
   inputClass: string;
   labelClass: string;
 }
 
-function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, inputClass, labelClass }: HeroEditorProps) {
+function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploadingHeroMobile, heroMobileFileRef, onUploadMobile, inputClass, labelClass }: HeroEditorProps) {
   function set(field: keyof HeroSettings) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const val = e.target.type === 'range' || e.target.type === 'number' ? Number(e.target.value) : e.target.value;
@@ -308,6 +325,92 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, input
               <span>0% (transparent)</span>
               <span>95% (shume i errët)</span>
             </div>
+          </div>
+          <div>
+            <label className={labelClass}>Pozicioni i imazhit (Desktop)</label>
+            <select
+              value={hero.image_position_desktop || 'center'}
+              onChange={(e) => setHero(h => ({ ...h, image_position_desktop: e.target.value }))}
+              className={inputClass}
+            >
+              <option value="center">Qendër</option>
+              <option value="left">Majtas</option>
+              <option value="right">Djathtas</option>
+              <option value="top">Lart</option>
+              <option value="bottom">Poshtë</option>
+              <option value="30% center">30% nga e majta</option>
+              <option value="70% center">70% nga e majta</option>
+            </select>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Imazhi për Mobile / Tablet" icon={<Image className="w-4 h-4" />}>
+        <div className="space-y-4">
+          <p className="text-xs text-dark-500 -mt-1">Ngarko një foto të dedikuar për ekrane më të vogla (vertikale ose katror funksionon më mirë). Nëse e lë bosh, do të përdoret foto kryesore me pozicionim të rregulluar.</p>
+          {hero.image_url_mobile ? (
+            <div className="relative rounded-xl overflow-hidden bg-gray-100 mb-3 mx-auto" style={{ aspectRatio: '9/16', maxWidth: '220px' }}>
+              <img src={hero.image_url_mobile} alt="Hero Mobile" className="w-full h-full object-cover" style={{ objectPosition: hero.image_position_mobile || '70% center' }} />
+              <div className="absolute inset-0 bg-dark-950/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => heroMobileFileRef.current?.click()}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white text-dark-900 rounded-xl text-xs font-semibold"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Ndrysho
+                </button>
+              </div>
+              <button
+                onClick={() => setHero(h => ({ ...h, image_url_mobile: '' }))}
+                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center bg-gray-50 mb-3">
+              <Image className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-dark-500">Nuk ka foto mobile</p>
+              <p className="text-xs text-dark-400 mt-1">Do të përdoret foto kryesore me pozicionin e rregulluar</p>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={() => heroMobileFileRef.current?.click()}
+              disabled={uploadingHeroMobile}
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all shrink-0"
+            >
+              {uploadingHeroMobile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {uploadingHeroMobile ? 'Duke ngarkuar...' : 'Ngarko foto mobile'}
+            </button>
+            <input ref={heroMobileFileRef} type="file" accept="image/*" className="hidden" onChange={onUploadMobile} />
+            <input
+              type="text"
+              value={hero.image_url_mobile || ''}
+              onChange={(e) => setHero(h => ({ ...h, image_url_mobile: e.target.value }))}
+              placeholder="ose vendos URL te imazhit..."
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Pozicioni i imazhit (Mobile / Tablet)</label>
+            <select
+              value={hero.image_position_mobile || '70% center'}
+              onChange={(e) => setHero(h => ({ ...h, image_position_mobile: e.target.value }))}
+              className={inputClass}
+            >
+              <option value="center">Qendër</option>
+              <option value="left">Majtas</option>
+              <option value="right">Djathtas</option>
+              <option value="top">Lart</option>
+              <option value="bottom">Poshtë</option>
+              <option value="30% center">30% nga e majta</option>
+              <option value="50% center">Qendër (50%)</option>
+              <option value="70% center">70% nga e majta (rekomandohet)</option>
+              <option value="center top">Qendër lart</option>
+              <option value="center bottom">Qendër poshtë</option>
+            </select>
+            <p className="text-xs text-dark-400 mt-1.5">Përcakton se cila pjesë e fotos qëndron e dukshme në ekrane të vogla.</p>
           </div>
         </div>
       </SectionCard>
