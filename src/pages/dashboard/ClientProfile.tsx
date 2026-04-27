@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { clientNavItems } from '../../lib/clientNav';
@@ -10,6 +11,7 @@ const inputClass = 'w-full px-4 py-3 bg-white border border-gray-200 rounded-xl 
 
 export default function ClientProfile() {
   const { user, profile, refreshProfile } = useAuth();
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [phone, setPhone] = useState(profile?.phone || '');
   const [selectedCountryId, setSelectedCountryId] = useState(profile?.country_id || '');
@@ -74,10 +76,10 @@ export default function ClientProfile() {
       updated_at: new Date().toISOString(),
     }).eq('id', user.id);
     if (error) {
-      setProfileMessage({ type: 'error', text: 'Ndodhi nje gabim gjate ruajtjes. Ju lutem provoni perseri.' });
+      setProfileMessage({ type: 'error', text: t('clientDash.profile.saveError') });
     } else {
       await refreshProfile();
-      setProfileMessage({ type: 'success', text: 'U ruajt me sukses!' });
+      setProfileMessage({ type: 'success', text: t('clientDash.profile.saveSuccess') });
     }
     setSaving(false);
     setTimeout(() => setProfileMessage(null), 3000);
@@ -87,19 +89,19 @@ export default function ClientProfile() {
     e.preventDefault();
     setPasswordMessage(null);
     if (newPassword.length < 6) {
-      setPasswordMessage({ type: 'error', text: 'Fjalekalimi duhet te kete te pakten 6 karaktere.' });
+      setPasswordMessage({ type: 'error', text: t('clientDash.profile.passwordMin') });
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordMessage({ type: 'error', text: 'Fjalekalimi i ri nuk perputhet me konfirmimin.' });
+      setPasswordMessage({ type: 'error', text: t('clientDash.profile.passwordMismatch') });
       return;
     }
     setChangingPassword(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) {
-      setPasswordMessage({ type: 'error', text: error.message || 'Ndodhi nje gabim gjate ndryshimit te fjalekalimit.' });
+      setPasswordMessage({ type: 'error', text: error.message || t('clientDash.profile.passwordError') });
     } else {
-      setPasswordMessage({ type: 'success', text: 'Fjalekalimi u ndryshua me sukses!' });
+      setPasswordMessage({ type: 'success', text: t('clientDash.profile.passwordSuccess') });
       setNewPassword('');
       setConfirmPassword('');
     }
@@ -108,40 +110,40 @@ export default function ClientProfile() {
   }
 
   return (
-    <DashboardLayout title="Profili" navItems={clientNavItems}>
+    <DashboardLayout title={t('clientNav.profile')} navItems={clientNavItems}>
       <div className="max-w-xl">
-        <h1 className="text-2xl font-bold text-dark-950 mb-1">Profili im</h1>
-        <p className="text-dark-500 mb-8 text-[15px]">Perditesoni informacionet tuaja personale</p>
+        <h1 className="text-2xl font-bold text-dark-950 mb-1">{t('clientDash.profile.title')}</h1>
+        <p className="text-dark-500 mb-8 text-[15px]">{t('clientDash.profile.subtitle')}</p>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <form onSubmit={handleSave} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-dark-700 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.email')}</label>
               <input type="email" value={profile?.email || ''} disabled className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-400 cursor-not-allowed" />
-              <p className="text-[11px] text-dark-400 mt-1">Emaili nuk mund te ndryshohet</p>
+              <p className="text-[11px] text-dark-400 mt-1">{t('clientDash.profile.emailLocked')}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-dark-700 mb-1.5">Emri i plote</label>
+              <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.fullName')}</label>
               <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required className={inputClass} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-dark-700 mb-1.5">Numri i telefonit</label>
-              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+383 4X XXX XXX" className={`${inputClass} placeholder:text-dark-300`} />
+              <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.phone')}</label>
+              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder={t('clientDash.profile.phonePlaceholder')} className={`${inputClass} placeholder:text-dark-300`} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-dark-700 mb-1.5">Shteti</label>
+                <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.country')}</label>
                 <select value={selectedCountryId} onChange={e => setSelectedCountryId(e.target.value)} className={inputClass}>
-                  <option value="">Zgjidhni shtetin</option>
+                  <option value="">{t('clientDash.profile.selectCountry')}</option>
                   {countries.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-dark-700 mb-1.5">Qyteti</label>
+                <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.city')}</label>
                 <select value={selectedCityId} onChange={e => setSelectedCityId(e.target.value)} className={inputClass} disabled={!selectedCountryId || filteredCities.length === 0}>
-                  <option value="">Zgjidhni qytetin</option>
+                  <option value="">{t('clientDash.profile.selectCity')}</option>
                   {filteredCities.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -151,7 +153,7 @@ export default function ClientProfile() {
             <div className="flex items-center gap-3 pt-2">
               <button type="submit" disabled={saving} className="px-6 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all flex items-center gap-2">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {saving ? 'Duke ruajtur...' : 'Ruaj ndryshimet'}
+                {saving ? t('clientDash.profile.saving') : t('clientDash.profile.save')}
               </button>
               {profileMessage && (
                 <span className={`flex items-center gap-1.5 text-sm font-medium animate-fade-in ${profileMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
@@ -164,18 +166,18 @@ export default function ClientProfile() {
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-6">
-          <h2 className="text-lg font-semibold text-dark-950 mb-1">Ndrysho fjalekalimin</h2>
-          <p className="text-dark-500 text-sm mb-5">Vendosni nje fjalekalim te ri per llogarine tuaj</p>
+          <h2 className="text-lg font-semibold text-dark-950 mb-1">{t('clientDash.profile.changePassword')}</h2>
+          <p className="text-dark-500 text-sm mb-5">{t('clientDash.profile.changePasswordSubtitle')}</p>
           <form onSubmit={handlePasswordChange} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-dark-700 mb-1.5">Fjalekalimi i ri</label>
+              <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.newPassword')}</label>
               <div className="relative">
                 <input
                   type={showNewPassword ? 'text' : 'password'}
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
                   required
-                  placeholder="Minimum 6 karaktere"
+                  placeholder={t('clientDash.profile.newPasswordPlaceholder')}
                   className={`${inputClass} pr-11 placeholder:text-dark-300`}
                 />
                 <button
@@ -188,14 +190,14 @@ export default function ClientProfile() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-dark-700 mb-1.5">Konfirmo fjalekalimin e ri</label>
+              <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.confirmPassword')}</label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   required
-                  placeholder="Perseritni fjalekalimin"
+                  placeholder={t('clientDash.profile.confirmPasswordPlaceholder')}
                   className={`${inputClass} pr-11 placeholder:text-dark-300`}
                 />
                 <button
@@ -210,7 +212,7 @@ export default function ClientProfile() {
             <div className="flex items-center gap-3 pt-2">
               <button type="submit" disabled={changingPassword} className="px-6 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all flex items-center gap-2">
                 {changingPassword && <Loader2 className="w-4 h-4 animate-spin" />}
-                {changingPassword ? 'Duke ndryshuar...' : 'Ndrysho fjalekalimin'}
+                {changingPassword ? t('clientDash.profile.changing') : t('clientDash.profile.changeButton')}
               </button>
               {passwordMessage && (
                 <span className={`flex items-center gap-1.5 text-sm font-medium animate-fade-in ${passwordMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>

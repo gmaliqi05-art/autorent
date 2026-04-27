@@ -1,46 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { CalendarDays, Car, FileText, MapPin, Loader2, CreditCard, Wallet, Building, Banknote, Download, AlertTriangle, ChevronLeft, ChevronRight, Star, X, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Booking, Vehicle, Company } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { clientNavItems } from '../../lib/clientNav';
 import BookingInvoice from '../../components/booking/BookingInvoice';
+import { formatDate, bookingStatusColors, bookingStatusLabel, paymentStatusColors, paymentStatusLabel, paymentMethodLabel } from '../../lib/clientDashHelpers';
 
 const ITEMS_PER_PAGE = 10;
 
-const paymentMethodLabels: Record<string, { label: string; icon: React.ReactNode }> = {
-  stripe: { label: 'Karte', icon: <CreditCard className="w-3 h-3" /> },
-  paypal: { label: 'PayPal', icon: <Wallet className="w-3 h-3" /> },
-  bank_transfer: { label: 'Transfer', icon: <Building className="w-3 h-3" /> },
-  cash: { label: 'Kesh', icon: <Banknote className="w-3 h-3" /> },
+const paymentMethodIcons: Record<string, React.ReactNode> = {
+  stripe: <CreditCard className="w-3 h-3" />,
+  paypal: <Wallet className="w-3 h-3" />,
+  bank_transfer: <Building className="w-3 h-3" />,
+  cash: <Banknote className="w-3 h-3" />,
 };
-
-const paymentStatusLabels: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Ne pritje', color: 'bg-yellow-100 text-yellow-700' },
-  paid: { label: 'Paguar', color: 'bg-green-100 text-green-700' },
-  failed: { label: 'Deshtuar', color: 'bg-red-100 text-red-700' },
-};
-
-const statusLabels: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Ne pritje', color: 'bg-yellow-100 text-yellow-700' },
-  confirmed: { label: 'Konfirmuar', color: 'bg-blue-100 text-blue-700' },
-  active: { label: 'Aktiv', color: 'bg-green-100 text-green-700' },
-  completed: { label: 'Perfunduar', color: 'bg-gray-100 text-gray-600' },
-  cancelled: { label: 'Anuluar', color: 'bg-red-100 text-red-700' },
-};
-
-const filterTabs = [
-  { value: '', label: 'Te gjitha' },
-  { value: 'pending', label: 'Ne pritje' },
-  { value: 'confirmed', label: 'Konfirmuara' },
-  { value: 'active', label: 'Aktive' },
-  { value: 'completed', label: 'Perfunduara' },
-  { value: 'cancelled', label: 'Anuluara' },
-];
 
 export default function ClientBookings() {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [bookings, setBookings] = useState<(Booking & { vehicle?: Vehicle; company?: Company })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +36,23 @@ export default function ClientBookings() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewedBookingIds, setReviewedBookingIds] = useState<Set<string>>(new Set());
   const [reviewSuccess, setReviewSuccess] = useState(false);
+
+  const filterTabs = useMemo(() => [
+    { value: '', label: t('clientDash.bookings.filterAll') },
+    { value: 'pending', label: t('clientDash.bookingStatus.filterPending') },
+    { value: 'confirmed', label: t('clientDash.bookingStatus.filterConfirmed') },
+    { value: 'active', label: t('clientDash.bookingStatus.filterActive') },
+    { value: 'completed', label: t('clientDash.bookingStatus.filterCompleted') },
+    { value: 'cancelled', label: t('clientDash.bookingStatus.filterCancelled') },
+  ], [t]);
+
+  const ratingWords = [
+    t('clientDash.bookings.ratingBad'),
+    t('clientDash.bookings.ratingAverage'),
+    t('clientDash.bookings.ratingGood'),
+    t('clientDash.bookings.ratingVeryGood'),
+    t('clientDash.bookings.ratingExcellent'),
+  ];
 
   useEffect(() => {
     if (!user) return;
@@ -77,7 +74,7 @@ export default function ClientBookings() {
         .eq('client_id', user!.id),
     ]);
     if (bookingsRes.error) {
-      setError('Ndodhi nje gabim gjate ngarkimit te rezervimeve. Ju lutem provoni perseri.');
+      setError(t('clientDash.bookings.loadError'));
       setLoading(false);
       return;
     }
@@ -99,13 +96,13 @@ export default function ClientBookings() {
   async function submitReview() {
     if (!reviewBooking || !user) return;
     setSubmittingReview(true);
-    const { error } = await supabase.from('reviews').insert({
+    const { error } = await supabase.from('reviews').upsert({
       booking_id: reviewBooking.id,
       company_id: reviewBooking.company_id,
       client_id: user.id,
       rating: reviewRating,
-      comment: reviewComment.trim(),
-    });
+      comment: reviewComment.trim().slice(0, 500),
+    }, { onConflict: 'booking_id' });
     setSubmittingReview(false);
     if (error) return;
     setReviewedBookingIds(prev => new Set([...prev, reviewBooking.id]));
@@ -128,27 +125,27 @@ export default function ClientBookings() {
     setCancelling(false);
     setCancelConfirmId(null);
     if (cancelError) {
-      setError('Ndodhi nje gabim gjate anulimit te rezervimit. Ju lutem provoni perseri.');
+      setError(t('clientDash.bookings.cancelError'));
       return;
     }
     loadBookings();
   }
 
   return (
-    <DashboardLayout title="Rezervimet" navItems={clientNavItems}>
-      <h1 className="text-2xl font-bold text-dark-950 mb-1">Rezervimet e mia</h1>
-      <p className="text-dark-500 mb-6 text-[15px]">Historiku i te gjitha rezervimeve tuaja</p>
+    <DashboardLayout title={t('clientNav.bookings')} navItems={clientNavItems}>
+      <h1 className="text-2xl font-bold text-dark-950 mb-1">{t('clientDash.bookings.title')}</h1>
+      <p className="text-dark-500 mb-6 text-[15px]">{t('clientDash.bookings.subtitle')}</p>
 
       <div className="flex flex-wrap gap-1.5 mb-6">
-        {filterTabs.map(t => (
+        {filterTabs.map(tab => (
           <button
-            key={t.value}
-            onClick={() => setStatusFilter(t.value)}
+            key={tab.value}
+            onClick={() => setStatusFilter(tab.value)}
             className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
-              statusFilter === t.value ? 'bg-primary-600 text-white' : 'bg-white text-dark-600 border border-gray-200 hover:bg-gray-50'
+              statusFilter === tab.value ? 'bg-primary-600 text-white' : 'bg-white text-dark-600 border border-gray-200 hover:bg-gray-50'
             }`}
           >
-            {t.label}
+            {tab.label}
           </button>
         ))}
       </div>
@@ -161,7 +158,7 @@ export default function ClientBookings() {
             onClick={() => { setError(null); loadBookings(); }}
             className="ml-auto text-xs font-semibold text-red-600 hover:text-red-700 transition-colors"
           >
-            Provo perseri
+            {t('clientDash.bookings.tryAgain')}
           </button>
         </div>
       )}
@@ -173,14 +170,15 @@ export default function ClientBookings() {
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
           <FileText className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-dark-600 font-medium">Nuk ka rezervime</p>
+          <p className="text-dark-600 font-medium">{t('clientDash.bookings.noBookings')}</p>
         </div>
       ) : (
         <>
           <div className="space-y-3">
             {paginated.map(b => {
-              const s = statusLabels[b.status] || statusLabels.pending;
+              const statusColor = bookingStatusColors[b.status] || bookingStatusColors.pending;
               const canCancel = b.status === 'pending';
+              const paymentStatusInfo = paymentStatusColors[b.payment_status] || paymentStatusColors.pending;
               return (
                 <div key={b.id} className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-sm transition-shadow">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -194,12 +192,12 @@ export default function ClientBookings() {
                       </div>
                       <div>
                         <p className="font-semibold text-dark-900">
-                          {b.vehicle ? `${b.vehicle.brand} ${b.vehicle.model}` : 'Automjet'}
+                          {b.vehicle ? `${b.vehicle.brand} ${b.vehicle.model}` : t('clientDash.overview.vehicleFallback')}
                         </p>
                         <div className="flex flex-wrap items-center gap-3 mt-1">
                           <span className="flex items-center gap-1 text-xs text-dark-500">
                             <CalendarDays className="w-3 h-3" />
-                            {new Date(b.pickup_date).toLocaleDateString('sq-AL')} - {new Date(b.return_date).toLocaleDateString('sq-AL')}
+                            {formatDate(b.pickup_date, i18n.language)} - {formatDate(b.return_date, i18n.language)}
                           </span>
                           {b.pickup_location && (
                             <span className="flex items-center gap-1 text-xs text-dark-500">
@@ -207,7 +205,7 @@ export default function ClientBookings() {
                               {b.pickup_location}
                             </span>
                           )}
-                          <span className="text-xs text-dark-400">{b.total_days} dite</span>
+                          <span className="text-xs text-dark-400">{b.total_days} {t('clientDash.bookings.days')}</span>
                         </div>
                       </div>
                     </div>
@@ -215,29 +213,31 @@ export default function ClientBookings() {
                       <div className="flex flex-col items-end">
                         <span className="text-sm font-bold text-dark-900">{b.total_price} EUR</span>
                         {b.deposit_amount > 0 && (
-                          <span className="text-xs text-dark-400">+{b.deposit_amount} EUR depozite</span>
+                          <span className="text-xs text-dark-400">+{b.deposit_amount} EUR {t('clientDash.bookings.deposit')}</span>
                         )}
                       </div>
-                      {b.payment_method && paymentMethodLabels[b.payment_method] && (
+                      {b.payment_method && paymentMethodIcons[b.payment_method] && (
                         <span className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-[10px] font-medium text-dark-500">
-                          {paymentMethodLabels[b.payment_method].icon}
-                          {paymentMethodLabels[b.payment_method].label}
+                          {paymentMethodIcons[b.payment_method]}
+                          {paymentMethodLabel(b.payment_method, t)}
                         </span>
                       )}
-                      {b.payment_status && paymentStatusLabels[b.payment_status] && (
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${paymentStatusLabels[b.payment_status].color}`}>
-                          {paymentStatusLabels[b.payment_status].label}
+                      {b.payment_status && (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${paymentStatusInfo.bg}`}>
+                          {paymentStatusLabel(b.payment_status, t)}
                         </span>
                       )}
-                      <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${s.color}`}>{s.label}</span>
+                      <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusColor}`}>
+                        {bookingStatusLabel(b.status, t)}
+                      </span>
                       {(b.status === 'confirmed' || b.status === 'active' || b.status === 'completed') && b.company && (
                         <button
                           onClick={() => setInvoiceBooking(b)}
                           className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Shkarko faturen"
+                          title={t('clientDash.bookings.downloadInvoice')}
                         >
                           <Download className="w-3 h-3" />
-                          Fatura
+                          {t('clientDash.bookings.invoice')}
                         </button>
                       )}
                       {b.status === 'completed' && !reviewedBookingIds.has(b.id) && (
@@ -246,13 +246,13 @@ export default function ClientBookings() {
                           className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
                         >
                           <Star className="w-3 h-3" />
-                          Vleresom
+                          {t('clientDash.bookings.review')}
                         </button>
                       )}
                       {b.status === 'completed' && reviewedBookingIds.has(b.id) && (
                         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 bg-green-50 rounded-lg">
                           <Star className="w-3 h-3 fill-green-500" />
-                          Vleresuar
+                          {t('clientDash.bookings.reviewed')}
                         </span>
                       )}
                       {canCancel && (
@@ -260,7 +260,7 @@ export default function ClientBookings() {
                           onClick={() => setCancelConfirmId(b.id)}
                           className="text-xs text-red-600 font-medium hover:text-red-700 transition-colors"
                         >
-                          Anulo
+                          {t('clientDash.bookings.cancel')}
                         </button>
                       )}
                     </div>
@@ -312,15 +312,15 @@ export default function ClientBookings() {
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
-              <h3 className="text-lg font-bold text-dark-900 mb-2">Anulo rezervimin</h3>
-              <p className="text-sm text-dark-500 mb-6">Jeni te sigurt?</p>
+              <h3 className="text-lg font-bold text-dark-900 mb-2">{t('clientDash.bookings.cancelTitle')}</h3>
+              <p className="text-sm text-dark-500 mb-6">{t('clientDash.bookings.cancelConfirm')}</p>
               <div className="flex items-center gap-3 w-full">
                 <button
                   onClick={() => setCancelConfirmId(null)}
                   disabled={cancelling}
                   className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-dark-600 hover:bg-gray-50 transition-colors disabled:opacity-40"
                 >
-                  Jo
+                  {t('clientDash.bookings.no')}
                 </button>
                 <button
                   onClick={() => cancelBooking(cancelConfirmId)}
@@ -328,7 +328,7 @@ export default function ClientBookings() {
                   className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-sm font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {cancelling && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Po, anulo
+                  {t('clientDash.bookings.yesCancel')}
                 </button>
               </div>
             </div>
@@ -355,16 +355,16 @@ export default function ClientBookings() {
                 <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-4">
                   <CheckCircle2 className="w-7 h-7 text-green-600" />
                 </div>
-                <h3 className="text-lg font-bold text-dark-900 mb-1">Faleminderit per vleresimin!</h3>
-                <p className="text-sm text-dark-500">Vleresimi juaj u ruajt me sukses.</p>
+                <h3 className="text-lg font-bold text-dark-900 mb-1">{t('clientDash.bookings.reviewThanks')}</h3>
+                <p className="text-sm text-dark-500">{t('clientDash.bookings.reviewSaved')}</p>
               </div>
             ) : (
               <>
                 <div className="flex items-start justify-between mb-5">
                   <div>
-                    <h3 className="text-lg font-bold text-dark-900">Vlereso rezervimin</h3>
+                    <h3 className="text-lg font-bold text-dark-900">{t('clientDash.bookings.rateBooking')}</h3>
                     <p className="text-sm text-dark-500 mt-0.5">
-                      {reviewBooking.vehicle ? `${reviewBooking.vehicle.brand} ${reviewBooking.vehicle.model}` : 'Automjet'}
+                      {reviewBooking.vehicle ? `${reviewBooking.vehicle.brand} ${reviewBooking.vehicle.model}` : t('clientDash.overview.vehicleFallback')}
                     </p>
                   </div>
                   <button onClick={() => setReviewBooking(null)} className="text-dark-400 hover:text-dark-600 p-1">
@@ -373,7 +373,7 @@ export default function ClientBookings() {
                 </div>
 
                 <div className="mb-5">
-                  <p className="text-sm font-medium text-dark-700 mb-2">Vleresimi juaj</p>
+                  <p className="text-sm font-medium text-dark-700 mb-2">{t('clientDash.bookings.yourRating')}</p>
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map(star => (
                       <button
@@ -393,20 +393,22 @@ export default function ClientBookings() {
                       </button>
                     ))}
                     <span className="ml-2 text-sm font-semibold text-dark-700">
-                      {reviewRating === 5 ? 'Shkelqyeshem' : reviewRating === 4 ? 'Shume mire' : reviewRating === 3 ? 'Mire' : reviewRating === 2 ? 'Mesatar' : 'Keq'}
+                      {ratingWords[reviewRating - 1]}
                     </span>
                   </div>
                 </div>
 
                 <div className="mb-5">
-                  <label className="block text-sm font-medium text-dark-700 mb-1.5">Komenti (opsional)</label>
+                  <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.bookings.commentLabel')}</label>
                   <textarea
                     value={reviewComment}
-                    onChange={e => setReviewComment(e.target.value)}
+                    onChange={e => setReviewComment(e.target.value.slice(0, 500))}
                     rows={3}
-                    placeholder="Ndani pervojën tuaj..."
+                    maxLength={500}
+                    placeholder={t('clientDash.bookings.commentPlaceholder')}
                     className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 placeholder:text-dark-400 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all resize-none"
                   />
+                  <p className="text-[10px] text-dark-400 mt-1 text-right">{reviewComment.length}/500</p>
                 </div>
 
                 <div className="flex gap-3">
@@ -415,7 +417,7 @@ export default function ClientBookings() {
                     disabled={submittingReview}
                     className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-dark-600 hover:bg-gray-50 transition-colors disabled:opacity-40"
                   >
-                    Anulo
+                    {t('clientDash.bookings.cancel')}
                   </button>
                   <button
                     onClick={submitReview}
@@ -423,7 +425,7 @@ export default function ClientBookings() {
                     className="flex-1 px-4 py-2.5 rounded-xl bg-primary-600 text-sm font-semibold text-white hover:bg-primary-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                   >
                     {submittingReview && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Dergo vleresimin
+                    {t('clientDash.bookings.submitReview')}
                   </button>
                 </div>
               </>
