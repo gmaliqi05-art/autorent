@@ -1,6 +1,7 @@
 import { useState, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, CheckCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import FeaturedVehicles from '../components/home/FeaturedVehicles';
 import HowItWorks from '../components/home/HowItWorks';
 import Testimonials from '../components/home/Testimonials';
@@ -30,21 +31,22 @@ export default function HomePage() {
 }
 
 function MapSection() {
+  const { t } = useTranslation();
   return (
     <section className="py-24 bg-gray-50/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-10 gap-4">
           <div>
-            <p className="text-primary-600 font-semibold text-sm tracking-wide uppercase mb-2">Gjeni vendndodhjen</p>
+            <p className="text-primary-600 font-semibold text-sm tracking-wide uppercase mb-2">{t('home.mapSubtitle')}</p>
             <h2 className="text-3xl sm:text-4xl font-bold text-dark-950 leading-tight">
-              Gjeni automjetin qe ju pershtatet
+              {t('home.mapTitle')}
             </h2>
             <p className="text-dark-500 mt-3 max-w-lg">
-              Aktivizoni lokalizimin dhe shikoni pikat me te aferta te marrjes me qira. Klikoni mbi nje kompani per te pare automjetet disponibil.
+              {t('home.mapDesc')}
             </p>
           </div>
           <Link to="/automjetet" className="flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors group shrink-0">
-            Shiko te gjitha
+            {t('common.viewAll')}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
@@ -207,29 +209,38 @@ function HeroSection({ settings }: { settings: ReturnType<typeof useHomepageSett
   );
 }
 
-const categories = [
-  { id: 'ekonomike', label: 'Ekonomike', image: 'https://images.pexels.com/photos/1592384/pexels-photo-1592384.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop', desc: 'Nga 15 EUR/dite', count: '120+' },
-  { id: 'kompakte', label: 'Kompakte', image: 'https://images.pexels.com/photos/100656/pexels-photo-100656.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop', desc: 'Nga 25 EUR/dite', count: '95+' },
-  { id: 'sedan', label: 'Sedan', image: 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop', desc: 'Nga 35 EUR/dite', count: '80+' },
-  { id: 'suv', label: 'SUV', image: 'https://images.pexels.com/photos/116675/pexels-photo-116675.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop', desc: 'Nga 45 EUR/dite', count: '70+' },
-  { id: 'luksoz', label: 'Luksoze', image: 'https://images.pexels.com/photos/120049/pexels-photo-120049.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop', desc: 'Nga 65 EUR/dite', count: '35+' },
-  { id: 'furgon', label: 'Furgon', image: 'https://images.pexels.com/photos/2533092/pexels-photo-2533092.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop', desc: 'Nga 40 EUR/dite', count: '25+' },
-];
+const categoryImages: Record<string, string> = {
+  ekonomike: 'https://images.pexels.com/photos/1592384/pexels-photo-1592384.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop',
+  kompakte: 'https://images.pexels.com/photos/100656/pexels-photo-100656.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop',
+  sedan: 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop',
+  suv: 'https://images.pexels.com/photos/116675/pexels-photo-116675.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop',
+  luksoz: 'https://images.pexels.com/photos/120049/pexels-photo-120049.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop',
+  furgon: 'https://images.pexels.com/photos/2533092/pexels-photo-2533092.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop',
+};
 
 function CategoriesSection({ settings }: { settings: ReturnType<typeof useHomepageSettings> }) {
+  const { t } = useTranslation();
   const { sections } = settings;
+  const categories = [
+    { id: 'ekonomike', label: t('home.categoryEconomic'), price: 15, count: '120+' },
+    { id: 'kompakte', label: t('home.categoryCompact'), price: 25, count: '95+' },
+    { id: 'sedan', label: t('home.categorySedan'), price: 35, count: '80+' },
+    { id: 'suv', label: t('home.categorySuv'), price: 45, count: '70+' },
+    { id: 'luksoz', label: t('home.categoryLuxury'), price: 65, count: '35+' },
+    { id: 'furgon', label: t('home.categoryVan'), price: 40, count: '25+' },
+  ];
   return (
     <section className="py-24 bg-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-14 gap-4">
           <div>
-            <p className="text-primary-600 font-semibold text-sm tracking-wide uppercase mb-2">{sections.categories_subtitle}</p>
+            <p className="text-primary-600 font-semibold text-sm tracking-wide uppercase mb-2">{sections.categories_subtitle || t('home.categoriesSubtitle')}</p>
             <h2 className="text-3xl sm:text-4xl font-bold text-dark-950 leading-tight">
-              {sections.categories_title}
+              {sections.categories_title || t('home.categoriesTitle')}
             </h2>
           </div>
           <Link to="/automjetet" className="flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors group">
-            Shiko te gjitha
+            {t('common.viewAll')}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
@@ -242,7 +253,7 @@ function CategoriesSection({ settings }: { settings: ReturnType<typeof useHomepa
               className="group relative rounded-2xl overflow-hidden aspect-[3/2] lg:aspect-[16/10]"
             >
               <img
-                src={cat.image}
+                src={categoryImages[cat.id]}
                 alt={cat.label}
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
               />
@@ -251,7 +262,7 @@ function CategoriesSection({ settings }: { settings: ReturnType<typeof useHomepa
                 <div className="flex items-end justify-between">
                   <div>
                     <h3 className="text-lg lg:text-xl font-bold text-white mb-0.5">{cat.label}</h3>
-                    <p className="text-sm text-white/70">{cat.desc}</p>
+                    <p className="text-sm text-white/70">{t('home.categoryFromPrice', { price: cat.price })}</p>
                   </div>
                   <div className="glass rounded-lg px-3 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <span className="text-xs font-semibold text-white">{cat.count}</span>

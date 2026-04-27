@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, MapPin, Fuel, Users, Cog, Loader2, Star, ChevronLeft, ChevronRight, Pause, Play, Navigation } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import type { Vehicle } from '../../lib/types';
 import type { HomepageSettings } from '../../lib/useHomepageSettings';
@@ -36,6 +37,7 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 export default function FeaturedVehicles({ settings }: { settings?: HomepageSettings }) {
+  const { t } = useTranslation();
   const [allVehicles, setAllVehicles] = useState<VehicleWithCompany[]>([]);
   const [rawVehicles, setRawVehicles] = useState<VehicleWithCompany[]>([]);
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
@@ -160,19 +162,19 @@ export default function FeaturedVehicles({ settings }: { settings?: HomepageSett
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-14 gap-4">
           <div>
-            <p className="text-primary-600 font-semibold text-sm tracking-wide uppercase mb-2">{settings?.sections.featured_subtitle ?? 'Te zgjedhura'}</p>
+            <p className="text-primary-600 font-semibold text-sm tracking-wide uppercase mb-2">{settings?.sections.featured_subtitle ?? t('home.featuredSubtitle')}</p>
             <h2 className="text-3xl sm:text-4xl font-bold text-dark-950 leading-tight">
-              {userPos ? 'Automjetet me te aferta me ju' : (settings?.sections.featured_title ?? 'Automjete te rekomanduara')}
+              {userPos ? t('home.nearestTitle') : (settings?.sections.featured_title ?? t('home.featuredTitle'))}
             </h2>
             {userPos && (
               <div className="flex items-center gap-1.5 mt-2 text-xs text-green-600 font-medium">
                 <Navigation className="w-3.5 h-3.5" />
-                Renditur sipas distances nga pozicioni juaj
+                {t('home.nearestSorted')}
               </div>
             )}
           </div>
           <Link to="/automjetet" className="flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors group">
-            Shiko te gjitha
+            {t('common.viewAll')}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
@@ -205,7 +207,7 @@ export default function FeaturedVehicles({ settings }: { settings?: HomepageSett
                 <button
                   onClick={goPrev}
                   className="p-2 rounded-xl bg-white border border-gray-200 text-dark-500 hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95"
-                  aria-label="Mbrapa"
+                  aria-label={t('common.previous')}
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -220,7 +222,7 @@ export default function FeaturedVehicles({ settings }: { settings?: HomepageSett
                           ? 'w-8 h-2.5 bg-primary-600'
                           : 'w-2.5 h-2.5 bg-gray-300 hover:bg-gray-400'
                       }`}
-                      aria-label={`Faqja ${i + 1}`}
+                      aria-label={`${t('common.page')} ${i + 1}`}
                     />
                   ))}
                 </div>
@@ -228,7 +230,7 @@ export default function FeaturedVehicles({ settings }: { settings?: HomepageSett
                 <button
                   onClick={goNext}
                   className="p-2 rounded-xl bg-white border border-gray-200 text-dark-500 hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95"
-                  aria-label="Para"
+                  aria-label={t('common.forward')}
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -240,14 +242,14 @@ export default function FeaturedVehicles({ settings }: { settings?: HomepageSett
                       ? 'bg-primary-50 border-primary-200 text-primary-600'
                       : 'bg-white border-gray-200 text-dark-500 hover:bg-gray-50'
                   }`}
-                  aria-label={isPaused ? 'Vazhdo' : 'Ndalo'}
+                  aria-label={isPaused ? t('common.resume') : t('common.pause')}
                 >
                   {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
                 </button>
               </div>
 
               <p className="text-xs text-dark-400">
-                {currentPage + 1} / {totalPages} ({allVehicles.length} automjete gjithsej)
+                {currentPage + 1} / {totalPages} ({t('home.totalVehiclesCount', { count: allVehicles.length })})
               </p>
             </div>
           )}
@@ -258,6 +260,7 @@ export default function FeaturedVehicles({ settings }: { settings?: HomepageSett
 }
 
 function VehicleItem({ vehicle }: { vehicle: VehicleWithCompany }) {
+  const { t } = useTranslation();
   return (
     <Link
       to={'/automjetet/' + vehicle.id}
@@ -271,12 +274,12 @@ function VehicleItem({ vehicle }: { vehicle: VehicleWithCompany }) {
         />
         <div className="absolute top-3 left-3">
           <span className="px-3 py-1 rounded-lg bg-white/90 backdrop-blur-sm text-xs font-semibold text-dark-800 shadow-sm capitalize">
-            {vehicle.category}
+            {t(`vehicles.categories.${vehicle.category}`, { defaultValue: vehicle.category })}
           </span>
         </div>
         <div className="absolute top-3 right-3">
           <span className="px-3 py-1 rounded-lg bg-primary-600 text-xs font-bold text-white shadow-sm">
-            {vehicle.price_per_day} EUR/dite
+            {t('vehicles.priceLabel', { price: vehicle.price_per_day })}
           </span>
         </div>
       </div>
@@ -313,15 +316,15 @@ function VehicleItem({ vehicle }: { vehicle: VehicleWithCompany }) {
         <div className="flex items-center gap-5 pt-4 border-t border-gray-50">
           <div className="flex items-center gap-1.5 text-xs text-dark-500">
             <Cog className="w-3.5 h-3.5 text-dark-400" />
-            {vehicle.transmission === 'automatike' ? 'Auto' : 'Manuale'}
+            {vehicle.transmission === 'automatike' ? t('vehicles.autoShort') : t('vehicles.manualShort')}
           </div>
           <div className="flex items-center gap-1.5 text-xs text-dark-500">
             <Fuel className="w-3.5 h-3.5 text-dark-400" />
-            <span className="capitalize">{vehicle.fuel_type}</span>
+            <span>{t(`vehicles.fuels.${vehicle.fuel_type}`, { defaultValue: vehicle.fuel_type })}</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-dark-500">
             <Users className="w-3.5 h-3.5 text-dark-400" />
-            {vehicle.seats} vende
+            {t('vehicles.seatsLabel', { count: vehicle.seats })}
           </div>
         </div>
       </div>
