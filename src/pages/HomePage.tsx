@@ -131,12 +131,12 @@ function HeroSection({ settings }: { settings: ReturnType<typeof useHomepageSett
                   className="w-full pl-10 pr-4 py-3 sm:py-4 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl text-sm text-white focus:ring-2 focus:ring-primary-400 focus:bg-white/20 transition-colors appearance-none cursor-pointer font-medium [&>option]:text-dark-900"
                 >
                   <option value="">{hero.search_label_city}</option>
-                  <option value="Prishtine">Prishtine, Kosove</option>
-                  <option value="Tirane">Tirane, Shqiperi</option>
-                  <option value="Shkup">Shkup, Maqedoni</option>
-                  <option value="Prizren">Prizren, Kosove</option>
-                  <option value="Shkoder">Shkoder, Shqiperi</option>
-                  <option value="Durres">Durres, Shqiperi</option>
+                  <option value="Prishtine">{t('hero.cityPrishtine')}</option>
+                  <option value="Tirane">{t('hero.cityTirane')}</option>
+                  <option value="Shkup">{t('hero.cityShkup')}</option>
+                  <option value="Prizren">{t('hero.cityPrizren')}</option>
+                  <option value="Shkoder">{t('hero.cityShkoder')}</option>
+                  <option value="Durres">{t('hero.cityDurres')}</option>
                 </select>
               </div>
               <div className="grid grid-cols-2 sm:contents gap-2">

@@ -9,6 +9,7 @@ import LanguageSwitcher from '../LanguageSwitcher';
 
 interface NavItem {
   label: string;
+  labelKey?: string;
   path: string;
   icon: React.ReactNode;
 }
@@ -26,19 +27,19 @@ export default function DashboardLayout({ children, title, navItems, navGroups }
   const navigate = useNavigate();
   const location = useLocation();
 
-  function translateLabel(label: string): string {
-    const map: Record<string, string> = {
-      'Pamja e pergjithshme': t('dashboard.overview'),
-      'Rezervimet': t('dashboard.myBookings'),
-      'Pagesat': t('dashboard.payments'),
-      'Njoftimet': t('dashboard.notifications'),
-      'Profili': t('dashboard.profile'),
-      'Automjetet': t('dashboard.vehicles'),
-      'Vleresimet': t('dashboard.reviews'),
-      'Abonimi': t('dashboard.subscription'),
-      'Cilesimet': t('dashboard.settings'),
-    };
-    return map[label] || label;
+  function translateLabel(item: { label: string; labelKey?: string }): string {
+    if (item.labelKey) {
+      const translated = t(item.labelKey);
+      if (translated && translated !== item.labelKey) return translated;
+    }
+    return item.label;
+  }
+  function translateGroupLabel(group: { label: string; labelKey?: string }): string {
+    if (group.labelKey) {
+      const translated = t(group.labelKey);
+      if (translated && translated !== group.labelKey) return translated;
+    }
+    return group.label;
   }
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
@@ -66,7 +67,7 @@ export default function DashboardLayout({ children, title, navItems, navGroups }
         }`}
       >
         <span className={active ? 'text-primary-600' : 'text-dark-400'}>{item.icon}</span>
-        {translateLabel(item.label)}
+        {translateLabel(item)}
       </Link>
     );
   };
@@ -100,7 +101,7 @@ export default function DashboardLayout({ children, title, navItems, navGroups }
                       onClick={() => toggleGroup(group.label)}
                       className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.12em] hover:text-gray-600 transition-colors"
                     >
-                      {group.label}
+                      {translateGroupLabel(group)}
                       <ChevronDown className={`w-3 h-3 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
                     </button>
                     {!collapsed && (
