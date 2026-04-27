@@ -63,6 +63,7 @@ function MapSection() {
 }
 
 function HeroSection({ settings }: { settings: ReturnType<typeof useHomepageSettings> }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [city, setCity] = useState('');
   const today = new Date().toISOString().split('T')[0];
