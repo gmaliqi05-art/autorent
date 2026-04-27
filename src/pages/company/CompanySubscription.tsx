@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Check, Crown, Zap, Star, Gem, AlertCircle, CheckCircle2, RefreshCw, Calendar, ArrowUpRight, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Company, SubscriptionPlan } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { companyNavItems } from '../../lib/companyNav';
+import { formatDateLong } from '../../lib/companyDashHelpers';
 
 const PLAN_ICONS: Record<string, React.ReactNode> = {
   free: <Star className="w-5 h-5" />,
@@ -18,11 +20,6 @@ function getPlanIcon(name: string) {
   return PLAN_ICONS[key] || <Star className="w-5 h-5" />;
 }
 
-function formatDate(iso: string | null) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('sq-AL', { day: '2-digit', month: 'long', year: 'numeric' });
-}
-
 function daysUntil(iso: string | null): number | null {
   if (!iso) return null;
   const diff = new Date(iso).getTime() - Date.now();
@@ -31,6 +28,7 @@ function daysUntil(iso: string | null): number | null {
 
 export default function CompanySubscription() {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [company, setCompany] = useState<Company | null>(null);
   const [currentPlan, setCurrentPlan] = useState<SubscriptionPlan | null>(null);
   const [allPlans, setAllPlans] = useState<SubscriptionPlan[]>([]);
@@ -40,6 +38,7 @@ export default function CompanySubscription() {
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
   const [changingTo, setChangingTo] = useState<string | null>(null);
   const [showChangePlan, setShowChangePlan] = useState(false);
+  const [confirmPlan, setConfirmPlan] = useState<SubscriptionPlan | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -61,6 +60,11 @@ export default function CompanySubscription() {
     });
   }, [user]);
 
+  function formatDate(iso: string | null) {
+    if (!iso) return '—';
+    return formatDateLong(iso, i18n.language);
+  }
+
   async function handleToggleAutoRenew() {
     if (!company) return;
     const currentValue = (company as Company & { subscription_auto_renew?: boolean }).subscription_auto_renew;
@@ -73,12 +77,12 @@ export default function CompanySubscription() {
     setSaving(false);
     if (!error) {
       setCompany(prev => prev ? { ...prev, subscription_auto_renew: newValue } as Company & { subscription_auto_renew: boolean } : prev);
-      setFeedback({ type: 'success', message: newValue ? 'Rinovimi automatik u aktivizua.' : 'Rinovimi automatik u çaktivizua.' });
+      setFeedback({ type: 'success', message: newValue ? t('companyDash.subscription.autoRenewEnabled') : t('companyDash.subscription.autoRenewDisabled') });
       setTimeout(() => setFeedback(null), 3000);
     }
   }
 
-  async function handleChangePlan(planId: string) {
+  async function performPlanChange(planId: string) {
     if (!company) return;
     setChangingTo(planId);
     const now = new Date();
@@ -111,11 +115,16 @@ export default function CompanySubscription() {
         subscription_expires_at: expiresAt.toISOString(),
       } : prev);
       setShowChangePlan(false);
-      setFeedback({ type: 'success', message: `Plani u ndryshua ne ${plan?.name}!` });
+      setConfirmPlan(null);
+      setFeedback({ type: 'success', message: t('companyDash.subscription.planChanged', { name: plan?.name }) });
       setTimeout(() => setFeedback(null), 3500);
     } else {
-      setFeedback({ type: 'error', message: 'Ndodhi nje gabim. Provoni perseri.' });
+      setFeedback({ type: 'error', message: t('companyDash.subscription.changeError') });
     }
+  }
+
+  function requestPlanChange(plan: SubscriptionPlan) {
+    setConfirmPlan(plan);
   }
 
   const companyWithExtras = company as (Company & { subscription_auto_renew?: boolean; subscription_billing_cycle?: string }) | null;
@@ -125,9 +134,24 @@ export default function CompanySubscription() {
   const isExpiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft >= 0;
   const isExpired = daysLeft !== null && daysLeft < 0;
 
+  function statusLabel(): string {
+    if (company?.subscription_status === 'active') return t('companyDash.subscription.statusActive');
+    if (company?.subscription_status === 'trial') return t('companyDash.subscription.statusTrial');
+    if (company?.subscription_status === 'expired') return t('companyDash.subscription.statusExpired');
+    if (company?.subscription_status === 'cancelled') return t('companyDash.subscription.statusCancelled');
+    return t('companyDash.subscription.statusNone');
+  }
+
+  function autoRenewPrice(): string {
+    if (!currentPlan) return '';
+    return billingCycle === 'yearly'
+      ? t('companyDash.subscription.perYearShort', { amount: currentPlan.price_yearly })
+      : `${currentPlan.price_monthly} ${t('companyDash.subscription.perMonthShort')}`;
+  }
+
   if (loading) {
     return (
-      <DashboardLayout title="Abonimi" navItems={companyNavItems}>
+      <DashboardLayout title={t('companyDash.subscription.title')} navItems={companyNavItems}>
         <div className="flex items-center justify-center h-64">
           <div className="w-7 h-7 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
         </div>
@@ -136,10 +160,10 @@ export default function CompanySubscription() {
   }
 
   return (
-    <DashboardLayout title="Abonimi" navItems={companyNavItems}>
+    <DashboardLayout title={t('companyDash.subscription.title')} navItems={companyNavItems}>
       <div className="max-w-3xl">
-        <h1 className="text-2xl font-bold text-dark-950 mb-1">Abonimi juaj</h1>
-        <p className="text-dark-500 mb-8 text-[15px]">Menaxhoni planin dhe ciklin e faturimit te kompanise suaj</p>
+        <h1 className="text-2xl font-bold text-dark-950 mb-1">{t('companyDash.subscription.heading')}</h1>
+        <p className="text-dark-500 mb-8 text-[15px]">{t('companyDash.subscription.subtitle')}</p>
 
         {feedback && (
           <div className={`mb-6 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium ${
@@ -157,10 +181,10 @@ export default function CompanySubscription() {
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-sm">
-                {isExpired ? 'Abonimi ka skaduar!' : `Abonimi skadon ne ${daysLeft} dite!`}
+                {isExpired ? t('companyDash.subscription.expiredTitle') : t('companyDash.subscription.expiringTitle', { days: daysLeft })}
               </p>
               <p className="text-sm mt-0.5 opacity-80">
-                {isExpired ? 'Rinovoni abonoimin per te vazhduar perdorimin e platformes.' : 'Rinovoni abonoimin per te mos humbur qasjen.'}
+                {isExpired ? t('companyDash.subscription.expiredBody') : t('companyDash.subscription.expiringBody')}
               </p>
             </div>
           </div>
@@ -169,7 +193,7 @@ export default function CompanySubscription() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
           <div className="flex items-start justify-between mb-5">
             <div>
-              <p className="text-xs font-semibold text-dark-400 uppercase tracking-wide mb-2">Plani aktual</p>
+              <p className="text-xs font-semibold text-dark-400 uppercase tracking-wide mb-2">{t('companyDash.subscription.currentPlan')}</p>
               {currentPlan ? (
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center">
@@ -186,8 +210,8 @@ export default function CompanySubscription() {
                     <Star className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-dark-950">Pa abonim</h2>
-                    <p className="text-dark-400 text-sm">Zgjidhni nje plan per te filluar</p>
+                    <h2 className="text-xl font-bold text-dark-950">{t('companyDash.subscription.noPlan')}</h2>
+                    <p className="text-dark-400 text-sm">{t('companyDash.subscription.noPlanDesc')}</p>
                   </div>
                 </div>
               )}
@@ -201,11 +225,7 @@ export default function CompanySubscription() {
                     ? 'bg-red-100 text-red-700'
                     : 'bg-gray-100 text-gray-500'
             }`}>
-              {company?.subscription_status === 'active' ? 'Aktiv'
-                : company?.subscription_status === 'trial' ? 'Prove'
-                : company?.subscription_status === 'expired' ? 'Skaduar'
-                : company?.subscription_status === 'cancelled' ? 'Anuluar'
-                : 'Pa plan'}
+              {statusLabel()}
             </span>
           </div>
 
@@ -215,13 +235,13 @@ export default function CompanySubscription() {
                 <p className="text-lg font-bold text-dark-950">
                   {currentPlan.max_vehicles === -1 ? '∞' : currentPlan.max_vehicles}
                 </p>
-                <p className="text-xs text-dark-400 mt-0.5">Automjete</p>
+                <p className="text-xs text-dark-400 mt-0.5">{t('companyDash.subscription.vehicles')}</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-3 text-center">
                 <p className="text-lg font-bold text-dark-950">
                   {currentPlan.max_bookings_monthly === -1 ? '∞' : currentPlan.max_bookings_monthly}
                 </p>
-                <p className="text-xs text-dark-400 mt-0.5">Rezervime/muaj</p>
+                <p className="text-xs text-dark-400 mt-0.5">{t('companyDash.subscription.bookingsMonthly')}</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-3 text-center">
                 <p className="text-lg font-bold text-dark-950">
@@ -230,13 +250,13 @@ export default function CompanySubscription() {
                     : currentPlan.price_monthly === 0 ? '0' : `${currentPlan.price_monthly}`
                   }
                 </p>
-                <p className="text-xs text-dark-400 mt-0.5">EUR/muaj</p>
+                <p className="text-xs text-dark-400 mt-0.5">{t('companyDash.subscription.perMonth')}</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-3 text-center">
                 <p className={`text-lg font-bold ${isExpiringSoon ? 'text-amber-600' : isExpired ? 'text-red-600' : 'text-dark-950'}`}>
-                  {daysLeft !== null ? (daysLeft < 0 ? 'Skaduar' : `${daysLeft}d`) : '—'}
+                  {daysLeft !== null ? (daysLeft < 0 ? t('companyDash.subscription.expiredShort') : `${daysLeft}d`) : '—'}
                 </p>
-                <p className="text-xs text-dark-400 mt-0.5">Dite mbetur</p>
+                <p className="text-xs text-dark-400 mt-0.5">{t('companyDash.subscription.daysLeft')}</p>
               </div>
             </div>
           )}
@@ -244,22 +264,22 @@ export default function CompanySubscription() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-gray-100">
             <div className="flex items-center gap-2 text-sm text-dark-500">
               <Calendar className="w-4 h-4 text-dark-300" />
-              <span>Skadon me: <span className="font-medium text-dark-700">{formatDate(company?.subscription_expires_at || null)}</span></span>
+              <span>{t('companyDash.subscription.expiresOn')}: <span className="font-medium text-dark-700">{formatDate(company?.subscription_expires_at || null)}</span></span>
             </div>
             <div className="flex items-center gap-2 text-sm text-dark-500">
               <RefreshCw className="w-4 h-4 text-dark-300" />
-              <span>Cikli: <span className="font-medium text-dark-700">{billingCycle === 'yearly' ? 'Vjetor' : 'Mujor'}</span></span>
+              <span>{t('companyDash.subscription.cycle')}: <span className="font-medium text-dark-700">{billingCycle === 'yearly' ? t('companyDash.subscription.yearly') : t('companyDash.subscription.monthly')}</span></span>
             </div>
           </div>
 
           {currentPlan && currentPlan.price_monthly > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-dark-700">Rinovim automatik</p>
+                <p className="text-sm font-medium text-dark-700">{t('companyDash.subscription.autoRenew')}</p>
                 <p className="text-xs text-dark-400 mt-0.5">
                   {autoRenew
-                    ? `Abonimi rinovohet automatikisht me ${billingCycle === 'yearly' ? currentPlan.price_yearly + ' EUR/vit' : currentPlan.price_monthly + ' EUR/muaj'}`
-                    : 'Abonimi nuk rinovohet automatikisht pas skadimit'}
+                    ? t('companyDash.subscription.autoRenewOn', { price: autoRenewPrice() })
+                    : t('companyDash.subscription.autoRenewOff')}
                 </p>
               </div>
               <button
@@ -277,10 +297,10 @@ export default function CompanySubscription() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h3 className="text-base font-semibold text-dark-900">
-                {showChangePlan ? 'Ndrysho planin' : 'Plani juaj'}
+                {showChangePlan ? t('companyDash.subscription.changeTitle') : t('companyDash.subscription.yourPlan')}
               </h3>
               <p className="text-xs text-dark-400 mt-0.5">
-                {showChangePlan ? 'Zgjidhni planin e ri dhe ciklin e faturimit' : 'Upgrade ose downgrade ne plani tjeter'}
+                {showChangePlan ? t('companyDash.subscription.changeDesc') : t('companyDash.subscription.yourPlanDesc')}
               </p>
             </div>
             <button
@@ -292,7 +312,7 @@ export default function CompanySubscription() {
                   : 'bg-primary-50 text-primary-700 hover:bg-primary-100'
               }`}
             >
-              {showChangePlan ? 'Anulo' : <><ArrowUpRight className="w-3.5 h-3.5" /> Ndrysho planin</>}
+              {showChangePlan ? t('companyDash.common.cancel') : <><ArrowUpRight className="w-3.5 h-3.5" /> {t('companyDash.subscription.changeButton')}</>}
             </button>
           </div>
 
@@ -307,7 +327,7 @@ export default function CompanySubscription() {
                       billing === 'monthly' ? 'bg-white text-dark-900 shadow-sm' : 'text-dark-400 hover:text-dark-600'
                     }`}
                   >
-                    Mujor
+                    {t('companyDash.subscription.monthly')}
                   </button>
                   <button
                     type="button"
@@ -316,8 +336,8 @@ export default function CompanySubscription() {
                       billing === 'yearly' ? 'bg-white text-dark-900 shadow-sm' : 'text-dark-400 hover:text-dark-600'
                     }`}
                   >
-                    Vjetor
-                    <span className="text-[9px] font-bold px-1 py-0.5 rounded-full bg-green-100 text-green-700">-20%</span>
+                    {t('companyDash.subscription.yearly')}
+                    <span className="text-[9px] font-bold px-1 py-0.5 rounded-full bg-green-100 text-green-700">{t('companyDash.subscription.yearlyDiscount')}</span>
                   </button>
                 </div>
               </div>
@@ -334,7 +354,7 @@ export default function CompanySubscription() {
                     <button
                       key={plan.id}
                       type="button"
-                      onClick={() => !isCurrentPlan && handleChangePlan(plan.id)}
+                      onClick={() => !isCurrentPlan && requestPlanChange(plan)}
                       disabled={isCurrentPlan || !!changingTo}
                       className={`relative text-left p-4 rounded-xl border-2 transition-all ${
                         isCurrentPlan
@@ -344,12 +364,12 @@ export default function CompanySubscription() {
                     >
                       {plan.is_popular && (
                         <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
-                          Popullor
+                          {t('companyDash.subscription.popular')}
                         </span>
                       )}
                       {isCurrentPlan && (
                         <span className="absolute -top-2.5 right-3 bg-green-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
-                          Aktual
+                          {t('companyDash.subscription.current')}
                         </span>
                       )}
                       <div className="flex items-center gap-1.5 mb-2 text-dark-400">
@@ -358,16 +378,16 @@ export default function CompanySubscription() {
                       <p className="text-xs font-bold text-dark-900 mb-1">{plan.name}</p>
                       <div>
                         {price === 0 ? (
-                          <span className="text-sm font-bold text-dark-950">Falas</span>
+                          <span className="text-sm font-bold text-dark-950">{t('companyDash.subscription.free')}</span>
                         ) : (
                           <>
                             <span className="text-sm font-bold text-dark-950">{price}</span>
-                            <span className="text-[10px] text-dark-400"> EUR/muaj</span>
+                            <span className="text-[10px] text-dark-400"> {t('companyDash.subscription.perMonthShort')}</span>
                           </>
                         )}
                       </div>
                       {billing === 'yearly' && plan.price_yearly > 0 && (
-                        <p className="text-[10px] text-green-600 mt-0.5">{plan.price_yearly} EUR/vit</p>
+                        <p className="text-[10px] text-green-600 mt-0.5">{t('companyDash.subscription.perYearShort', { amount: plan.price_yearly })}</p>
                       )}
                       <ul className="mt-2 pt-2 border-t border-gray-100 space-y-0.5">
                         {(plan.features || []).slice(0, 2).map((f, i) => (
@@ -382,11 +402,11 @@ export default function CompanySubscription() {
                           {isChanging ? (
                             <div className="flex items-center justify-center gap-1.5 py-1 text-xs text-primary-600 font-medium">
                               <Loader2 className="w-3 h-3 animate-spin" />
-                              Duke u ndryshuar...
+                              {t('companyDash.subscription.changing')}
                             </div>
                           ) : (
                             <p className="text-[10px] text-primary-600 font-semibold text-center py-0.5">
-                              Zgjidh kete plan →
+                              {t('companyDash.subscription.selectPlan')} →
                             </p>
                           )}
                         </div>
@@ -397,7 +417,7 @@ export default function CompanySubscription() {
               </div>
 
               <p className="text-xs text-dark-400 text-center">
-                Ndryshimi i planit hyn ne fuqi menjehere. Data e skadimit llogaritet nga sot.
+                {t('companyDash.subscription.changeNote')}
               </p>
             </>
           )}
@@ -414,6 +434,40 @@ export default function CompanySubscription() {
           )}
         </div>
       </div>
+
+      {confirmPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-bold text-dark-900 mb-3">{t('companyDash.subscription.confirmTitle')}</h3>
+            <p className="text-sm text-dark-600 mb-6">
+              {t('companyDash.subscription.confirmBody', {
+                from: currentPlan?.name || t('companyDash.subscription.noPlan'),
+                to: confirmPlan.name,
+                price: billing === 'yearly' && confirmPlan.price_yearly > 0
+                  ? t('companyDash.subscription.perYearShort', { amount: confirmPlan.price_yearly })
+                  : `${confirmPlan.price_monthly} ${t('companyDash.subscription.perMonthShort')}`,
+              })}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmPlan(null)}
+                disabled={!!changingTo}
+                className="px-4 py-2 text-sm font-medium text-dark-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                {t('companyDash.common.cancel')}
+              </button>
+              <button
+                onClick={() => performPlanChange(confirmPlan.id)}
+                disabled={!!changingTo}
+                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {changingTo && <Loader2 className="w-4 h-4 animate-spin" />}
+                {t('companyDash.subscription.confirmContinue')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

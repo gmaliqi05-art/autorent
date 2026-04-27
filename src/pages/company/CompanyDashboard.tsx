@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Car, CalendarDays, DollarSign, Eye, Clock, Star, Zap, Crown, Gem, AlertTriangle, CheckCircle, ArrowUpRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Vehicle, Booking, Company, SubscriptionPlan } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { companyNavItems } from '../../lib/companyNav';
+import { formatDate, bookingStatusColors, bookingStatusLabel } from '../../lib/companyDashHelpers';
 
 const PLAN_META: Record<string, { icon: React.ReactNode; gradient: string; badge: string }> = {
   'Free': { icon: <Star className="w-4 h-4" />, gradient: 'from-gray-500 to-gray-600', badge: 'bg-gray-100 text-gray-700' },
@@ -16,11 +18,13 @@ const PLAN_META: Record<string, { icon: React.ReactNode; gradient: string; badge
 
 export default function CompanyDashboard() {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [company, setCompany] = useState<Company | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -28,7 +32,14 @@ export default function CompanyDashboard() {
   }, [user]);
 
   async function loadData() {
-    const { data: comp } = await supabase.from('companies').select('*').eq('owner_id', user!.id).maybeSingle();
+    setLoadError(false);
+    setLoading(true);
+    const { data: comp, error } = await supabase.from('companies').select('*').eq('owner_id', user!.id).maybeSingle();
+    if (error) {
+      setLoadError(true);
+      setLoading(false);
+      return;
+    }
     if (comp) {
       setCompany(comp as Company);
       const [v, b, p] = await Promise.all([
@@ -45,8 +56,10 @@ export default function CompanyDashboard() {
     setLoading(false);
   }
 
-  const revenue = bookings.filter(b => b.status === 'completed' || b.status === 'active').reduce((s, b) => s + Number(b.total_price), 0);
   const paidRevenue = bookings.filter(b => b.payment_status === 'paid').reduce((s, b) => s + Number(b.total_price), 0);
+  const totalRevenue = bookings
+    .filter(b => (b.status === 'completed' || b.status === 'active') && b.payment_status !== 'failed')
+    .reduce((s, b) => s + Number(b.total_price), 0);
   const pendingPayments = bookings.filter(b => b.payment_status === 'pending').reduce((s, b) => s + Number(b.total_price), 0);
   const pendingCount = bookings.filter(b => b.status === 'pending').length;
   const activeVehicles = vehicles.filter(v => v.is_published && v.is_available).length;
@@ -63,19 +76,36 @@ export default function CompanyDashboard() {
   const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 7 && daysUntilExpiry > 0;
   const isExpired = daysUntilExpiry !== null && daysUntilExpiry <= 0;
 
-  const statusLabels: Record<string, { label: string; color: string }> = {
-    pending: { label: 'Ne pritje', color: 'bg-yellow-100 text-yellow-700' },
-    confirmed: { label: 'Konfirmuar', color: 'bg-blue-100 text-blue-700' },
-    active: { label: 'Aktiv', color: 'bg-green-100 text-green-700' },
-    completed: { label: 'Perfunduar', color: 'bg-gray-100 text-gray-600' },
-    cancelled: { label: 'Anuluar', color: 'bg-red-100 text-red-700' },
-  };
-
   if (loading) {
     return (
-      <DashboardLayout title="Paneli i kompanise" navItems={companyNavItems}>
+      <DashboardLayout title={t('companyDash.overview.title')} navItems={companyNavItems}>
         <div className="flex items-center justify-center h-64">
           <div className="w-7 h-7 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <DashboardLayout title={t('companyDash.overview.title')} navItems={companyNavItems}>
+        <div className="flex flex-col items-center justify-center h-64 gap-3">
+          <AlertTriangle className="w-8 h-8 text-red-500" />
+          <p className="text-sm text-dark-600">{t('companyDash.common.loadError')}</p>
+          <button onClick={loadData} className="px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700">
+            {t('companyDash.common.tryAgain')}
+          </button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!company) {
+    return (
+      <DashboardLayout title={t('companyDash.overview.title')} navItems={companyNavItems}>
+        <div className="flex flex-col items-center justify-center h-64 gap-3">
+          <AlertTriangle className="w-8 h-8 text-amber-500" />
+          <p className="text-sm text-dark-600">{t('companyDash.common.noCompany')}</p>
         </div>
       </DashboardLayout>
     );
@@ -84,41 +114,39 @@ export default function CompanyDashboard() {
   const planMeta = plan ? (PLAN_META[plan.name] || PLAN_META['Free']) : PLAN_META['Free'];
 
   return (
-    <DashboardLayout title="Paneli i kompanise" navItems={companyNavItems}>
+    <DashboardLayout title={t('companyDash.overview.title')} navItems={companyNavItems}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-dark-950">{company?.name || 'Kompania ime'}</h1>
-          <p className="text-dark-500 mt-1 text-[15px]">Menaxhoni automjetet, rezervimet dhe statistikat.</p>
+          <h1 className="text-2xl font-bold text-dark-950">{company.name || t('companyDash.overview.myCompany')}</h1>
+          <p className="text-dark-500 mt-1 text-[15px]">{t('companyDash.overview.subtitle')}</p>
         </div>
-        {company && (
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
-            company.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${company.status === 'approved' ? 'bg-green-500' : 'bg-yellow-500'}`} />
-            {company.status === 'approved' ? 'Aktive' : 'Ne pritje'}
-          </span>
-        )}
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
+          company.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${company.status === 'approved' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+          {company.status === 'approved' ? t('companyDash.overview.statusActive') : t('companyDash.overview.statusPending')}
+        </span>
       </div>
 
       {(isExpired || isExpiringSoon || isAtVehicleLimit) && (
         <div className={`mb-6 rounded-xl border p-4 flex items-start gap-3 ${isExpired || isAtVehicleLimit ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
           <AlertTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${isExpired || isAtVehicleLimit ? 'text-red-500' : 'text-amber-500'}`} />
           <div className="flex-1">
-            {isExpired && <p className="text-sm font-semibold text-red-800">Abonimi juaj ka skaduar. Rinovojeni per te vazhduar sherbimin.</p>}
-            {isExpiringSoon && !isExpired && <p className="text-sm font-semibold text-amber-800">Abonimi skadon per {daysUntilExpiry} dite. Rinovojeni tani.</p>}
-            {isAtVehicleLimit && <p className="text-sm font-semibold text-red-800 mt-1">Keni arritur limitin e automjeteve per planin tuaj ({vehicleLimit} automjete). Kaloni ne nje plan me te larte.</p>}
+            {isExpired && <p className="text-sm font-semibold text-red-800">{t('companyDash.overview.expired')}</p>}
+            {isExpiringSoon && !isExpired && <p className="text-sm font-semibold text-amber-800">{t('companyDash.overview.expiringSoon', { days: daysUntilExpiry })}</p>}
+            {isAtVehicleLimit && <p className="text-sm font-semibold text-red-800 mt-1">{t('companyDash.overview.atVehicleLimit', { limit: vehicleLimit })}</p>}
           </div>
-          <Link to="/kompania/cilesimet" className="shrink-0 px-3 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg hover:bg-primary-700 transition-colors">
-            Upgrade
+          <Link to="/kompania/abonimi" className="shrink-0 px-3 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg hover:bg-primary-700 transition-colors">
+            {t('companyDash.overview.upgrade')}
           </Link>
         </div>
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard icon={<Car className="w-5 h-5 text-primary-600" />} bg="bg-primary-50" value={vehicles.length} label="Automjete" />
-        <StatCard icon={<Eye className="w-5 h-5 text-green-600" />} bg="bg-green-50" value={activeVehicles} label="Publikuara" />
-        <StatCard icon={<Clock className="w-5 h-5 text-yellow-600" />} bg="bg-yellow-50" value={pendingCount} label="Ne pritje" />
-        <StatCard icon={<DollarSign className="w-5 h-5 text-accent-600" />} bg="bg-accent-50" value={`${revenue}E`} label="Te ardhura" />
+        <StatCard icon={<Car className="w-5 h-5 text-primary-600" />} bg="bg-primary-50" value={vehicles.length} label={t('companyDash.overview.vehicles')} />
+        <StatCard icon={<Eye className="w-5 h-5 text-green-600" />} bg="bg-green-50" value={activeVehicles} label={t('companyDash.overview.published')} />
+        <StatCard icon={<Clock className="w-5 h-5 text-yellow-600" />} bg="bg-yellow-50" value={pendingCount} label={t('companyDash.overview.pendingBookings')} />
+        <StatCard icon={<DollarSign className="w-5 h-5 text-accent-600" />} bg="bg-accent-50" value={`${totalRevenue.toFixed(2)} EUR`} label={t('companyDash.overview.revenue')} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
@@ -128,7 +156,7 @@ export default function CompanyDashboard() {
               <DollarSign className="w-6 h-6 text-white" />
             </div>
             <p className="text-3xl font-bold text-white mb-1">{paidRevenue.toFixed(0)} EUR</p>
-            <p className="text-sm text-white/80">Te ardhurat e paguara</p>
+            <p className="text-sm text-white/80">{t('companyDash.overview.paidRevenue')}</p>
           </div>
         </Link>
         <Link to="/kompania/pagesat" className="block">
@@ -137,7 +165,7 @@ export default function CompanyDashboard() {
               <Clock className="w-6 h-6 text-white" />
             </div>
             <p className="text-3xl font-bold text-white mb-1">{pendingPayments.toFixed(0)} EUR</p>
-            <p className="text-sm text-white/80">Ne pritje per pagese</p>
+            <p className="text-sm text-white/80">{t('companyDash.overview.pendingPayments')}</p>
           </div>
         </Link>
 
@@ -150,7 +178,7 @@ export default function CompanyDashboard() {
               {planMeta.icon}
             </div>
             <div>
-              <p className="text-xs text-white/70 font-medium">Plani juaj</p>
+              <p className="text-xs text-white/70 font-medium">{t('companyDash.overview.yourPlan')}</p>
               <p className="text-base font-bold">{plan?.name || 'Free'}</p>
             </div>
           </div>
@@ -158,7 +186,7 @@ export default function CompanyDashboard() {
           {vehicleLimit !== null ? (
             <div className="mb-3">
               <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-white/70">Automjete</span>
+                <span className="text-white/70">{t('companyDash.overview.vehicles')}</span>
                 <span className="font-semibold">{vehicles.length} / {vehicleLimit}</span>
               </div>
               <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
@@ -171,19 +199,19 @@ export default function CompanyDashboard() {
           ) : (
             <div className="mb-3 flex items-center gap-1.5 text-xs text-white/70">
               <CheckCircle className="w-3.5 h-3.5 text-green-300" />
-              Automjete pa limit
+              {t('companyDash.overview.vehiclesUnlimited')}
             </div>
           )}
 
-          {company?.subscription_expires_at && (
+          {company.subscription_expires_at && (
             <p className={`text-xs ${isExpiringSoon || isExpired ? 'text-red-200 font-semibold' : 'text-white/60'}`}>
-              {isExpired ? 'Skaduar' : `Skadon: ${new Date(company.subscription_expires_at).toLocaleDateString('sq-AL')}`}
+              {isExpired ? t('companyDash.overview.expiresLabel') : `${t('companyDash.overview.expires')}: ${formatDate(company.subscription_expires_at, i18n.language)}`}
             </p>
           )}
 
-          <Link to="/kompania/cilesimet" className="mt-4 flex items-center gap-1.5 text-xs text-white/80 hover:text-white transition-colors font-medium">
+          <Link to="/kompania/abonimi" className="mt-4 flex items-center gap-1.5 text-xs text-white/80 hover:text-white transition-colors font-medium">
             <ArrowUpRight className="w-3.5 h-3.5" />
-            Ndrysho planin
+            {t('companyDash.overview.changePlan')}
           </Link>
         </div>
       </div>
@@ -191,7 +219,7 @@ export default function CompanyDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-gray-100">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="font-semibold text-dark-950">Automjetet ({vehicles.length})</h2>
+            <h2 className="font-semibold text-dark-950">{t('companyDash.overview.vehiclesPanel')} ({vehicles.length})</h2>
             {vehicleLimit !== null && (
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isAtVehicleLimit ? 'bg-red-100 text-red-600' : isNearVehicleLimit ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-dark-400'}`}>
                 {vehicles.length}/{vehicleLimit}
@@ -199,7 +227,7 @@ export default function CompanyDashboard() {
             )}
           </div>
           {vehicles.length === 0 ? (
-            <EmptyState icon={<Car className="w-8 h-8 text-gray-300" />} text="Nuk keni automjete" />
+            <EmptyState icon={<Car className="w-8 h-8 text-gray-300" />} text={t('companyDash.overview.noVehicles')} />
           ) : (
             <div className="divide-y divide-gray-50">
               {vehicles.slice(0, 5).map(v => (
@@ -210,7 +238,7 @@ export default function CompanyDashboard() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-dark-900">{v.brand} {v.model}</p>
-                      <p className="text-[11px] text-dark-400">{v.year} | {v.price_per_day}EUR/dite</p>
+                      <p className="text-[11px] text-dark-400">{v.year} | {v.price_per_day} {t('companyDash.common.perDay')}</p>
                     </div>
                   </div>
                   <span className={`w-2 h-2 rounded-full ${v.is_available && v.is_published ? 'bg-green-500' : 'bg-gray-300'}`} />
@@ -222,29 +250,28 @@ export default function CompanyDashboard() {
 
         <div className="bg-white rounded-2xl border border-gray-100">
           <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="font-semibold text-dark-950">Rezervimet ({bookings.length})</h2>
+            <h2 className="font-semibold text-dark-950">{t('companyDash.overview.bookingsPanel')} ({bookings.length})</h2>
           </div>
           {bookings.length === 0 ? (
-            <EmptyState icon={<CalendarDays className="w-8 h-8 text-gray-300" />} text="Nuk ka rezervime" />
+            <EmptyState icon={<CalendarDays className="w-8 h-8 text-gray-300" />} text={t('companyDash.overview.noBookings')} />
           ) : (
             <div className="divide-y divide-gray-50">
-              {bookings.slice(0, 5).map(b => {
-                const s = statusLabels[b.status] || statusLabels.pending;
-                return (
-                  <div key={b.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
-                    <div>
-                      <p className="text-sm font-medium text-dark-900">{b.client_name || 'Klient'}</p>
-                      <p className="text-[11px] text-dark-400">
-                        {new Date(b.pickup_date).toLocaleDateString('sq-AL')} - {b.total_days} dite
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-dark-900">{b.total_price}E</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.color}`}>{s.label}</span>
-                    </div>
+              {bookings.slice(0, 5).map(b => (
+                <div key={b.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+                  <div>
+                    <p className="text-sm font-medium text-dark-900">{b.client_name || t('companyDash.common.clientFallback')}</p>
+                    <p className="text-[11px] text-dark-400">
+                      {formatDate(b.pickup_date, i18n.language)} - {b.total_days} {t('companyDash.common.days')}
+                    </p>
                   </div>
-                );
-              })}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-dark-900">{Number(b.total_price).toFixed(0)} EUR</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${bookingStatusColors[b.status] || bookingStatusColors.pending}`}>
+                      {bookingStatusLabel(b.status, t)}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

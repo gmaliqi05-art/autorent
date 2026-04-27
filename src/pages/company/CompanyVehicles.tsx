@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Car, Plus, Pencil, Loader2, Eye, EyeOff, Trash2, Upload, X, ChevronLeft, ChevronRight, AlertTriangle, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Vehicle, Company, SubscriptionPlan } from '../../lib/types';
@@ -15,8 +16,20 @@ const emptyVehicle = {
   main_image_url: '', is_available: true, is_published: false,
 };
 
+const CATEGORY_VALUES = ['ekonomike', 'kompakte', 'sedan', 'suv', 'luksoz', 'minivan', 'furgon'];
+const TRANSMISSION_VALUES = ['manuale', 'automatike'];
+const FUEL_VALUES = ['benzine', 'nafte', 'elektrike', 'hibride'];
+
+function extractStoragePath(url: string): string | null {
+  const marker = '/vehicle-images/';
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return url.slice(idx + marker.length);
+}
+
 export default function CompanyVehicles() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [company, setCompany] = useState<Company | null>(null);
   const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -28,6 +41,7 @@ export default function CompanyVehicles() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [previousImageUrl, setPreviousImageUrl] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -65,7 +79,7 @@ export default function CompanyVehicles() {
         setPlan((planRes.data || null) as SubscriptionPlan | null);
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Ndodhi nje gabim gjate ngarkimit te te dhenave.';
+      const message = err instanceof Error ? err.message : t('companyDash.common.loadError');
       setError(message);
     }
     setLoading(false);
@@ -76,6 +90,7 @@ export default function CompanyVehicles() {
     setEditId(null);
     setImageFile(null);
     setImagePreview('');
+    setPreviousImageUrl('');
     setError(null);
     setShowForm(true);
   }
@@ -90,6 +105,7 @@ export default function CompanyVehicles() {
     setEditId(v.id);
     setImageFile(null);
     setImagePreview(v.main_image_url || '');
+    setPreviousImageUrl(v.main_image_url || '');
     setError(null);
     setShowForm(true);
   }
@@ -98,13 +114,14 @@ export default function CompanyVehicles() {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        alert('Ju lutem zgjidhni nje imazh valid.');
+        setError(t('companyDash.vehicles.imageInvalid'));
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        alert('Imazhi duhet te jete me i vogel se 5MB.');
+        setError(t('companyDash.vehicles.imageTooLarge'));
         return;
       }
+      setError(null);
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -137,7 +154,7 @@ export default function CompanyVehicles() {
     setUploadingImage(false);
 
     if (uploadError) {
-      setError('Gabim gjate ngarkimit te imazhit: ' + uploadError.message);
+      setError(`${t('companyDash.vehicles.imageUploadError')}: ${uploadError.message}`);
       return null;
     }
 
@@ -194,11 +211,19 @@ export default function CompanyVehicles() {
         const { error: insertError } = await supabase.from('vehicles').insert({ ...payload, company_id: company.id });
         if (insertError) throw insertError;
       }
+
+      if (previousImageUrl && previousImageUrl !== imageUrl) {
+        const oldPath = extractStoragePath(previousImageUrl);
+        if (oldPath) {
+          await supabase.storage.from('vehicle-images').remove([oldPath]);
+        }
+      }
+
       setShowForm(false);
       setError(null);
       loadData();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Ndodhi nje gabim gjate ruajtjes.';
+      const message = err instanceof Error ? err.message : t('companyDash.common.saveError');
       setError(message);
     }
     setSaving(false);
@@ -213,13 +238,12 @@ export default function CompanyVehicles() {
         .update({
           is_published: newPublished,
           status: newPublished ? 'active' : 'draft',
-          is_available: newPublished ? true : v.is_available,
         })
         .eq('id', v.id);
       if (toggleError) throw toggleError;
       loadData();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Ndodhi nje gabim gjate ndryshimit.';
+      const message = err instanceof Error ? err.message : t('companyDash.common.saveError');
       setError(message);
     }
   }
@@ -229,12 +253,21 @@ export default function CompanyVehicles() {
     setDeleting(true);
     setError(null);
     try {
+      const target = vehicles.find(v => v.id === deleteId);
       const { error: deleteError } = await supabase.from('vehicles').delete().eq('id', deleteId);
       if (deleteError) throw deleteError;
+
+      if (target?.main_image_url) {
+        const path = extractStoragePath(target.main_image_url);
+        if (path) {
+          await supabase.storage.from('vehicle-images').remove([path]);
+        }
+      }
+
       setDeleteId(null);
       loadData();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Ndodhi nje gabim gjate fshirjes.';
+      const message = err instanceof Error ? err.message : t('companyDash.common.saveError');
       setError(message);
     }
     setDeleting(false);
@@ -242,7 +275,7 @@ export default function CompanyVehicles() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Automjetet" navItems={companyNavItems}>
+      <DashboardLayout title={t('companyDash.vehicles.title')} navItems={companyNavItems}>
         <div className="flex items-center justify-center h-64">
           <div className="w-7 h-7 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
         </div>
@@ -250,13 +283,17 @@ export default function CompanyVehicles() {
     );
   }
 
+  const categoryOptions: [string, string][] = CATEGORY_VALUES.map(v => [v, t(`companyDash.vehicles.category_${v}`)]);
+  const transmissionOptions: [string, string][] = TRANSMISSION_VALUES.map(v => [v, t(`companyDash.vehicles.transmission_${v}`)]);
+  const fuelOptions: [string, string][] = FUEL_VALUES.map(v => [v, t(`companyDash.vehicles.fuel_${v}`)]);
+
   return (
-    <DashboardLayout title="Automjetet" navItems={companyNavItems}>
+    <DashboardLayout title={t('companyDash.vehicles.title')} navItems={companyNavItems}>
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-dark-950 mb-2">Fshij automjetin</h3>
-            <p className="text-sm text-dark-600 mb-6">Jeni te sigurt qe doni te fshini kete automjet?</p>
+            <h3 className="text-lg font-semibold text-dark-950 mb-2">{t('companyDash.vehicles.deleteTitle')}</h3>
+            <p className="text-sm text-dark-600 mb-6">{t('companyDash.vehicles.deleteConfirm')}</p>
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>
             )}
@@ -266,7 +303,7 @@ export default function CompanyVehicles() {
                 disabled={deleting}
                 className="px-5 py-2.5 text-sm font-medium text-dark-600 hover:text-dark-900 transition-colors"
               >
-                Anulo
+                {t('companyDash.common.cancel')}
               </button>
               <button
                 onClick={handleDelete}
@@ -274,7 +311,7 @@ export default function CompanyVehicles() {
                 className="flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 disabled:opacity-50 transition-all"
               >
                 {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                {deleting ? 'Duke fshire...' : 'Fshij'}
+                {deleting ? t('companyDash.common.deleting') : t('companyDash.common.delete')}
               </button>
             </div>
           </div>
@@ -293,14 +330,14 @@ export default function CompanyVehicles() {
             <div className="flex-1">
               <p className={`text-sm font-semibold ${atLimit ? 'text-red-800' : 'text-amber-800'}`}>
                 {atLimit
-                  ? `Keni arritur limitin e automjeteve (${limit}/${limit}). Kaloni ne nje plan me te larte per teshtuar me shume.`
-                  : `Po i afroheni limitit — ${vehicles.length} nga ${limit} automjete.`
+                  ? t('companyDash.vehicles.atLimitTitle', { count: limit, limit })
+                  : t('companyDash.vehicles.nearLimitTitle', { count: vehicles.length, limit })
                 }
               </p>
             </div>
-            <Link to="/kompania/cilesimet" className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg hover:bg-primary-700 transition-colors">
+            <Link to="/kompania/abonimi" className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg hover:bg-primary-700 transition-colors">
               <ArrowUpRight className="w-3.5 h-3.5" />
-              Upgrade
+              {t('companyDash.overview.upgrade')}
             </Link>
           </div>
         );
@@ -308,10 +345,11 @@ export default function CompanyVehicles() {
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-dark-950">Automjetet e mia</h1>
+          <h1 className="text-2xl font-bold text-dark-950">{t('companyDash.vehicles.myFleet')}</h1>
           <p className="text-dark-500 text-[15px]">
-            {vehicles.length} automjete
-            {plan && plan.max_vehicles !== -1 && ` / ${plan.max_vehicles} max (${plan.name})`}
+            {plan && plan.max_vehicles !== -1
+              ? t('companyDash.vehicles.fleetCountWithLimit', { count: vehicles.length, limit: plan.max_vehicles, plan: plan.name })
+              : t('companyDash.vehicles.fleetCount', { count: vehicles.length })}
           </p>
         </div>
         {(() => {
@@ -321,40 +359,43 @@ export default function CompanyVehicles() {
             <button
               onClick={atLimit ? undefined : openAdd}
               disabled={atLimit}
-              title={atLimit ? 'Keni arritur limitin e planit tuaj' : undefined}
+              title={atLimit ? t('companyDash.vehicles.atLimitTooltip') : undefined}
               className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition-colors ${atLimit ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-primary-600 text-white hover:bg-primary-700'}`}
             >
               <Plus className="w-4 h-4" />
-              Shto automjet
+              {t('companyDash.vehicles.addVehicle')}
             </button>
           );
         })()}
       </div>
 
-      {error && !deleteId && (
+      {error && !deleteId && !showForm && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>
       )}
 
       {showForm && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6 animate-slide-down">
-          <h3 className="font-semibold text-dark-950 mb-5">{editId ? 'Ndrysho automjetin' : 'Shto automjet te ri'}</h3>
+          <h3 className="font-semibold text-dark-950 mb-5">{editId ? t('companyDash.vehicles.editVehicle') : t('companyDash.vehicles.addNew')}</h3>
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>
+          )}
           <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Input label="Marka" value={form.brand} onChange={v => setForm({ ...form, brand: v })} required />
-            <Input label="Modeli" value={form.model} onChange={v => setForm({ ...form, model: v })} required />
-            <Input label="Viti" type="number" value={String(form.year)} onChange={v => setForm({ ...form, year: Number(v) })} />
-            <Input label="Targa" value={form.plate_number} onChange={v => setForm({ ...form, plate_number: v })} />
-            <Input label="Kilometrazhi" type="number" value={String(form.mileage)} onChange={v => setForm({ ...form, mileage: Number(v) })} />
-            <Select label="Kategoria" value={form.category} onChange={v => setForm({ ...form, category: v })} options={[['ekonomike','Ekonomike'],['kompakte','Kompakte'],['sedan','Sedan'],['suv','SUV'],['luksoz','Luksoze'],['minivan','Minivan'],['furgon','Furgon']]} />
-            <Select label="Transmisioni" value={form.transmission} onChange={v => setForm({ ...form, transmission: v })} options={[['manuale','Manuale'],['automatike','Automatike']]} />
-            <Select label="Karburanti" value={form.fuel_type} onChange={v => setForm({ ...form, fuel_type: v })} options={[['benzine','Benzine'],['nafte','Nafte'],['elektrike','Elektrike'],['hibride','Hibride']]} />
-            <Input label="Vendet" type="number" value={String(form.seats)} onChange={v => setForm({ ...form, seats: Number(v) })} />
-            <Input label="Dyert" type="number" value={String(form.doors)} onChange={v => setForm({ ...form, doors: Number(v) })} />
-            <Input label="Ngjyra" value={form.color} onChange={v => setForm({ ...form, color: v })} />
-            <Input label="Cmimi/dite (EUR)" type="number" value={String(form.price_per_day)} onChange={v => setForm({ ...form, price_per_day: Number(v) })} required />
-            <Input label="Depozita (EUR)" type="number" value={String(form.deposit_amount)} onChange={v => setForm({ ...form, deposit_amount: Number(v) })} />
+            <Input label={t('companyDash.vehicles.brand')} value={form.brand} onChange={v => setForm({ ...form, brand: v })} required />
+            <Input label={t('companyDash.vehicles.model')} value={form.model} onChange={v => setForm({ ...form, model: v })} required />
+            <Input label={t('companyDash.vehicles.year')} type="number" value={String(form.year)} onChange={v => setForm({ ...form, year: Number(v) })} />
+            <Input label={t('companyDash.vehicles.plateNumber')} value={form.plate_number} onChange={v => setForm({ ...form, plate_number: v })} />
+            <Input label={t('companyDash.vehicles.mileage')} type="number" value={String(form.mileage)} onChange={v => setForm({ ...form, mileage: Number(v) })} />
+            <Select label={t('companyDash.vehicles.category')} value={form.category} onChange={v => setForm({ ...form, category: v })} options={categoryOptions} />
+            <Select label={t('companyDash.vehicles.transmission')} value={form.transmission} onChange={v => setForm({ ...form, transmission: v })} options={transmissionOptions} />
+            <Select label={t('companyDash.vehicles.fuelType')} value={form.fuel_type} onChange={v => setForm({ ...form, fuel_type: v })} options={fuelOptions} />
+            <Input label={t('companyDash.vehicles.seats')} type="number" value={String(form.seats)} onChange={v => setForm({ ...form, seats: Number(v) })} />
+            <Input label={t('companyDash.vehicles.doors')} type="number" value={String(form.doors)} onChange={v => setForm({ ...form, doors: Number(v) })} />
+            <Input label={t('companyDash.vehicles.color')} value={form.color} onChange={v => setForm({ ...form, color: v })} />
+            <Input label={t('companyDash.vehicles.pricePerDay')} type="number" value={String(form.price_per_day)} onChange={v => setForm({ ...form, price_per_day: Number(v) })} required />
+            <Input label={t('companyDash.vehicles.depositAmount')} type="number" value={String(form.deposit_amount)} onChange={v => setForm({ ...form, deposit_amount: Number(v) })} />
 
             <div className="sm:col-span-2 lg:col-span-3">
-              <label className="block text-xs font-medium text-dark-600 mb-1.5">Imazhi i automjetit</label>
+              <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('companyDash.vehicles.vehicleImage')}</label>
 
               {imagePreview || form.main_image_url ? (
                 <div className="relative w-full max-w-md">
@@ -370,10 +411,10 @@ export default function CompanyVehicles() {
               ) : (
                 <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-primary-400 transition-colors">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-dark-600 mb-1">Ngarko imazh ose vendos URL</p>
-                  <p className="text-xs text-dark-400 mb-3">PNG, JPG, WEBP deri ne 5MB</p>
+                  <p className="text-sm text-dark-600 mb-1">{t('companyDash.vehicles.uploadPrompt')}</p>
+                  <p className="text-xs text-dark-400 mb-3">{t('companyDash.vehicles.uploadHint')}</p>
                   <label className="inline-block px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors cursor-pointer">
-                    Zgjidhni imazh
+                    {t('companyDash.vehicles.chooseImage')}
                     <input
                       type="file"
                       accept="image/*"
@@ -383,7 +424,7 @@ export default function CompanyVehicles() {
                   </label>
                   <div className="mt-3 pt-3 border-t border-gray-200">
                     <Input
-                      label="Ose vendos URL e imazhit"
+                      label={t('companyDash.vehicles.orImageUrl')}
                       value={form.main_image_url}
                       onChange={v => {
                         setForm({ ...form, main_image_url: v });
@@ -398,10 +439,10 @@ export default function CompanyVehicles() {
             <div className="sm:col-span-2 lg:col-span-3 flex items-center gap-3 pt-2">
               <button type="submit" disabled={saving || uploadingImage} className="px-6 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all flex items-center gap-2">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {saving ? 'Duke ruajtur...' : editId ? 'Perditeso' : 'Shto'}
+                {saving ? t('companyDash.common.saving') : editId ? t('companyDash.vehicles.submitUpdate') : t('companyDash.vehicles.submitAdd')}
               </button>
               <button type="button" onClick={() => setShowForm(false)} className="px-5 py-2.5 text-sm font-medium text-dark-600 hover:text-dark-900 transition-colors">
-                Anulo
+                {t('companyDash.common.cancel')}
               </button>
             </div>
           </form>
@@ -411,8 +452,8 @@ export default function CompanyVehicles() {
       {vehicles.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
           <Car className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-dark-600 font-medium">Nuk keni automjete te regjistruara</p>
-          <p className="text-sm text-dark-400 mt-1">Shtoni automjetin e pare per te filluar.</p>
+          <p className="text-dark-600 font-medium">{t('companyDash.vehicles.noFleet')}</p>
+          <p className="text-sm text-dark-400 mt-1">{t('companyDash.vehicles.noFleetDesc')}</p>
         </div>
       ) : (
         <>
@@ -439,11 +480,11 @@ export default function CompanyVehicles() {
                 </div>
                 <div className="p-4">
                   <p className="font-semibold text-dark-900 text-sm">{v.brand} {v.model}</p>
-                  <p className="text-[11px] text-dark-400 mt-0.5">{v.year} | {v.category} | {v.transmission}</p>
+                  <p className="text-[11px] text-dark-400 mt-0.5">{v.year} | {t(`companyDash.vehicles.category_${v.category}`, v.category)} | {t(`companyDash.vehicles.transmission_${v.transmission}`, v.transmission)}</p>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                    <span className="text-sm font-bold text-primary-600">{v.price_per_day}EUR/dite</span>
+                    <span className="text-sm font-bold text-primary-600">{v.price_per_day} {t('companyDash.common.perDay')}</span>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${v.is_published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {v.is_published ? 'Publikuar' : 'Draft'}
+                      {v.is_published ? t('companyDash.vehicles.publishedBadge') : t('companyDash.vehicles.draftBadge')}
                     </span>
                   </div>
                 </div>
@@ -493,7 +534,7 @@ function Input({ label, value, onChange, type = 'text', required = false }: { la
   );
 }
 
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[][] }) {
+function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
   return (
     <div>
       <label className="block text-xs font-medium text-dark-600 mb-1.5">{label}</label>
