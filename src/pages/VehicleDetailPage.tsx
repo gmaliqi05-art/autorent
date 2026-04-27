@@ -9,6 +9,7 @@ import PaymentMethodSelector, { type PaymentMethodType } from '../components/boo
 import { sendBookingConfirmationToClient, sendBookingNotificationToCompany } from '../lib/emailService';
 import { createInvoice } from '../lib/invoiceService';
 import { createNotification } from '../lib/notificationService';
+import { todayISO, addDaysISO } from '../lib/dateDefaults';
 
 type BookingStep = 'dates' | 'invoice' | 'payment' | 'success';
 
@@ -20,8 +21,9 @@ export default function VehicleDetailPage() {
   const [company, setCompany] = useState<Company | null>(null);
   const [, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pickupDate, setPickupDate] = useState('');
-  const [returnDate, setReturnDate] = useState('');
+  const today = todayISO();
+  const [pickupDate, setPickupDate] = useState(today);
+  const [returnDate, setReturnDate] = useState(addDaysISO(today, 1));
   const [booking, setBooking] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [step, setStep] = useState<BookingStep>('dates');
@@ -29,7 +31,12 @@ export default function VehicleDetailPage() {
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [availabilityError, setAvailabilityError] = useState('');
 
-  const today = new Date().toISOString().split('T')[0];
+  function handlePickupChange(value: string) {
+    setPickupDate(value);
+    if (value && (!returnDate || returnDate <= value)) {
+      setReturnDate(addDaysISO(value, 1));
+    }
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -532,7 +539,7 @@ export default function VehicleDetailPage() {
                       type="date"
                       min={today}
                       value={pickupDate}
-                      onChange={e => setPickupDate(e.target.value)}
+                      onChange={e => handlePickupChange(e.target.value)}
                       className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                     />
                   </div>

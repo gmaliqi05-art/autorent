@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import type { PlatformAd } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
+import { todayISO, addDaysISO } from '../../lib/dateDefaults';
 
 const positions = [
   { value: 'homepage_banner', label: 'Baneri kryesor' },
@@ -13,16 +14,21 @@ const positions = [
   { value: 'booking_confirm', label: 'Konfirmim rezervimi' },
 ];
 
-const emptyAd = {
-  title: '',
-  description: '',
-  image_url: '',
-  link_url: '',
-  position: 'homepage_banner',
-  is_active: true,
-  start_date: '',
-  end_date: '',
-};
+function makeEmptyAd() {
+  const start = todayISO();
+  return {
+    title: '',
+    description: '',
+    image_url: '',
+    link_url: '',
+    position: 'homepage_banner',
+    is_active: true,
+    start_date: start,
+    end_date: addDaysISO(start, 30),
+  };
+}
+
+const emptyAd = makeEmptyAd();
 
 export default function AdminAds() {
   const [ads, setAds] = useState<PlatformAd[]>([]);
@@ -58,7 +64,7 @@ export default function AdminAds() {
   function startCreate() {
     setCreating(true);
     setEditing(null);
-    setForm({ ...emptyAd });
+    setForm(makeEmptyAd());
   }
 
   function cancelEdit() {

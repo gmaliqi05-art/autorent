@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
 import { useNavigate } from 'react-router-dom';
+import { todayISO, addDaysISO } from '../../lib/dateDefaults';
 
 const positions = [
   { value: 'homepage_banner', label: 'Banner kryesor i Ballines', desc: 'Vendoset ne kryefaqe, shume vizibel' },
@@ -20,7 +21,7 @@ export default function AdminCreateAd() {
   const [form, setForm] = useState({
     title: '', description: '', image_url: '', link_url: '',
     position: 'homepage_banner', is_active: true,
-    start_date: '', end_date: '',
+    start_date: todayISO(), end_date: addDaysISO(todayISO(), 30),
   });
   const [preview, setPreview] = useState(false);
 
