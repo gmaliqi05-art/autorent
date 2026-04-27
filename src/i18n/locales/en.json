@@ -189,8 +189,6 @@
     "categoryLuxury": "Luxury",
     "categoryVan": "Van",
     "categoryFromPrice": "From {{price}} EUR/day",
-    "categoryVehicleCount": "{{count}} vehicles",
-    "categoryComingSoon": "Coming soon",
     "featuredSubtitle": "Featured",
     "featuredTitle": "Recommended vehicles",
     "nearestTitle": "Vehicles closest to you",

@@ -29,7 +29,7 @@ function extractStoragePath(url: string): string | null {
 
 export default function CompanyVehicles() {
   const { user } = useAuth();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [company, setCompany] = useState<Company | null>(null);
   const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -46,7 +46,6 @@ export default function CompanyVehicles() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [dbCategories, setDbCategories] = useState<{ key: string; label_sq: string; label_en: string; label_de: string }[]>([]);
 
   const totalPages = Math.max(1, Math.ceil(vehicles.length / ITEMS_PER_PAGE));
   const paginatedVehicles = vehicles.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -55,17 +54,6 @@ export default function CompanyVehicles() {
     if (!user) return;
     loadData();
   }, [user]);
-
-  useEffect(() => {
-    supabase
-      .from('vehicle_categories')
-      .select('key, label_sq, label_en, label_de, sort_order')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true })
-      .then(({ data }) => {
-        if (data) setDbCategories(data as typeof dbCategories);
-      });
-  }, []);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -295,16 +283,7 @@ export default function CompanyVehicles() {
     );
   }
 
-  const lang = i18n.language || 'sq';
-  const categorySource = dbCategories.length > 0
-    ? dbCategories.map(c => [
-        c.key,
-        lang.startsWith('en') ? (c.label_en || c.label_sq)
-          : lang.startsWith('de') ? (c.label_de || c.label_sq)
-          : c.label_sq,
-      ] as [string, string])
-    : CATEGORY_VALUES.map(v => [v, t(`companyDash.vehicles.category_${v}`)] as [string, string]);
-  const categoryOptions: [string, string][] = categorySource;
+  const categoryOptions: [string, string][] = CATEGORY_VALUES.map(v => [v, t(`companyDash.vehicles.category_${v}`)]);
   const transmissionOptions: [string, string][] = TRANSMISSION_VALUES.map(v => [v, t(`companyDash.vehicles.transmission_${v}`)]);
   const fuelOptions: [string, string][] = FUEL_VALUES.map(v => [v, t(`companyDash.vehicles.fuel_${v}`)]);
 

@@ -19,7 +19,7 @@ type VehicleWithCompany = Vehicle & {
 };
 
 export default function VehicleListPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [vehicles, setVehicles] = useState<VehicleWithCompany[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,19 +37,17 @@ export default function VehicleListPage() {
   const [countries, setCountries] = useState<Country[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [filteredCities, setFilteredCities] = useState<City[]>([]);
-  const [dbCategories, setDbCategories] = useState<{ key: string; label_sq: string; label_en: string; label_de: string }[]>([]);
 
-  const categories = useMemo(() => {
-    const lang = i18n.language || 'sq';
-    const all = { value: '', label: t('vehicles.all') };
-    const items = dbCategories.map(c => ({
-      value: c.key,
-      label: lang.startsWith('en') ? (c.label_en || c.label_sq)
-           : lang.startsWith('de') ? (c.label_de || c.label_sq)
-           : c.label_sq,
-    }));
-    return [all, ...items];
-  }, [t, dbCategories, i18n.language]);
+  const categories = useMemo(() => [
+    { value: '', label: t('vehicles.all') },
+    { value: 'ekonomike', label: t('vehicles.categories.ekonomike') },
+    { value: 'kompakte', label: t('vehicles.categories.kompakte') },
+    { value: 'sedan', label: t('vehicles.categories.sedan') },
+    { value: 'suv', label: t('vehicles.categories.suv') },
+    { value: 'luksoz', label: t('vehicles.categories.luksoz') },
+    { value: 'minivan', label: t('vehicles.categories.minivan') },
+    { value: 'furgon', label: t('vehicles.categories.furgon') },
+  ], [t]);
 
   const transmissions = useMemo(() => [
     { value: '', label: t('vehicles.all') },
@@ -73,17 +71,7 @@ export default function VehicleListPage() {
 
   useEffect(() => {
     loadCountries();
-    loadCategories();
   }, []);
-
-  async function loadCategories() {
-    const { data } = await supabase
-      .from('vehicle_categories')
-      .select('key, label_sq, label_en, label_de, sort_order, is_active')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true });
-    if (data) setDbCategories(data as typeof dbCategories);
-  }
 
   useEffect(() => {
     loadVehicles();

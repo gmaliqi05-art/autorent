@@ -189,8 +189,6 @@
     "categoryLuxury": "Luxus",
     "categoryVan": "Transporter",
     "categoryFromPrice": "Ab {{price}} EUR/Tag",
-    "categoryVehicleCount": "{{count}} Fahrzeuge",
-    "categoryComingSoon": "Bald verfügbar",
     "featuredSubtitle": "Hervorgehoben",
     "featuredTitle": "Empfohlene Fahrzeuge",
     "nearestTitle": "Fahrzeuge in Ihrer Nähe",
