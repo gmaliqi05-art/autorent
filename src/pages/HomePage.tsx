@@ -110,14 +110,14 @@ function HeroSection({ settings }: { settings: ReturnType<typeof useHomepageSett
         </div>
 
         <div className="animate-slide-up-delay-2 max-w-4xl">
-          <div className="bg-white/[0.97] backdrop-blur-xl rounded-2xl p-2 sm:p-3 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)]">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-2 sm:p-3 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)]">
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1 relative group">
-                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-600 pointer-events-none" />
+                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none z-10" />
                 <select
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 sm:py-4 bg-gray-50/80 hover:bg-gray-100/80 border-0 rounded-xl text-sm text-dark-700 focus:ring-2 focus:ring-primary-500 transition-colors appearance-none cursor-pointer font-medium"
+                  className="w-full pl-10 pr-4 py-3 sm:py-4 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl text-sm text-white focus:ring-2 focus:ring-primary-400 focus:bg-white/20 transition-colors appearance-none cursor-pointer font-medium [&>option]:text-dark-900"
                 >
                   <option value="">{hero.search_label_city}</option>
                   <option value="Prishtine">Prishtine, Kosove</option>
@@ -130,25 +130,25 @@ function HeroSection({ settings }: { settings: ReturnType<typeof useHomepageSett
               </div>
               <div className="grid grid-cols-2 sm:contents gap-2">
                 <div className="flex-1 relative group">
-                  <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-600 pointer-events-none" />
+                  <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none z-10" />
                   <input
                     type="date"
                     min={today}
                     value={pickupDate}
                     onChange={e => setPickupDate(e.target.value)}
                     placeholder={hero.search_label_pickup}
-                    className="w-full pl-10 pr-2 py-3 sm:py-4 bg-gray-50/80 hover:bg-gray-100/80 border-0 rounded-xl text-sm text-dark-700 focus:ring-2 focus:ring-primary-500 transition-colors font-medium"
+                    className="w-full pl-10 pr-2 py-3 sm:py-4 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl text-sm text-white focus:ring-2 focus:ring-primary-400 focus:bg-white/20 transition-colors font-medium [color-scheme:dark]"
                   />
                 </div>
                 <div className="flex-1 relative group">
-                  <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-600 pointer-events-none" />
+                  <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white pointer-events-none z-10" />
                   <input
                     type="date"
                     min={pickupDate || today}
                     value={returnDate}
                     onChange={e => setReturnDate(e.target.value)}
                     placeholder={hero.search_label_return}
-                    className="w-full pl-10 pr-2 py-3 sm:py-4 bg-gray-50/80 hover:bg-gray-100/80 border-0 rounded-xl text-sm text-dark-700 focus:ring-2 focus:ring-primary-500 transition-colors font-medium"
+                    className="w-full pl-10 pr-2 py-3 sm:py-4 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl text-sm text-white focus:ring-2 focus:ring-primary-400 focus:bg-white/20 transition-colors font-medium [color-scheme:dark]"
                   />
                 </div>
               </div>

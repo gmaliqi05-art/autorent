@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import { supabase } from '../../lib/supabase';
 import type { Company } from '../../lib/types';
@@ -69,6 +69,7 @@ function createUserIcon() {
 }
 
 export default function NearbyCompaniesMap() {
+  const navigate = useNavigate();
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
@@ -141,10 +142,10 @@ export default function NearbyCompaniesMap() {
       if (c.latitude == null || c.longitude == null) return;
       const marker = L.marker([c.latitude, c.longitude], { icon: createCompanyIcon(c.name) })
         .addTo(mapRef.current!)
-        .on('click', () => setSelected(c));
+        .on('click', () => navigate(`/automjetet?company=${c.id}`));
       markersRef.current.push(marker);
     });
-  }, [companies, loading]);
+  }, [companies, loading, navigate]);
 
   const locateUser = useCallback(() => {
     if (!navigator.geolocation) {
@@ -260,15 +261,10 @@ export default function NearbyCompaniesMap() {
             </div>
           ) : (
             nearby.map(c => (
-              <button
+              <Link
                 key={c.id}
-                onClick={() => {
-                  setSelected(c);
-                  if (mapRef.current && c.latitude && c.longitude) {
-                    mapRef.current.setView([c.latitude, c.longitude], 14);
-                  }
-                }}
-                className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${selected?.id === c.id ? 'bg-primary-50 border-l-2 border-l-primary-600' : ''}`}
+                to={`/automjetet?company=${c.id}`}
+                className={`block w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${selected?.id === c.id ? 'bg-primary-50 border-l-2 border-l-primary-600' : ''}`}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
@@ -299,7 +295,7 @@ export default function NearbyCompaniesMap() {
                     )}
                   </div>
                 </div>
-              </button>
+              </Link>
             ))
           )}
         </div>
