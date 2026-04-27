@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Save, Loader2, Globe, Image, Monitor, LayoutGrid, Eye,
   Upload, X, Check, ChevronDown, ChevronUp, RefreshCw, Palette,
-  Type, AlignLeft, Link as LinkIcon, Car
+  Type, AlignLeft, Link as LinkIcon, Car, Tag, Plus, Trash2, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { HeroSettings, LogoSettings, NavbarSettings, SectionsSettings } from '../../lib/types';
@@ -10,13 +10,14 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
 import { defaultHero, defaultLogo, defaultNavbar, defaultSections } from '../../lib/useHomepageSettings';
 
-type Tab = 'hero' | 'logo' | 'navbar' | 'sections';
+type Tab = 'hero' | 'logo' | 'navbar' | 'sections' | 'categories';
 
 const tabs: { id: Tab; label: string; icon: React.ReactNode; desc: string }[] = [
   { id: 'hero', label: 'Hero / Balline', icon: <Image className="w-4 h-4" />, desc: 'Imazhi, titulli, butoni i kerkimit' },
   { id: 'logo', label: 'Logo & Emri', icon: <Car className="w-4 h-4" />, desc: 'Logo e platformes ne te gjitha vendet' },
   { id: 'navbar', label: 'Shiriti Kryesor', icon: <Monitor className="w-4 h-4" />, desc: 'Lidhjet dhe butonat e navigimit' },
   { id: 'sections', label: 'Seksionet', icon: <LayoutGrid className="w-4 h-4" />, desc: 'Visibility dhe titujt e seksioneve' },
+  { id: 'categories', label: 'Kategorite e Automjeteve', icon: <Tag className="w-4 h-4" />, desc: 'Menaxho kategorite qe shfaqen ne homepage' },
 ];
 
 export default function AdminHomepage() {
@@ -122,14 +123,16 @@ export default function AdminHomepage() {
           <h1 className="text-2xl font-bold text-dark-950">Menaxhimi i Ballines</h1>
           <p className="text-dark-500 mt-1 text-[15px]">Kontrollo komplet Homepage-in, logon, navigimin dhe seksionet</p>
         </div>
-        <button
-          onClick={saveTab}
-          disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all text-sm shadow-sm shadow-primary-600/20"
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-          {saving ? 'Duke ruajtur...' : saved ? 'U ruajt!' : 'Ruaj ndryshimet'}
-        </button>
+        {activeTab !== 'categories' && (
+          <button
+            onClick={saveTab}
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all text-sm shadow-sm shadow-primary-600/20"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+            {saving ? 'Duke ruajtur...' : saved ? 'U ruajt!' : 'Ruaj ndryshimet'}
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -197,6 +200,9 @@ export default function AdminHomepage() {
               inputClass={inputClass}
               labelClass={labelClass}
             />
+          )}
+          {activeTab === 'categories' && (
+            <CategoriesEditor inputClass={inputClass} labelClass={labelClass} />
           )}
         </div>
       </div>
@@ -840,6 +846,274 @@ function SectionsEditor({ sections, setSections, inputClass, labelClass }: Secti
             <p className="text-xs text-primary-700 mt-1">Seksionet e çaktivizuara fshihen nga Homepage. Titujt e perditesuar shfaqen menjëherë per vizituesit e rinj.</p>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+type CategoryRow = {
+  key: string;
+  sort_order: number;
+  is_active: boolean;
+  image_url: string;
+  label_sq: string;
+  label_en: string;
+  label_de: string;
+  default_min_price: number;
+  vehicle_count?: number;
+};
+
+function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labelClass: string }) {
+  const [rows, setRows] = useState<CategoryRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<string | null>(null);
+  const [savedKey, setSavedKey] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newRow, setNewRow] = useState<CategoryRow>({
+    key: '', sort_order: 99, is_active: true, image_url: '',
+    label_sq: '', label_en: '', label_de: '', default_min_price: 0,
+  });
+
+  useEffect(() => { loadRows(); }, []);
+
+  async function loadRows() {
+    setLoading(true);
+    const { data } = await supabase
+      .from('vehicle_categories_with_stats')
+      .select('*')
+      .order('sort_order', { ascending: true });
+    setRows((data || []) as CategoryRow[]);
+    setLoading(false);
+  }
+
+  function update(idx: number, patch: Partial<CategoryRow>) {
+    setRows(prev => prev.map((r, i) => i === idx ? { ...r, ...patch } : r));
+  }
+
+  async function saveRow(row: CategoryRow) {
+    setSaving(row.key);
+    setError(null);
+    const { error: err } = await supabase
+      .from('vehicle_categories')
+      .update({
+        sort_order: row.sort_order,
+        is_active: row.is_active,
+        image_url: row.image_url,
+        label_sq: row.label_sq,
+        label_en: row.label_en,
+        label_de: row.label_de,
+        default_min_price: row.default_min_price,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('key', row.key);
+    setSaving(null);
+    if (err) {
+      setError(err.message);
+    } else {
+      setSavedKey(row.key);
+      setTimeout(() => setSavedKey(null), 2000);
+    }
+  }
+
+  async function moveRow(idx: number, dir: -1 | 1) {
+    const target = idx + dir;
+    if (target < 0 || target >= rows.length) return;
+    const a = rows[idx], b = rows[target];
+    const next = [...rows];
+    next[idx] = { ...a, sort_order: b.sort_order };
+    next[target] = { ...b, sort_order: a.sort_order };
+    next.sort((x, y) => x.sort_order - y.sort_order);
+    setRows(next);
+    await Promise.all([
+      supabase.from('vehicle_categories').update({ sort_order: b.sort_order }).eq('key', a.key),
+      supabase.from('vehicle_categories').update({ sort_order: a.sort_order }).eq('key', b.key),
+    ]);
+  }
+
+  async function deleteRow(key: string) {
+    if (!confirm(`Fshi kategorine "${key}"? Automjetet ekzistuese ne kete kategori nuk fshihen, por nuk do shfaqen ne homepage.`)) return;
+    setError(null);
+    const { error: err } = await supabase.from('vehicle_categories').delete().eq('key', key);
+    if (err) setError(err.message);
+    else loadRows();
+  }
+
+  async function addRow() {
+    const key = newRow.key.trim().toLowerCase();
+    if (!key || !/^[a-z0-9_]+$/.test(key)) {
+      setError('Celesi duhet vetem shkronja te vogla, numra ose underscore.');
+      return;
+    }
+    setError(null);
+    const { error: err } = await supabase.from('vehicle_categories').insert({
+      key,
+      sort_order: newRow.sort_order || rows.length + 1,
+      is_active: newRow.is_active,
+      image_url: newRow.image_url,
+      label_sq: newRow.label_sq || key,
+      label_en: newRow.label_en || newRow.label_sq || key,
+      label_de: newRow.label_de || newRow.label_sq || key,
+      default_min_price: newRow.default_min_price,
+    });
+    if (err) {
+      setError(err.message);
+      return;
+    }
+    setShowAdd(false);
+    setNewRow({ key: '', sort_order: 99, is_active: true, image_url: '', label_sq: '', label_en: '', label_de: '', default_min_price: 0 });
+    loadRows();
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 p-12 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <div>
+            <h2 className="text-lg font-bold text-dark-950">Kategorite e Automjeteve</h2>
+            <p className="text-sm text-dark-500 mt-1">Cdo kategori e aktivizuar shfaqet ne homepage me numrin e automjeteve te publikuara dhe cmimin minimal te llogaritur automatikisht.</p>
+          </div>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            Shto kategori
+          </button>
+        </div>
+        {error && (
+          <div className="mt-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">{error}</div>
+        )}
+      </div>
+
+      {showAdd && (
+        <div className="bg-white rounded-2xl border border-primary-200 p-6 space-y-4">
+          <h3 className="text-sm font-bold text-dark-950">Kategori e re</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Celesi (lowercase, pa hapesira)</label>
+              <input className={inputClass} value={newRow.key} onChange={e => setNewRow({ ...newRow, key: e.target.value })} placeholder="p.sh. cabriolet" />
+            </div>
+            <div>
+              <label className={labelClass}>URL e imazhit</label>
+              <input className={inputClass} value={newRow.image_url} onChange={e => setNewRow({ ...newRow, image_url: e.target.value })} placeholder="https://" />
+            </div>
+            <div>
+              <label className={labelClass}>Emri (Shqip)</label>
+              <input className={inputClass} value={newRow.label_sq} onChange={e => setNewRow({ ...newRow, label_sq: e.target.value })} />
+            </div>
+            <div>
+              <label className={labelClass}>Emri (English)</label>
+              <input className={inputClass} value={newRow.label_en} onChange={e => setNewRow({ ...newRow, label_en: e.target.value })} />
+            </div>
+            <div>
+              <label className={labelClass}>Emri (Deutsch)</label>
+              <input className={inputClass} value={newRow.label_de} onChange={e => setNewRow({ ...newRow, label_de: e.target.value })} />
+            </div>
+            <div>
+              <label className={labelClass}>Cmimi minimal default (EUR/dite)</label>
+              <input type="number" className={inputClass} value={newRow.default_min_price} onChange={e => setNewRow({ ...newRow, default_min_price: Number(e.target.value) })} />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={addRow} className="px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700">Ruaj</button>
+            <button onClick={() => setShowAdd(false)} className="px-4 py-2 bg-gray-100 text-dark-700 text-sm font-semibold rounded-xl hover:bg-gray-200">Anulo</button>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {rows.map((row, idx) => (
+          <div key={row.key} className="bg-white rounded-2xl border border-gray-100 p-5">
+            <div className="flex items-start gap-4">
+              <div className="w-24 h-20 rounded-xl bg-gray-100 overflow-hidden shrink-0">
+                {row.image_url && <img src={row.image_url} alt={row.label_sq} className="w-full h-full object-cover" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-1 flex-wrap">
+                  <code className="text-xs font-mono px-2 py-0.5 bg-gray-100 text-dark-700 rounded">{row.key}</code>
+                  <span className="text-xs text-dark-500">{row.vehicle_count || 0} automjete te publikuara</span>
+                  <label className="flex items-center gap-1.5 cursor-pointer text-xs text-dark-700">
+                    <input
+                      type="checkbox"
+                      checked={row.is_active}
+                      onChange={e => update(idx, { is_active: e.target.checked })}
+                      className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    Aktive
+                  </label>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                  <div>
+                    <label className={labelClass}>Shqip</label>
+                    <input className={inputClass} value={row.label_sq} onChange={e => update(idx, { label_sq: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>English</label>
+                    <input className={inputClass} value={row.label_en} onChange={e => update(idx, { label_en: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Deutsch</label>
+                    <input className={inputClass} value={row.label_de} onChange={e => update(idx, { label_de: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                  <div>
+                    <label className={labelClass}>URL e imazhit</label>
+                    <input className={inputClass} value={row.image_url} onChange={e => update(idx, { image_url: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Cmimi minimal default (EUR)</label>
+                    <input type="number" className={inputClass} value={row.default_min_price} onChange={e => update(idx, { default_min_price: Number(e.target.value) })} />
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5 shrink-0">
+                <button
+                  onClick={() => moveRow(idx, -1)}
+                  disabled={idx === 0}
+                  className="p-2 rounded-lg bg-gray-50 text-dark-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Lart"
+                >
+                  <ArrowUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => moveRow(idx, 1)}
+                  disabled={idx === rows.length - 1}
+                  className="p-2 rounded-lg bg-gray-50 text-dark-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Posht"
+                >
+                  <ArrowDown className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => deleteRow(row.key)}
+                  className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+                  title="Fshi"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+              <button
+                onClick={() => saveRow(row)}
+                disabled={saving === row.key}
+                className="flex items-center gap-1.5 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50"
+              >
+                {saving === row.key ? <Loader2 className="w-4 h-4 animate-spin" /> : savedKey === row.key ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                {savedKey === row.key ? 'U ruajt' : 'Ruaj kategorine'}
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -189,6 +189,8 @@
     "categoryLuxury": "Luksoze",
     "categoryVan": "Furgon",
     "categoryFromPrice": "Nga {{price}} EUR/dite",
+    "categoryVehicleCount": "{{count}} automjete",
+    "categoryComingSoon": "Se shpejti",
     "featuredSubtitle": "Te zgjedhura",
     "featuredTitle": "Automjete te rekomanduara",
     "nearestTitle": "Automjetet me te aferta me ju",

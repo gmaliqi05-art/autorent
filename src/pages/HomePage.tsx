@@ -1,7 +1,8 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '../lib/supabase';
 import FeaturedVehicles from '../components/home/FeaturedVehicles';
 import HowItWorks from '../components/home/HowItWorks';
 import Testimonials from '../components/home/Testimonials';
@@ -210,26 +211,39 @@ function HeroSection({ settings }: { settings: ReturnType<typeof useHomepageSett
   );
 }
 
-const categoryImages: Record<string, string> = {
-  ekonomike: 'https://images.pexels.com/photos/1592384/pexels-photo-1592384.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop',
-  kompakte: 'https://images.pexels.com/photos/100656/pexels-photo-100656.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop',
-  sedan: 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop',
-  suv: 'https://images.pexels.com/photos/116675/pexels-photo-116675.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop',
-  luksoz: 'https://images.pexels.com/photos/120049/pexels-photo-120049.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop',
-  furgon: 'https://images.pexels.com/photos/2533092/pexels-photo-2533092.jpeg?auto=compress&cs=tinysrgb&w=400&h=260&fit=crop',
+type CategoryRow = {
+  key: string;
+  sort_order: number;
+  is_active: boolean;
+  image_url: string;
+  label_sq: string;
+  label_en: string;
+  label_de: string;
+  vehicle_count: number;
+  min_price: number;
 };
 
+function categoryLabel(row: CategoryRow, lang: string): string {
+  if (lang.startsWith('en')) return row.label_en || row.label_sq;
+  if (lang.startsWith('de')) return row.label_de || row.label_sq;
+  return row.label_sq;
+}
+
 function CategoriesSection({ settings }: { settings: ReturnType<typeof useHomepageSettings> }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { sections } = settings;
-  const categories = [
-    { id: 'ekonomike', label: t('home.categoryEconomic'), price: 15, count: '120+' },
-    { id: 'kompakte', label: t('home.categoryCompact'), price: 25, count: '95+' },
-    { id: 'sedan', label: t('home.categorySedan'), price: 35, count: '80+' },
-    { id: 'suv', label: t('home.categorySuv'), price: 45, count: '70+' },
-    { id: 'luksoz', label: t('home.categoryLuxury'), price: 65, count: '35+' },
-    { id: 'furgon', label: t('home.categoryVan'), price: 40, count: '25+' },
-  ];
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from('vehicle_categories_with_stats')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+      .then(({ data }) => {
+        if (data) setCategories(data as CategoryRow[]);
+      });
+  }, []);
   return (
     <section className="py-24 bg-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -247,31 +261,43 @@ function CategoriesSection({ settings }: { settings: ReturnType<typeof useHomepa
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              to={'/automjetet?category=' + cat.id}
-              className="group relative rounded-2xl overflow-hidden aspect-[3/2] lg:aspect-[16/10]"
-            >
-              <img
-                src={categoryImages[cat.id]}
-                alt={cat.label}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-dark-950/80 via-dark-950/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-6">
-                <div className="flex items-end justify-between">
-                  <div>
-                    <h3 className="text-lg lg:text-xl font-bold text-white mb-0.5">{cat.label}</h3>
-                    <p className="text-sm text-white/70">{t('home.categoryFromPrice', { price: cat.price })}</p>
-                  </div>
-                  <div className="glass rounded-lg px-3 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="text-xs font-semibold text-white">{cat.count}</span>
+          {categories.map((cat) => {
+            const label = categoryLabel(cat, i18n.language);
+            const hasVehicles = cat.vehicle_count > 0;
+            return (
+              <Link
+                key={cat.key}
+                to={'/automjetet?category=' + cat.key}
+                className="group relative rounded-2xl overflow-hidden aspect-[3/2] lg:aspect-[16/10]"
+              >
+                <img
+                  src={cat.image_url}
+                  alt={label}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-dark-950/80 via-dark-950/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-6">
+                  <div className="flex items-end justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-lg lg:text-xl font-bold text-white mb-0.5">{label}</h3>
+                      <p className="text-sm text-white/70">
+                        {hasVehicles
+                          ? t('home.categoryFromPrice', { price: Math.round(Number(cat.min_price)) })
+                          : t('home.categoryComingSoon')}
+                      </p>
+                    </div>
+                    {hasVehicles && (
+                      <div className="glass rounded-lg px-3 py-1.5 shrink-0">
+                        <span className="text-xs font-semibold text-white">
+                          {t('home.categoryVehicleCount', { count: cat.vehicle_count })}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
