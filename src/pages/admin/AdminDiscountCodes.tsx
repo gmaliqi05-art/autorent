@@ -4,7 +4,6 @@ import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
 import { format } from 'date-fns';
-import { todayISO, addDaysISO } from '../../lib/dateDefaults';
 
 interface DiscountCode {
   id: string;
@@ -20,16 +19,10 @@ interface DiscountCode {
   created_at: string;
 }
 
-function makeEmpty(): Partial<DiscountCode> {
-  return {
-    code: '', type: 'percent', value: 10, min_amount: 0,
-    max_uses: null, is_active: true,
-    expires_at: addDaysISO(todayISO(), 30) + 'T23:59:59Z',
-    description: '',
-  };
-}
-
-const empty: Partial<DiscountCode> = makeEmpty();
+const empty: Partial<DiscountCode> = {
+  code: '', type: 'percent', value: 10, min_amount: 0,
+  max_uses: null, is_active: true, expires_at: null, description: '',
+};
 
 export default function AdminDiscountCodes() {
   const [codes, setCodes] = useState<DiscountCode[]>([]);
@@ -62,7 +55,7 @@ export default function AdminDiscountCodes() {
     setSaving(false);
     setShowForm(false);
     setEditing(null);
-    setForm(makeEmpty());
+    setForm(empty);
   }
 
   async function toggleActive(id: string, val: boolean) {
@@ -100,7 +93,7 @@ export default function AdminDiscountCodes() {
             <h1 className="text-2xl font-bold text-gray-900">Kode Zbritjesh</h1>
             <p className="text-gray-500 text-sm mt-1">Krijoni dhe menaxhoni kodet e zbritjes per klientet</p>
           </div>
-          <button onClick={() => { setForm(makeEmpty()); setEditing(null); setShowForm(true); }}
+          <button onClick={() => { setForm(empty); setEditing(null); setShowForm(true); }}
             className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg font-medium">
             <Plus className="w-4 h-4" />Kode i ri
           </button>
@@ -181,7 +174,7 @@ export default function AdminDiscountCodes() {
                 </div>
               </div>
               <div className="flex gap-3 mt-6">
-                <button onClick={() => { setShowForm(false); setEditing(null); setForm(makeEmpty()); }}
+                <button onClick={() => { setShowForm(false); setEditing(null); setForm(empty); }}
                   className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50">Anulo</button>
                 <button onClick={save} disabled={saving || !form.code || !form.value}
                   className="flex-1 flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50">
