@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Building2, BarChart3, Globe, Headphones } from 'lucide-react';
-
-const benefits = [
-  { icon: Globe, text: 'Arrini mijera kliente te rinj' },
-  { icon: BarChart3, text: 'Menaxhoni floten dixhitalisht' },
-  { icon: Headphones, text: 'Mbeshtetje teknike 24/7' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function CompanyCTA() {
+  const { t } = useTranslation();
+  const benefits = [
+    { icon: Globe, text: t('home.ctaBenefit1') },
+    { icon: BarChart3, text: t('home.ctaBenefit2') },
+    { icon: Headphones, text: t('home.ctaBenefit3') },
+  ];
+
   return (
     <section className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,17 +31,17 @@ export default function CompanyCTA() {
               <div>
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-white/80 text-xs font-medium tracking-wide uppercase mb-8">
                   <Building2 className="w-3.5 h-3.5" />
-                  Per kompanite e qirase
+                  {t('home.ctaBadge')}
                 </div>
 
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
-                  Rritni biznesin tuaj
+                  {t('home.ctaTitle1')}
                   <br />
-                  <span className="text-primary-400">me RentaKar</span>
+                  <span className="text-primary-400">{t('home.ctaTitle2')}</span>
                 </h2>
 
                 <p className="text-gray-300 leading-relaxed mb-10 max-w-lg text-lg">
-                  Bashkohuni me platformen lider ne rajon dhe menaxhoni te gjithe operacionin tuaj te qirase nga nje vend i vetem.
+                  {t('home.ctaDesc')}
                 </p>
 
                 <div className="space-y-4 mb-10">
@@ -58,14 +60,14 @@ export default function CompanyCTA() {
                     to="/regjistrohu?role=company"
                     className="inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-dark-900 font-semibold rounded-xl hover:bg-gray-100 active:scale-[0.98] transition-all shadow-lg"
                   >
-                    Regjistro kompanine
+                    {t('home.ctaPrimary')}
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                   <Link
                     to="/regjistrohu?role=company"
                     className="inline-flex items-center gap-2 px-7 py-3.5 glass text-white font-medium rounded-xl hover:bg-white/15 transition-colors"
                   >
-                    Shiko planet
+                    {t('home.ctaSecondary')}
                   </Link>
                 </div>
               </div>
@@ -75,21 +77,21 @@ export default function CompanyCTA() {
                   <div className="space-y-4">
                     <div className="glass-dark rounded-2xl p-6">
                       <p className="text-4xl font-bold text-white mb-1">98%</p>
-                      <p className="text-sm text-gray-400">Kenaqesi e klienteve</p>
+                      <p className="text-sm text-gray-400">{t('home.ctaStat1Label')}</p>
                     </div>
                     <div className="glass-dark rounded-2xl p-6">
                       <p className="text-4xl font-bold text-white mb-1">3x</p>
-                      <p className="text-sm text-gray-400">Rritje e rezervimeve</p>
+                      <p className="text-sm text-gray-400">{t('home.ctaStat2Label')}</p>
                     </div>
                   </div>
                   <div className="space-y-4 mt-8">
                     <div className="glass-dark rounded-2xl p-6">
                       <p className="text-4xl font-bold text-white mb-1">24h</p>
-                      <p className="text-sm text-gray-400">Konfirmim i shpejte</p>
+                      <p className="text-sm text-gray-400">{t('home.ctaStat3Label')}</p>
                     </div>
                     <div className="glass-dark rounded-2xl p-6">
                       <p className="text-4xl font-bold text-white mb-1">0 EUR</p>
-                      <p className="text-sm text-gray-400">Komisione fillestare</p>
+                      <p className="text-sm text-gray-400">{t('home.ctaStat4Label')}</p>
                     </div>
                   </div>
                 </div>

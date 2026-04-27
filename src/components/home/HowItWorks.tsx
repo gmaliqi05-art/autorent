@@ -1,49 +1,52 @@
 import { Search, Calendar, Shield, Car, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const steps = [
-  {
-    icon: Search,
-    title: 'Kerkoni automjetin',
-    desc: 'Zgjidhni vendin, daten dhe tipin e automjetit qe deshironi. Filtrat e avancuara ju ndihmojne te gjeni automjetin perfekt.',
-    color: 'bg-primary-50 text-primary-600',
-    accent: 'from-primary-600/5 to-transparent',
-  },
-  {
-    icon: Calendar,
-    title: 'Beni rezervimin',
-    desc: 'Plotesoni te dhenat tuaja dhe rezervoni ne pak sekonda. Procesi eshte i sigurt dhe i shpejte.',
-    color: 'bg-accent-50 text-accent-600',
-    accent: 'from-accent-500/5 to-transparent',
-  },
-  {
-    icon: Shield,
-    title: 'Konfirmim i shpejte',
-    desc: 'Kompania konfirmon rezervimin tuaj brenda orarit te punes. Do te njoftoheni menjehere.',
-    color: 'bg-green-50 text-green-600',
-    accent: 'from-green-500/5 to-transparent',
-  },
-  {
-    icon: Car,
-    title: 'Merrni automjetin',
-    desc: 'Paraqituni ne vendin e caktuar, nenshkruani kontraten dhe nisni udhetimin tuaj.',
-    color: 'bg-dark-50 text-dark-700',
-    accent: 'from-dark-500/5 to-transparent',
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function HowItWorks() {
+  const { t } = useTranslation();
+
+  const steps = [
+    {
+      icon: Search,
+      title: t('home.hiwStep1Title'),
+      desc: t('home.hiwStep1Desc'),
+      color: 'bg-primary-50 text-primary-600',
+      accent: 'from-primary-600/5 to-transparent',
+    },
+    {
+      icon: Calendar,
+      title: t('home.hiwStep2Title'),
+      desc: t('home.hiwStep2Desc'),
+      color: 'bg-accent-50 text-accent-600',
+      accent: 'from-accent-500/5 to-transparent',
+    },
+    {
+      icon: Shield,
+      title: t('home.hiwStep3Title'),
+      desc: t('home.hiwStep3Desc'),
+      color: 'bg-green-50 text-green-600',
+      accent: 'from-green-500/5 to-transparent',
+    },
+    {
+      icon: Car,
+      title: t('home.hiwStep4Title'),
+      desc: t('home.hiwStep4Desc'),
+      color: 'bg-dark-50 text-dark-700',
+      accent: 'from-dark-500/5 to-transparent',
+    },
+  ];
+
   return (
     <section className="py-24 bg-white relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary-50/40 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="text-center mb-16 max-w-2xl mx-auto">
-          <p className="text-primary-600 font-semibold text-sm tracking-wide uppercase mb-2">Si funksionon</p>
+          <p className="text-primary-600 font-semibold text-sm tracking-wide uppercase mb-2">{t('home.hiwBadge')}</p>
           <h2 className="text-3xl sm:text-4xl font-bold text-dark-950 leading-tight mb-4">
-            Kater hapa te thjesht per automjetin tuaj
+            {t('home.hiwTitle')}
           </h2>
           <p className="text-dark-500 leading-relaxed">
-            Nga kerkimi deri te marrja e automjetit, gjithcka behet ne menyre dixhitale.
+            {t('home.hiwDesc')}
           </p>
         </div>
 
@@ -79,7 +82,7 @@ export default function HowItWorks() {
             to="/automjetet"
             className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-dark-950 text-white font-semibold rounded-xl hover:bg-dark-900 active:scale-[0.98] transition-all"
           >
-            Filloni tani
+            {t('home.hiwStartNow')}
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

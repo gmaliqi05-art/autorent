@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { MapPin, Fuel, Users, Cog, Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Vehicle } from '../../lib/types';
 
 interface VehicleCardProps {
@@ -7,6 +8,7 @@ interface VehicleCardProps {
 }
 
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
+  const { t } = useTranslation();
   return (
     <Link
       to={'/automjetet/' + vehicle.id}
@@ -25,7 +27,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         </div>
         <div className="absolute top-3 right-3">
           <span className="px-3 py-1.5 rounded-lg bg-primary-600 text-xs font-bold text-white shadow-lg shadow-primary-600/30">
-            {vehicle.price_per_day} EUR/dite
+            {vehicle.price_per_day} EUR{t('common.perDay')}
           </span>
         </div>
       </div>
@@ -54,7 +56,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         <div className="flex items-center gap-4 pt-4 border-t border-gray-50">
           <div className="flex items-center gap-1.5 text-[11px] text-dark-500">
             <Cog className="w-3.5 h-3.5 text-dark-400" />
-            {vehicle.transmission === 'automatike' ? 'Auto' : 'Manuale'}
+            {vehicle.transmission === 'automatike' ? t('vehicles.automatic') : t('vehicles.manual')}
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-dark-500">
             <Fuel className="w-3.5 h-3.5 text-dark-400" />
@@ -62,7 +64,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-dark-500">
             <Users className="w-3.5 h-3.5 text-dark-400" />
-            {vehicle.seats} vende
+            {vehicle.seats} {t('vehicles.seats').toLowerCase()}
           </div>
         </div>
       </div>

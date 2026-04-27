@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Car, MapPin, Phone, Mail, Eye, EyeOff, Loader2, X, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useHomepageSettings } from '../../lib/useHomepageSettings';
+import { useTranslation } from 'react-i18next';
 
 export default function Footer() {
   const { logo } = useHomepageSettings();
+  const { t } = useTranslation();
   const clickTimestamps = useRef<number[]>([]);
   const [showAdminModal, setShowAdminModal] = useState(false);
 
@@ -42,22 +44,21 @@ export default function Footer() {
               </p>
               <p className="text-sm leading-relaxed mb-1">NUI: 812373174</p>
               <p className="text-sm leading-relaxed">
-                Platforma me e madhe per qirane te automjeteve ne Kosove, Shqiperi dhe Maqedoni te
-                Veriut.
+                {t('footer.tagline')}
               </p>
             </div>
 
             <div>
-              <h4 className="text-white font-semibold mb-4">Lidhjet</h4>
+              <h4 className="text-white font-semibold mb-4">{t('footer.links')}</h4>
               <ul className="space-y-2.5">
                 <li>
                   <Link to="/automjetet" className="text-sm hover:text-white transition-colors">
-                    Automjetet
+                    {t('nav.vehicles')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/automjetet" className="text-sm hover:text-white transition-colors">
-                    Kerko automjet
+                    {t('footer.searchVehicle')}
                   </Link>
                 </li>
                 <li>
@@ -65,45 +66,45 @@ export default function Footer() {
                     to="/regjistrohu?role=company"
                     className="text-sm hover:text-white transition-colors"
                   >
-                    Regjistro kompanine
+                    {t('footer.registerCompany')}
                   </Link>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-white font-semibold mb-4">Dokumentet Ligjore</h4>
+              <h4 className="text-white font-semibold mb-4">{t('footer.legalDocs')}</h4>
               <ul className="space-y-2.5">
                 <li>
                   <Link to="/kushtet-perdorimit" className="text-sm hover:text-white transition-colors">
-                    Kushtet e Perdorimit
+                    {t('footer.termsOfUse')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/politika-privatesise" className="text-sm hover:text-white transition-colors">
-                    Politika e Privatesise
+                    {t('footer.privacyPolicy')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/politika-cookie" className="text-sm hover:text-white transition-colors">
-                    Politika e Cookie-ve
+                    {t('footer.cookiePolicy')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/te-drejtat-gdpr" className="text-sm hover:text-white transition-colors">
-                    Te Drejtat GDPR
+                    {t('footer.gdprRights')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/njoftim-ligjor" className="text-sm hover:text-white transition-colors">
-                    Njoftim Ligjor (Imprint)
+                    {t('footer.legalNotice')}
                   </Link>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-white font-semibold mb-4">Kontakti</h4>
+              <h4 className="text-white font-semibold mb-4">{t('footer.contact')}</h4>
               <ul className="space-y-2.5">
                 <li className="flex items-start gap-2 text-sm">
                   <MapPin className="w-4 h-4 text-primary-400 shrink-0 mt-0.5" />
@@ -125,28 +126,27 @@ export default function Footer() {
 
           <div className="text-center space-y-3">
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-              <Link to="/kushtet-perdorimit" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">Kushtet e Perdorimit</Link>
+              <Link to="/kushtet-perdorimit" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">{t('footer.termsOfUse')}</Link>
               <span className="text-gray-700 text-xs">·</span>
-              <Link to="/politika-privatesise" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">Politika e Privatesise</Link>
+              <Link to="/politika-privatesise" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">{t('footer.privacyPolicy')}</Link>
               <span className="text-gray-700 text-xs">·</span>
               <Link to="/politika-cookie" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">Cookie</Link>
               <span className="text-gray-700 text-xs">·</span>
-              <Link to="/te-drejtat-gdpr" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">Te Drejtat GDPR</Link>
+              <Link to="/te-drejtat-gdpr" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">{t('footer.gdprRights')}</Link>
               <span className="text-gray-700 text-xs">·</span>
-              <Link to="/njoftim-ligjor" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">Njoftim Ligjor</Link>
+              <Link to="/njoftim-ligjor" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">{t('footer.legalNotice')}</Link>
             </div>
             <p className="text-xs text-gray-500">
-              &copy; {new Date().getFullYear()} RentaKar SH.P.K. &middot; NUI: 812373174 &middot; Te gjitha te drejtat e rezervuara.
+              &copy; {new Date().getFullYear()} RentaKar SH.P.K. &middot; NUI: 812373174 &middot; {t('footer.rights')}.
             </p>
             <p className="text-xs text-gray-600">
-              Mundesuar nga{' '}
+              {t('footer.poweredBy')}{' '}
               <span
                 onClick={handleSecretClick}
                 className="text-gray-400 font-medium cursor-default select-none"
               >
                 MarGroup Germany
-              </span>{' '}
-              🇩🇪
+              </span>
             </p>
           </div>
         </div>
@@ -159,6 +159,7 @@ export default function Footer() {
 
 function AdminLoginModal({ onClose }: { onClose: () => void }) {
   const { signIn } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -172,7 +173,7 @@ function AdminLoginModal({ onClose }: { onClose: () => void }) {
     setLoading(true);
     const result = await signIn(email, password);
     if (result.error) {
-      setError('Kredencialet nuk jane te sakta.');
+      setError(t('auth.adminLoginError'));
       setLoading(false);
       return;
     }
@@ -190,8 +191,8 @@ function AdminLoginModal({ onClose }: { onClose: () => void }) {
               <Shield className="w-4 h-4 text-amber-400" />
             </div>
             <div>
-              <h3 className="text-white font-semibold text-sm">Hyrje Administrative</h3>
-              <p className="text-gray-400 text-xs">Vetem per perdorim te brendshem</p>
+              <h3 className="text-white font-semibold text-sm">{t('auth.adminLogin')}</h3>
+              <p className="text-gray-400 text-xs">{t('auth.adminLoginDesc')}</p>
             </div>
           </div>
           <button
@@ -211,7 +212,7 @@ function AdminLoginModal({ onClose }: { onClose: () => void }) {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-dark-700 mb-1.5">Email</label>
+              <label className="block text-xs font-medium text-dark-700 mb-1.5">{t('auth.email')}</label>
               <input
                 type="email"
                 value={email}
@@ -223,7 +224,7 @@ function AdminLoginModal({ onClose }: { onClose: () => void }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-dark-700 mb-1.5">Fjalekalimi</label>
+              <label className="block text-xs font-medium text-dark-700 mb-1.5">{t('auth.password')}</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -231,7 +232,7 @@ function AdminLoginModal({ onClose }: { onClose: () => void }) {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-dark-900 placeholder:text-dark-300 focus:ring-2 focus:ring-dark-500/20 focus:border-dark-500 transition-all pr-10"
-                  placeholder="Fjalekalimi"
+                  placeholder={t('auth.password')}
                 />
                 <button
                   type="button"
@@ -252,7 +253,7 @@ function AdminLoginModal({ onClose }: { onClose: () => void }) {
               className="w-full py-2.5 bg-dark-950 text-white font-semibold rounded-lg text-sm hover:bg-dark-800 disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
             >
               {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              {loading ? 'Duke u kyqur...' : 'Hyr'}
+              {loading ? t('auth.adminLoggingIn') : t('auth.adminEnter')}
             </button>
           </form>
         </div>

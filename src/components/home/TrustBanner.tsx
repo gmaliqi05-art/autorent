@@ -1,13 +1,15 @@
 import { Shield, Award, TrendingUp, Users } from 'lucide-react';
-
-const stats = [
-  { icon: TrendingUp, value: '500+', label: 'Automjete ne platforme' },
-  { icon: Users, value: '10,000+', label: 'Kliente te kenaqur' },
-  { icon: Shield, value: '50+', label: 'Kompani te verifikuara' },
-  { icon: Award, value: '4.8/5', label: 'Vleresimi mesatar' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function TrustBanner() {
+  const { t } = useTranslation();
+  const stats = [
+    { icon: TrendingUp, value: '500+', label: t('home.statVehicles') },
+    { icon: Users, value: '10,000+', label: t('home.statClients') },
+    { icon: Shield, value: '50+', label: t('home.statCompanies') },
+    { icon: Award, value: '4.8/5', label: t('home.statRating') },
+  ];
+
   return (
     <section className="relative py-16 bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
