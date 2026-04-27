@@ -1,0 +1,189 @@
+import { useState, useEffect, useRef } from 'react';
+import { MessageSquare, X, Send, Loader2, Car, ChevronRight } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { findBestMatch, getSuggestedQuestions } from '../../lib/chatMatcher';
+import type { ChatResponse } from '../../lib/types';
+
+interface Message {
+  id: string;
+  type: 'bot' | 'user';
+  text: string;
+  timestamp: Date;
+}
+
+export default function ChatWidget() {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [responses, setResponses] = useState<ChatResponse[]>([]);
+  const [suggestions, setSuggestions] = useState<ChatResponse[]>([]);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const messagesEnd = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open && !hasLoaded) {
+      loadResponses();
+    }
+  }, [open, hasLoaded]);
+
+  useEffect(() => {
+    messagesEnd.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  async function loadResponses() {
+    const { data } = await supabase.from('chat_responses').select('*').eq('is_active', true);
+    const all = (data || []) as ChatResponse[];
+    setResponses(all);
+    setSuggestions(getSuggestedQuestions(all, 4));
+    setHasLoaded(true);
+
+    setMessages([{
+      id: 'welcome',
+      type: 'bot',
+      text: 'Pershendetje! Jam asistenti virtual i RentaKar. Si mund t\'ju ndihmoj sot?',
+      timestamp: new Date(),
+    }]);
+  }
+
+  async function handleSend(text?: string) {
+    const msg = (text || input).trim();
+    if (!msg) return;
+
+    const userMsg: Message = { id: Date.now().toString(), type: 'user', text: msg, timestamp: new Date() };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setLoading(true);
+
+    await new Promise(r => setTimeout(r, 400 + Math.random() * 400));
+
+    const match = findBestMatch(msg, responses);
+
+    if (match) {
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        text: match.answer,
+        timestamp: new Date(),
+      }]);
+      supabase.from('chat_responses').update({ usage_count: (match.usage_count || 0) + 1 }).eq('id', match.id).then();
+    } else {
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        text: 'Nuk gjeta nje pergjigje te sakte per pyetjen tuaj. Provoni te pyesni ndryshe, ose kontaktoni ekipin tone:\n\nTelefon: +383 44 000 000\nEmail: info@rentakar.com',
+        timestamp: new Date(),
+      }]);
+    }
+    setLoading(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }
+
+  return (
+    <>
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg shadow-primary-600/30 flex items-center justify-center hover:bg-primary-700 hover:scale-105 active:scale-95 transition-all"
+        >
+          <MessageSquare className="w-6 h-6" />
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
+        </button>
+      )}
+
+      {open && (
+        <div className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-3rem)] bg-white rounded-2xl shadow-2xl shadow-dark-950/15 border border-gray-100 flex flex-col overflow-hidden animate-scale-in">
+          <div className="bg-dark-950 px-5 py-4 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center">
+                <Car className="w-4.5 h-4.5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-white text-sm font-semibold">RentaKar Asistent</h3>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
+                  <span className="text-gray-400 text-[11px]">Online</span>
+                </div>
+              </div>
+            </div>
+            <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-white transition-colors p-1">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {messages.map(msg => (
+              <div key={msg.id} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                  msg.type === 'user'
+                    ? 'bg-primary-600 text-white rounded-br-md'
+                    : 'bg-gray-100 text-dark-800 rounded-bl-md'
+                }`}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="flex gap-1.5">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {messages.length <= 1 && suggestions.length > 0 && !loading && (
+              <div className="pt-2">
+                <p className="text-[11px] text-dark-400 font-medium mb-2 uppercase tracking-wider">Pyetje te shpeshta:</p>
+                <div className="space-y-1.5">
+                  {suggestions.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => handleSend(s.question)}
+                      className="w-full text-left px-3.5 py-2.5 bg-gray-50 hover:bg-primary-50 border border-gray-100 hover:border-primary-200 rounded-xl text-xs text-dark-700 hover:text-primary-700 transition-all flex items-center justify-between gap-2 group"
+                    >
+                      <span className="line-clamp-1">{s.question}</span>
+                      <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-primary-500 shrink-0 transition-colors" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEnd} />
+          </div>
+
+          <div className="border-t border-gray-100 p-3 shrink-0">
+            <div className="flex gap-2">
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Shkruani pyetjen tuaj..."
+                className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 placeholder:text-dark-300 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+              />
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || loading}
+                className="w-10 h-10 bg-primary-600 text-white rounded-xl flex items-center justify-center hover:bg-primary-700 disabled:opacity-40 disabled:hover:bg-primary-600 transition-all active:scale-95"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </button>
+            </div>
+            <p className="text-center text-[10px] text-dark-300 mt-2">Asistenti virtual i RentaKar</p>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

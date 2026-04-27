@@ -1,0 +1,118 @@
+import { CreditCard, Building, Wallet, Banknote, CheckCircle2 } from 'lucide-react';
+
+export type PaymentMethodType = 'stripe' | 'paypal' | 'bank_transfer' | 'cash';
+
+interface PaymentMethodSelectorProps {
+  selected: PaymentMethodType | '';
+  onSelect: (method: PaymentMethodType) => void;
+}
+
+const methods: { id: PaymentMethodType; label: string; description: string; icon: React.ReactNode; color: string }[] = [
+  {
+    id: 'stripe',
+    label: 'Karte krediti / debiti',
+    description: 'Paguaj me Visa, Mastercard ose karte tjeter',
+    icon: <CreditCard className="w-5 h-5" />,
+    color: 'from-blue-500 to-blue-600',
+  },
+  {
+    id: 'paypal',
+    label: 'PayPal',
+    description: 'Paguaj permes llogarise PayPal',
+    icon: <Wallet className="w-5 h-5" />,
+    color: 'from-sky-500 to-sky-600',
+  },
+  {
+    id: 'bank_transfer',
+    label: 'Transfer bankar',
+    description: 'Paguaj me transfer direkt ne llogarine bankare',
+    icon: <Building className="w-5 h-5" />,
+    color: 'from-emerald-500 to-emerald-600',
+  },
+  {
+    id: 'cash',
+    label: 'Paguaj ne lokal (Kesh)',
+    description: 'Paguaj me para ne dore kur te merrni automjetin',
+    icon: <Banknote className="w-5 h-5" />,
+    color: 'from-amber-500 to-amber-600',
+  },
+];
+
+export default function PaymentMethodSelector({ selected, onSelect }: PaymentMethodSelectorProps) {
+  return (
+    <div className="space-y-3">
+      <h3 className="font-bold text-dark-950 text-lg">Zgjidhni metoden e pageses</h3>
+      <p className="text-sm text-dark-500 mb-4">Zgjidhni si deshironi te paguani per kete rezervim</p>
+
+      <div className="space-y-2.5">
+        {methods.map((method) => {
+          const isSelected = selected === method.id;
+          return (
+            <button
+              key={method.id}
+              type="button"
+              onClick={() => onSelect(method.id)}
+              className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+                isSelected
+                  ? 'border-primary-500 bg-primary-50/50 shadow-sm'
+                  : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50/50'
+              }`}
+            >
+              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${method.color} flex items-center justify-center text-white shrink-0`}>
+                {method.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`font-semibold text-sm ${isSelected ? 'text-primary-700' : 'text-dark-900'}`}>
+                  {method.label}
+                </p>
+                <p className="text-xs text-dark-400 mt-0.5">{method.description}</p>
+              </div>
+              {isSelected && (
+                <CheckCircle2 className="w-5 h-5 text-primary-600 shrink-0" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {selected === 'bank_transfer' && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mt-4">
+          <p className="text-sm font-semibold text-emerald-800 mb-2">Detajet e transferit bankar</p>
+          <div className="space-y-1 text-xs text-emerald-700">
+            <p>Banka: Raiffeisen Bank Kosovo</p>
+            <p>IBAN: XK06 1234 5678 9012 3456</p>
+            <p>Perfituesi: RentaKar SH.P.K</p>
+            <p className="mt-2 text-emerald-600 italic">Rezervimi do te konfirmohet pasi te verifikohet pagesa.</p>
+          </div>
+        </div>
+      )}
+
+      {selected === 'cash' && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-4">
+          <p className="text-sm font-semibold text-amber-800 mb-1">Pagesa ne lokal</p>
+          <p className="text-xs text-amber-700">
+            Paguani direkt tek kompania kur te shkoni per te marrur automjetin. Sillni sakt shumen e fatures.
+          </p>
+        </div>
+      )}
+
+      {selected === 'stripe' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-4">
+          <p className="text-sm font-semibold text-blue-800 mb-1">Pagesa me karte</p>
+          <p className="text-xs text-blue-700">
+            Do te ridrejtoheni ne Stripe per te perfunduar pagesen me siguri. Pagesa procesohet menjehere.
+          </p>
+        </div>
+      )}
+
+      {selected === 'paypal' && (
+        <div className="bg-sky-50 border border-sky-200 rounded-xl p-4 mt-4">
+          <p className="text-sm font-semibold text-sky-800 mb-1">Pagesa me PayPal</p>
+          <p className="text-xs text-sky-700">
+            Do te ridrejtoheni ne PayPal per te perfunduar pagesen. Pagesa procesohet menjehere.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
