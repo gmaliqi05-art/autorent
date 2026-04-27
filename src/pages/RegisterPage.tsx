@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Car, Eye, EyeOff, Loader2, CheckCircle2, User, Building2, Check, Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import type { SubscriptionPlan, Country, City } from '../lib/types';
@@ -9,6 +10,7 @@ type TabType = 'client' | 'company';
 type BillingCycle = 'monthly' | 'yearly';
 
 export default function RegisterPage() {
+  const { t } = useTranslation();
   const { signUp, signUpCompany, user, profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -143,7 +145,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
     if (password.length < 6) {
-      setError('Fjalekalimi duhet te kete se paku 6 karaktere.');
+      setError(t('auth.passwordMin'));
       return;
     }
 
@@ -151,22 +153,22 @@ export default function RegisterPage() {
 
     if (activeTab === 'company') {
       if (!companyName.trim()) {
-        setError('Emri i kompanise eshte i detyrueshem.');
+        setError(t('auth.companyNameRequired'));
         setLoading(false);
         return;
       }
       if (!phone.trim()) {
-        setError('Numri i telefonit eshte i detyrueshem.');
+        setError(t('auth.phoneRequired'));
         setLoading(false);
         return;
       }
       if (!selectedCountryId) {
-        setError('Shteti eshte i detyrueshem.');
+        setError(t('auth.countryRequired'));
         setLoading(false);
         return;
       }
       if (!selectedCityId) {
-        setError('Qyteti eshte i detyrueshem.');
+        setError(t('auth.cityRequired'));
         setLoading(false);
         return;
       }
@@ -245,16 +247,16 @@ export default function RegisterPage() {
             {activeTab === 'company' ? (
               <>
                 <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
-                  Rritni biznesin<br />tuaj me ne.
+                  {t('auth.growBusinessTitle')}<br />{t('auth.growBusinessTitle2')}
                 </h2>
                 <p className="text-white/60 text-lg leading-relaxed max-w-md mb-8">
-                  Listoni automjetet tuaja ne platforme dhe arrini mijera kliente potenciale.
+                  {t('auth.growBusinessDesc')}
                 </p>
                 <div className="space-y-3">
                   {[
-                    'Menaxhim i lehte i flotiles',
-                    'Rezervime automatike online',
-                    'Panel analitik i detajuar',
+                    t('auth.growBenefit1'),
+                    t('auth.growBenefit2'),
+                    t('auth.growBenefit3'),
                   ].map((item) => (
                     <div key={item} className="flex items-center gap-2.5">
                       <CheckCircle2 className="w-4 h-4 text-green-400" />
@@ -264,14 +266,14 @@ export default function RegisterPage() {
                 </div>
                 {selectedPlan && (
                   <div className="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-                    <p className="text-white/50 text-xs uppercase tracking-wide font-semibold mb-1">Plani i zgjedhur</p>
+                    <p className="text-white/50 text-xs uppercase tracking-wide font-semibold mb-1">{t('auth.selectedPlan')}</p>
                     <p className="text-white font-bold text-lg">{selectedPlan.name}</p>
                     <p className="text-white/70 text-sm">
                       {billing === 'yearly' && selectedPlan.price_yearly > 0
-                        ? `${Math.round(selectedPlan.price_yearly / 12)} EUR/muaj · ${selectedPlan.price_yearly} EUR/vit`
+                        ? `${Math.round(selectedPlan.price_yearly / 12)} ${t('auth.perMonthEur')} · ${selectedPlan.price_yearly} ${t('auth.perYearEur')}`
                         : selectedPlan.price_monthly === 0
-                          ? 'Falas'
-                          : `${selectedPlan.price_monthly} EUR/muaj`
+                          ? t('auth.free')
+                          : `${selectedPlan.price_monthly} ${t('auth.perMonthEur')}`
                       }
                     </p>
                   </div>
@@ -280,16 +282,16 @@ export default function RegisterPage() {
             ) : (
               <>
                 <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
-                  Filloni<br />udhetimin tuaj.
+                  {t('auth.startJourneyTitle')}<br />{t('auth.startJourneyTitle2')}
                 </h2>
                 <p className="text-white/60 text-lg leading-relaxed max-w-md mb-8">
-                  Krijoni llogari falas dhe aksesoni qindra automjete premium ne te gjithe rajonin.
+                  {t('auth.startJourneyDesc')}
                 </p>
                 <div className="space-y-3">
                   {[
-                    'Rezervim i shpejte dhe i sigurt',
-                    'Anulim falas deri ne 48 ore',
-                    'Mbeshtetje 24/7 ne shqip',
+                    t('auth.startBenefit1'),
+                    t('auth.startBenefit2'),
+                    t('auth.startBenefit3'),
                   ].map((item) => (
                     <div key={item} className="flex items-center gap-2.5">
                       <CheckCircle2 className="w-4 h-4 text-green-400" />
@@ -321,18 +323,18 @@ export default function RegisterPage() {
                 <CheckCircle2 className="w-8 h-8 text-green-600" />
               </div>
               <h2 className="text-2xl font-bold text-dark-950 mb-2">
-                {activeTab === 'company' ? 'Kompania u regjistrua!' : 'Llogaria u krijua!'}
+                {activeTab === 'company' ? t('auth.companyRegistered') : t('auth.accountCreated')}
               </h2>
               <p className="text-dark-500">
                 {activeTab === 'company'
-                  ? 'Duke ju drejtuar ne panelin e kompanise...'
-                  : 'Duke ju drejtuar ne panelin tuaj...'}
+                  ? t('auth.redirectingCompany')
+                  : t('auth.redirectingClient')}
               </p>
             </div>
           ) : (
             <>
-              <h1 className="text-2xl font-bold text-dark-950 mb-1.5">Krijo llogari te re</h1>
-              <p className="text-dark-500 mb-6 text-[15px]">Zgjidhni tipin e llogarise</p>
+              <h1 className="text-2xl font-bold text-dark-950 mb-1.5">{t('auth.registerTitle')}</h1>
+              <p className="text-dark-500 mb-6 text-[15px]">{t('auth.registerSubtitle')}</p>
 
               <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
                 <button
@@ -345,7 +347,7 @@ export default function RegisterPage() {
                   }`}
                 >
                   <User className="w-4 h-4" />
-                  Klient
+                  {t('auth.tabClient')}
                 </button>
                 <button
                   type="button"
@@ -357,7 +359,7 @@ export default function RegisterPage() {
                   }`}
                 >
                   <Building2 className="w-4 h-4" />
-                  Kompani
+                  {t('auth.tabCompany')}
                 </button>
               </div>
 
@@ -370,7 +372,7 @@ export default function RegisterPage() {
               {activeTab === 'company' && (
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
-                    <label className="block text-sm font-medium text-dark-700">Zgjidhni planin e abonimit</label>
+                    <label className="block text-sm font-medium text-dark-700">{t('auth.selectPlan')}</label>
                     <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
                       <button
                         type="button"
@@ -379,7 +381,7 @@ export default function RegisterPage() {
                           billing === 'monthly' ? 'bg-white text-dark-900 shadow-sm' : 'text-dark-400 hover:text-dark-600'
                         }`}
                       >
-                        Mujor
+                        {t('auth.monthly')}
                       </button>
                       <button
                         type="button"
@@ -388,8 +390,8 @@ export default function RegisterPage() {
                           billing === 'yearly' ? 'bg-white text-dark-900 shadow-sm' : 'text-dark-400 hover:text-dark-600'
                         }`}
                       >
-                        Vjetor
-                        <span className={`text-[9px] font-bold px-1 py-0.5 rounded-full ${billing === 'yearly' ? 'bg-green-100 text-green-700' : 'bg-green-100 text-green-700'}`}>-20%</span>
+                        {t('auth.yearly')}
+                        <span className={`text-[9px] font-bold px-1 py-0.5 rounded-full ${billing === 'yearly' ? 'bg-green-100 text-green-700' : 'bg-green-100 text-green-700'}`}>{t('auth.save20')}</span>
                       </button>
                     </div>
                   </div>
@@ -417,7 +419,7 @@ export default function RegisterPage() {
                             {plan.is_popular && (
                               <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap">
                                 <Star className="w-2 h-2" />
-                                Popullor
+                                {t('auth.popular')}
                               </span>
                             )}
                             <div className="flex items-start justify-between mb-1.5">
@@ -430,20 +432,20 @@ export default function RegisterPage() {
                             </div>
                             <div className="mb-1">
                               {price === 0 ? (
-                                <span className="text-base font-bold text-dark-950">Falas</span>
+                                <span className="text-base font-bold text-dark-950">{t('auth.free')}</span>
                               ) : (
                                 <>
                                   <span className="text-base font-bold text-dark-950">{price}</span>
-                                  <span className="text-[10px] text-dark-400"> EUR/muaj</span>
+                                  <span className="text-[10px] text-dark-400"> {t('auth.perMonthEur')}</span>
                                 </>
                               )}
                             </div>
                             {billing === 'yearly' && plan.price_yearly > 0 && (
-                              <p className="text-[10px] text-green-600 font-medium">{plan.price_yearly} EUR/vit</p>
+                              <p className="text-[10px] text-green-600 font-medium">{plan.price_yearly} {t('auth.perYearEur')}</p>
                             )}
                             <div className="mt-1.5 pt-1.5 border-t border-gray-100">
                               <p className="text-[10px] text-dark-400 leading-tight">
-                                {plan.max_vehicles === -1 ? 'Pa limit' : `${plan.max_vehicles} automjete`}
+                                {plan.max_vehicles === -1 ? t('auth.noLimit') : t('auth.vehiclesCount', { count: plan.max_vehicles })}
                               </p>
                             </div>
                           </button>
@@ -456,18 +458,18 @@ export default function RegisterPage() {
                     <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-xs font-semibold text-blue-800">{selectedPlan.name} · {billing === 'yearly' ? 'Faturim vjetor' : 'Faturim mujor'}</p>
+                          <p className="text-xs font-semibold text-blue-800">{selectedPlan.name} · {billing === 'yearly' ? t('auth.yearlyBilling') : t('auth.monthlyBilling')}</p>
                           <p className="text-xs text-blue-600 mt-0.5">
                             {billing === 'yearly'
-                              ? `${selectedPlan.price_yearly} EUR/vit (kursen ${selectedPlan.price_monthly * 12 - selectedPlan.price_yearly} EUR)`
-                              : `${selectedPlan.price_monthly} EUR/muaj · rinovohet automatikisht`
+                              ? t('auth.yearlySaving', { total: selectedPlan.price_yearly, saving: selectedPlan.price_monthly * 12 - selectedPlan.price_yearly })
+                              : t('auth.monthlyAuto', { price: selectedPlan.price_monthly })
                             }
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="text-lg font-bold text-blue-900">
                             {billing === 'yearly' ? `${Math.round(selectedPlan.price_yearly / 12)}` : `${selectedPlan.price_monthly}`}
-                            <span className="text-xs font-normal text-blue-600"> EUR/muaj</span>
+                            <span className="text-xs font-normal text-blue-600"> {t('auth.perMonthEur')}</span>
                           </p>
                         </div>
                       </div>
@@ -479,7 +481,7 @@ export default function RegisterPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-dark-700 mb-1.5">
-                    {activeTab === 'company' ? 'Emri i pronarit / menaxherit' : 'Emri i plote'}
+                    {activeTab === 'company' ? t('auth.ownerName') : t('auth.fullName')}
                   </label>
                   <input
                     type="text"
@@ -487,14 +489,14 @@ export default function RegisterPage() {
                     onChange={(e) => setFullName(e.target.value)}
                     required
                     className={inputClass}
-                    placeholder="p.sh. Arben Krasniqi"
+                    placeholder={t('auth.ownerNamePlaceholder')}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-dark-700 mb-1.5">
-                      Shteti
+                      {t('vehicles.country', 'Shteti')}
                     </label>
                     <select
                       value={selectedCountryId}
@@ -502,7 +504,7 @@ export default function RegisterPage() {
                       className={inputClass}
                       required={activeTab === 'company'}
                     >
-                      <option value="">Zgjidhni shtetin</option>
+                      <option value="">{t('auth.selectCountry')}</option>
                       {countries.map((country) => (
                         <option key={country.id} value={country.id}>
                           {country.name}
@@ -512,7 +514,7 @@ export default function RegisterPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-dark-700 mb-1.5">
-                      Qyteti
+                      {t('vehicles.city', 'Qyteti')}
                     </label>
                     <select
                       value={selectedCityId}
@@ -521,7 +523,7 @@ export default function RegisterPage() {
                       required={activeTab === 'company'}
                       disabled={!selectedCountryId || filteredCities.length === 0}
                     >
-                      <option value="">Zgjidhni qytetin</option>
+                      <option value="">{t('auth.selectCity')}</option>
                       {filteredCities.map((city) => (
                         <option key={city.id} value={city.id}>
                           {city.name}
@@ -535,7 +537,7 @@ export default function RegisterPage() {
                   <>
                     <div>
                       <label className="block text-sm font-medium text-dark-700 mb-1.5">
-                        Emri i kompanise
+                        {t('auth.companyName')}
                       </label>
                       <input
                         type="text"
@@ -543,12 +545,12 @@ export default function RegisterPage() {
                         onChange={(e) => setCompanyName(e.target.value)}
                         required
                         className={inputClass}
-                        placeholder="p.sh. AutoRent Prishtina"
+                        placeholder={t('auth.companyNamePlaceholder')}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-dark-700 mb-1.5">
-                        Telefoni
+                        {t('auth.phone')}
                       </label>
                       <input
                         type="tel"
@@ -556,27 +558,27 @@ export default function RegisterPage() {
                         onChange={(e) => setPhone(e.target.value)}
                         required
                         className={inputClass}
-                        placeholder="+383 44 000 000"
+                        placeholder={t('auth.phonePlaceholder')}
                       />
                     </div>
                   </>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-dark-700 mb-1.5">Email</label>
+                  <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('auth.email')}</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className={inputClass}
-                    placeholder="email@shembull.com"
+                    placeholder={t('auth.emailPlaceholder')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-dark-700 mb-1.5">
-                    Fjalekalimi
+                    {t('auth.password')}
                   </label>
                   <div className="relative">
                     <input
@@ -586,7 +588,7 @@ export default function RegisterPage() {
                       required
                       minLength={6}
                       className={`${inputClass} pr-11`}
-                      placeholder="Minimumi 6 karaktere"
+                      placeholder={t('auth.passwordMinPlaceholder')}
                     />
                     <button
                       type="button"
@@ -609,37 +611,37 @@ export default function RegisterPage() {
                 >
                   {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                   {loading
-                    ? 'Duke u regjistruar...'
+                    ? t('auth.registering')
                     : activeTab === 'company'
-                      ? 'Regjistro kompanine'
-                      : 'Regjistrohu'}
+                      ? t('auth.registerCompanyButton')
+                      : t('auth.registerButton')}
                 </button>
               </form>
 
               <p className="mt-4 text-center text-xs text-dark-400 leading-relaxed">
-                Duke u regjistruar, pranoni{' '}
+                {t('auth.termsPrefix')}{' '}
                 <Link
                   to="/kushtet-perdorimit"
                   className="text-primary-600 hover:underline"
                 >
-                  Kushtet e Perdorimit
+                  {t('auth.termsTerms')}
                 </Link>
-                {' '}dhe{' '}
+                {' '}{t('auth.termsAnd')}{' '}
                 <Link
                   to="/politika-privatesise"
                   className="text-primary-600 hover:underline"
                 >
-                  Politiken e Privatesise
+                  {t('auth.termsPrivacy')}
                 </Link>
                 .
               </p>
               <p className="mt-6 text-center text-sm text-dark-500">
-                Keni llogari?{' '}
+                {t('auth.haveAccount')}{' '}
                 <Link
                   to="/login"
                   className="text-primary-600 font-semibold hover:text-primary-700 transition-colors"
                 >
-                  Kycu
+                  {t('auth.loginLink')}
                 </Link>
               </p>
             </>

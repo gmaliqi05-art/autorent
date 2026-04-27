@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Loader2, Car, ArrowUpDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import type { Vehicle, Country, City } from '../lib/types';
 import VehicleCard from '../components/vehicles/VehicleCard';
@@ -17,38 +18,8 @@ type VehicleWithCompany = Vehicle & {
   }
 };
 
-const categories = [
-  { value: '', label: 'Te gjitha' },
-  { value: 'ekonomike', label: 'Ekonomike' },
-  { value: 'kompakte', label: 'Kompakte' },
-  { value: 'sedan', label: 'Sedan' },
-  { value: 'suv', label: 'SUV' },
-  { value: 'luksoz', label: 'Luksoze' },
-  { value: 'minivan', label: 'Minivan' },
-  { value: 'furgon', label: 'Furgon' },
-];
-
-const transmissions = [
-  { value: '', label: 'Te gjitha' },
-  { value: 'manuale', label: 'Manuale' },
-  { value: 'automatike', label: 'Automatike' },
-];
-
-const fuels = [
-  { value: '', label: 'Te gjitha' },
-  { value: 'benzine', label: 'Benzine' },
-  { value: 'nafte', label: 'Nafte' },
-  { value: 'elektrike', label: 'Elektrike' },
-  { value: 'hibride', label: 'Hibride' },
-];
-
-const sortOptions = [
-  { value: 'newest', label: 'Me te rejat' },
-  { value: 'price_asc', label: 'Cmimi: i ulet' },
-  { value: 'price_desc', label: 'Cmimi: i larte' },
-];
-
 export default function VehicleListPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [vehicles, setVehicles] = useState<VehicleWithCompany[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +37,37 @@ export default function VehicleListPage() {
   const [countries, setCountries] = useState<Country[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [filteredCities, setFilteredCities] = useState<City[]>([]);
+
+  const categories = useMemo(() => [
+    { value: '', label: t('vehicles.all') },
+    { value: 'ekonomike', label: t('vehicles.categories.ekonomike') },
+    { value: 'kompakte', label: t('vehicles.categories.kompakte') },
+    { value: 'sedan', label: t('vehicles.categories.sedan') },
+    { value: 'suv', label: t('vehicles.categories.suv') },
+    { value: 'luksoz', label: t('vehicles.categories.luksoz') },
+    { value: 'minivan', label: t('vehicles.categories.minivan') },
+    { value: 'furgon', label: t('vehicles.categories.furgon') },
+  ], [t]);
+
+  const transmissions = useMemo(() => [
+    { value: '', label: t('vehicles.all') },
+    { value: 'manuale', label: t('vehicles.transmissions.manuale') },
+    { value: 'automatike', label: t('vehicles.transmissions.automatike') },
+  ], [t]);
+
+  const fuels = useMemo(() => [
+    { value: '', label: t('vehicles.all') },
+    { value: 'benzine', label: t('vehicles.fuels.benzine') },
+    { value: 'nafte', label: t('vehicles.fuels.nafte') },
+    { value: 'elektrike', label: t('vehicles.fuels.elektrike') },
+    { value: 'hibride', label: t('vehicles.fuels.hibride') },
+  ], [t]);
+
+  const sortOptions = useMemo(() => [
+    { value: 'newest', label: t('vehicles.sortNewest') },
+    { value: 'price_asc', label: t('vehicles.sortPriceLow') },
+    { value: 'price_desc', label: t('vehicles.sortPriceHigh') },
+  ], [t]);
 
   useEffect(() => {
     loadCountries();
@@ -161,8 +163,8 @@ export default function VehicleListPage() {
     <div className="min-h-screen bg-gray-50/80 pt-[68px]">
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-dark-950 mb-2">Automjetet ne dispozicion</h1>
-          <p className="text-dark-500">Gjeni automjetin perfekt per udhetimin tuaj</p>
+          <h1 className="text-3xl font-bold text-dark-950 mb-2">{t('vehicles.title')}</h1>
+          <p className="text-dark-500">{t('vehicles.pageDesc')}</p>
         </div>
       </div>
 
@@ -171,16 +173,16 @@ export default function VehicleListPage() {
           <aside className={`lg:w-64 shrink-0 ${filtersOpen ? 'block' : 'hidden lg:block'}`}>
             <div className="bg-white rounded-2xl border border-gray-100 p-5 sticky top-24">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="font-semibold text-dark-950 text-sm">Filtrat</h3>
+                <h3 className="font-semibold text-dark-950 text-sm">{t('vehicles.filters')}</h3>
                 {hasActiveFilters && (
                   <button onClick={clearFilters} className="text-xs text-primary-600 font-medium hover:text-primary-700 transition-colors">
-                    Pastro
+                    {t('common.clear', 'Pastro')}
                   </button>
                 )}
               </div>
 
               <div className="space-y-5">
-                <FilterGroup label="Kerko">
+                <FilterGroup label={t('common.search', 'Kerko')}>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
                     <input
@@ -188,40 +190,40 @@ export default function VehicleListPage() {
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && loadVehicles()}
-                      placeholder="p.sh. BMW X5..."
+                      placeholder={t('vehicles.searchPlaceholder')}
                       className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 placeholder:text-dark-300 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                     />
                   </div>
                 </FilterGroup>
 
-                <FilterGroup label="Shteti">
+                <FilterGroup label={t('vehicles.country')}>
                   <select
                     value={selectedCountryId}
                     onChange={e => setSelectedCountryId(e.target.value)}
                     className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                   >
-                    <option value="">Te gjitha shtetet</option>
+                    <option value="">{t('vehicles.allCountries')}</option>
                     {countries.map(country => (
                       <option key={country.id} value={country.id}>{country.name}</option>
                     ))}
                   </select>
                 </FilterGroup>
 
-                <FilterGroup label="Qyteti">
+                <FilterGroup label={t('vehicles.city')}>
                   <select
                     value={selectedCityId}
                     onChange={e => setSelectedCityId(e.target.value)}
                     disabled={!selectedCountryId}
                     className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="">Te gjitha qytetet</option>
+                    <option value="">{t('vehicles.allCities')}</option>
                     {filteredCities.map(city => (
                       <option key={city.id} value={city.id}>{city.name}</option>
                     ))}
                   </select>
                 </FilterGroup>
 
-                <FilterGroup label="Kategoria">
+                <FilterGroup label={t('vehicles.category')}>
                   <div className="flex flex-wrap gap-1.5">
                     {categories.map(c => (
                       <button
@@ -239,25 +241,25 @@ export default function VehicleListPage() {
                   </div>
                 </FilterGroup>
 
-                <FilterGroup label="Transmisioni">
+                <FilterGroup label={t('vehicles.transmission')}>
                   <div className="flex gap-1.5">
-                    {transmissions.map(t => (
+                    {transmissions.map(tr => (
                       <button
-                        key={t.value}
-                        onClick={() => setTransmission(t.value)}
+                        key={tr.value}
+                        onClick={() => setTransmission(tr.value)}
                         className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                          transmission === t.value
+                          transmission === tr.value
                             ? 'bg-primary-600 text-white shadow-sm'
                             : 'bg-gray-50 text-dark-600 hover:bg-gray-100'
                         }`}
                       >
-                        {t.label}
+                        {tr.label}
                       </button>
                     ))}
                   </div>
                 </FilterGroup>
 
-                <FilterGroup label="Karburanti">
+                <FilterGroup label={t('vehicles.fuel')}>
                   <div className="flex flex-wrap gap-1.5">
                     {fuels.map(f => (
                       <button
@@ -275,7 +277,7 @@ export default function VehicleListPage() {
                   </div>
                 </FilterGroup>
 
-                <FilterGroup label={`Cmimi: ${priceRange[0]}EUR - ${priceRange[1]}EUR`}>
+                <FilterGroup label={t('vehicles.priceRange', { min: priceRange[0], max: priceRange[1] })}>
                   <input
                     type="range"
                     min={0}
@@ -302,11 +304,11 @@ export default function VehicleListPage() {
                   className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-dark-700 hover:bg-gray-50 transition-colors"
                 >
                   <SlidersHorizontal className="w-4 h-4" />
-                  Filtrat
+                  {t('vehicles.filters')}
                   {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-primary-600" />}
                 </button>
                 <p className="text-sm text-dark-500">
-                  {loading ? 'Duke kerkuar...' : `${vehicles.length} automjete`}
+                  {loading ? t('vehicles.searching') : `${vehicles.length} ${t('vehicles.results')}`}
                 </p>
               </div>
 
@@ -331,10 +333,10 @@ export default function VehicleListPage() {
             ) : vehicles.length === 0 ? (
               <div className="text-center py-32">
                 <Car className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-dark-900 mb-1">Nuk u gjeten automjete</h3>
-                <p className="text-sm text-dark-500 mb-6">Provoni te ndryshoni filtrat ose kerkimin.</p>
+                <h3 className="text-lg font-semibold text-dark-900 mb-1">{t('vehicles.noVehicles')}</h3>
+                <p className="text-sm text-dark-500 mb-6">{t('vehicles.noVehiclesDesc')}</p>
                 <button onClick={clearFilters} className="px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors">
-                  Pastro filtrat
+                  {t('vehicles.clearFilters')}
                 </button>
               </div>
             ) : (
