@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Car, Plus, Pencil, Loader2, Eye, EyeOff, Trash2, Upload, X, ChevronLeft, ChevronRight, AlertTriangle, ArrowUpRight } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Car, Plus, Pencil, Loader2, Eye, EyeOff, Trash2, Upload, X, ChevronLeft, ChevronRight, AlertTriangle, ArrowUpRight, Copy, Search, Image as ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
@@ -10,15 +10,44 @@ import { companyNavItems } from '../../lib/companyNav';
 
 const ITEMS_PER_PAGE = 8;
 
-const emptyVehicle = {
+const AVAILABLE_FEATURES = [
+  'ac', 'bluetooth', 'gps', 'usb', 'cruise_control', 'parking_sensors',
+  'rearview_camera', 'sunroof', 'leather_seats', 'heated_seats', '4wd',
+  'apple_carplay', 'android_auto',
+] as const;
+
+type FormState = {
+  brand: string;
+  model: string;
+  year: number;
+  category: string;
+  transmission: string;
+  fuel_type: string;
+  seats: number;
+  doors: number;
+  color: string;
+  plate_number: string;
+  mileage: number;
+  price_per_day: number;
+  deposit_amount: number;
+  main_image_url: string;
+  images: string[];
+  features: string[];
+  is_available: boolean;
+  is_published: boolean;
+};
+
+const emptyVehicle: FormState = {
   brand: '', model: '', year: 2024, category: 'ekonomike', transmission: 'manuale', fuel_type: 'benzine',
   seats: 5, doors: 4, color: '', plate_number: '', mileage: 0, price_per_day: 0, deposit_amount: 0,
-  main_image_url: '', is_available: true, is_published: false,
+  main_image_url: '', images: [], features: [], is_available: true, is_published: false,
 };
 
 const CATEGORY_VALUES = ['ekonomike', 'kompakte', 'sedan', 'suv', 'luksoz', 'minivan', 'furgon'];
 const TRANSMISSION_VALUES = ['manuale', 'automatike'];
 const FUEL_VALUES = ['benzine', 'nafte', 'elektrike', 'hibride'];
+
+const MAX_GALLERY = 8;
 
 function extractStoragePath(url: string): string | null {
   const marker = '/vehicle-images/';
@@ -36,9 +65,10 @@ export default function CompanyVehicles() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ ...emptyVehicle });
+  const [form, setForm] = useState<FormState>({ ...emptyVehicle });
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [previousImageUrl, setPreviousImageUrl] = useState<string>('');
@@ -46,9 +76,20 @@ export default function CompanyVehicles() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState('');
 
-  const totalPages = Math.max(1, Math.ceil(vehicles.length / ITEMS_PER_PAGE));
-  const paginatedVehicles = vehicles.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const filteredVehicles = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return vehicles;
+    return vehicles.filter(v =>
+      v.brand.toLowerCase().includes(q) ||
+      v.model.toLowerCase().includes(q) ||
+      (v.plate_number || '').toLowerCase().includes(q)
+    );
+  }, [vehicles, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE));
+  const paginatedVehicles = filteredVehicles.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   useEffect(() => {
     if (!user) return;
@@ -59,7 +100,7 @@ export default function CompanyVehicles() {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
-  }, [vehicles.length, totalPages, currentPage]);
+  }, [filteredVehicles.length, totalPages, currentPage]);
 
   async function loadData() {
     setError(null);
@@ -69,7 +110,7 @@ export default function CompanyVehicles() {
       if (comp) {
         setCompany(comp as Company);
         const [vehRes, planRes] = await Promise.all([
-          supabase.from('vehicles').select('*').eq('company_id', comp.id).order('created_at', { ascending: false }),
+          supabase.from('vehicles').select('*').eq('company_id', comp.id).is('deleted_at', null).order('created_at', { ascending: false }),
           comp.subscription_plan_id
             ? supabase.from('subscription_plans').select('*').eq('id', comp.subscription_plan_id).maybeSingle()
             : Promise.resolve({ data: null, error: null }),
@@ -85,13 +126,17 @@ export default function CompanyVehicles() {
     setLoading(false);
   }
 
-  function openAdd() {
+  function resetForm() {
     setForm({ ...emptyVehicle });
     setEditId(null);
     setImageFile(null);
     setImagePreview('');
     setPreviousImageUrl('');
     setError(null);
+  }
+
+  function openAdd() {
+    resetForm();
     setShowForm(true);
   }
 
@@ -100,12 +145,35 @@ export default function CompanyVehicles() {
       brand: v.brand, model: v.model, year: v.year, category: v.category, transmission: v.transmission,
       fuel_type: v.fuel_type, seats: v.seats, doors: v.doors, color: v.color, plate_number: v.plate_number || '',
       mileage: v.mileage || 0, price_per_day: Number(v.price_per_day),
-      deposit_amount: Number(v.deposit_amount), main_image_url: v.main_image_url, is_available: v.is_available, is_published: v.is_published,
+      deposit_amount: Number(v.deposit_amount), main_image_url: v.main_image_url,
+      images: v.images || [], features: v.features || [],
+      is_available: v.is_available, is_published: v.is_published,
     });
     setEditId(v.id);
     setImageFile(null);
     setImagePreview(v.main_image_url || '');
     setPreviousImageUrl(v.main_image_url || '');
+    setError(null);
+    setShowForm(true);
+  }
+
+  function cloneVehicle(v: Vehicle) {
+    setForm({
+      brand: v.brand, model: v.model, year: v.year, category: v.category, transmission: v.transmission,
+      fuel_type: v.fuel_type, seats: v.seats, doors: v.doors, color: v.color,
+      plate_number: '',
+      mileage: 0, price_per_day: Number(v.price_per_day),
+      deposit_amount: Number(v.deposit_amount),
+      main_image_url: v.main_image_url,
+      images: v.images || [],
+      features: v.features || [],
+      is_available: true,
+      is_published: false,
+    });
+    setEditId(null);
+    setImageFile(null);
+    setImagePreview(v.main_image_url || '');
+    setPreviousImageUrl('');
     setError(null);
     setShowForm(true);
   }
@@ -137,45 +205,92 @@ export default function CompanyVehicles() {
     setForm({ ...form, main_image_url: '' });
   }
 
-  async function uploadImage(): Promise<string | null> {
+  async function uploadMainImage(): Promise<string | null> {
     if (!imageFile || !company) return null;
-
     setUploadingImage(true);
     const fileExt = imageFile.name.split('.').pop();
     const fileName = `${company.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-
     const { error: uploadError } = await supabase.storage
       .from('vehicle-images')
-      .upload(fileName, imageFile, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
+      .upload(fileName, imageFile, { cacheControl: '3600', upsert: false });
     setUploadingImage(false);
-
     if (uploadError) {
       setError(`${t('companyDash.vehicles.imageUploadError')}: ${uploadError.message}`);
       return null;
     }
-
-    const { data } = supabase.storage
-      .from('vehicle-images')
-      .getPublicUrl(fileName);
-
+    const { data } = supabase.storage.from('vehicle-images').getPublicUrl(fileName);
     return data.publicUrl;
+  }
+
+  async function handleGalleryUpload(files: FileList) {
+    if (!company) return;
+    const remaining = MAX_GALLERY - form.images.length;
+    if (remaining <= 0) {
+      setError(t('companyDash.vehicles.galleryMax', { max: MAX_GALLERY }));
+      return;
+    }
+    const toUpload = Array.from(files).slice(0, remaining);
+    setUploadingGallery(true);
+    setError(null);
+    const uploaded: string[] = [];
+    for (const file of toUpload) {
+      if (!file.type.startsWith('image/')) continue;
+      if (file.size > 5 * 1024 * 1024) continue;
+      const ext = file.name.split('.').pop();
+      const name = `${company.id}/gallery-${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('vehicle-images').upload(name, file, { upsert: false });
+      if (!upErr) {
+        const { data } = supabase.storage.from('vehicle-images').getPublicUrl(name);
+        uploaded.push(data.publicUrl);
+      }
+    }
+    setUploadingGallery(false);
+    if (uploaded.length > 0) {
+      setForm(prev => ({ ...prev, images: [...prev.images, ...uploaded] }));
+    }
+  }
+
+  async function removeGalleryImage(url: string) {
+    setForm(prev => ({ ...prev, images: prev.images.filter(x => x !== url) }));
+    const path = extractStoragePath(url);
+    if (path) {
+      await supabase.storage.from('vehicle-images').remove([path]);
+    }
+  }
+
+  function toggleFeature(f: string) {
+    setForm(prev => ({
+      ...prev,
+      features: prev.features.includes(f) ? prev.features.filter(x => x !== f) : [...prev.features, f],
+    }));
+  }
+
+  function validateForPublish(): string | null {
+    if (form.is_published) {
+      if (!form.main_image_url && !imageFile) return t('companyDash.vehicles.validationImage');
+      if (!form.brand.trim()) return t('companyDash.vehicles.validationBrand');
+      if (!form.model.trim()) return t('companyDash.vehicles.validationModel');
+      if (!form.plate_number.trim()) return t('companyDash.vehicles.validationPlate');
+      if (!(Number(form.price_per_day) > 0)) return t('companyDash.vehicles.validationPrice');
+    }
+    return null;
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!company) return;
+    const validationError = validateForPublish();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setSaving(true);
     setError(null);
 
     try {
       let imageUrl = form.main_image_url;
-
       if (imageFile) {
-        const uploadedUrl = await uploadImage();
+        const uploadedUrl = await uploadMainImage();
         if (uploadedUrl) {
           imageUrl = uploadedUrl;
         } else {
@@ -199,6 +314,8 @@ export default function CompanyVehicles() {
         price_per_day: form.price_per_day,
         deposit_amount: form.deposit_amount,
         main_image_url: imageUrl,
+        images: form.images,
+        features: form.features,
         is_available: form.is_available,
         is_published: form.is_published,
         status: form.is_published ? 'active' : 'draft',
@@ -220,7 +337,7 @@ export default function CompanyVehicles() {
       }
 
       setShowForm(false);
-      setError(null);
+      resetForm();
       loadData();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : t('companyDash.common.saveError');
@@ -232,6 +349,12 @@ export default function CompanyVehicles() {
   async function togglePublish(v: Vehicle) {
     setError(null);
     const newPublished = !v.is_published;
+    if (newPublished) {
+      if (!v.main_image_url || !v.brand || !v.model || !v.plate_number || !(Number(v.price_per_day) > 0)) {
+        setError(t('companyDash.vehicles.validationPublish'));
+        return;
+      }
+    }
     try {
       const { error: toggleError } = await supabase
         .from('vehicles')
@@ -253,16 +376,24 @@ export default function CompanyVehicles() {
     setDeleting(true);
     setError(null);
     try {
-      const target = vehicles.find(v => v.id === deleteId);
-      const { error: deleteError } = await supabase.from('vehicles').delete().eq('id', deleteId);
-      if (deleteError) throw deleteError;
-
-      if (target?.main_image_url) {
-        const path = extractStoragePath(target.main_image_url);
-        if (path) {
-          await supabase.storage.from('vehicle-images').remove([path]);
-        }
+      const { data: active, error: abErr } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('vehicle_id', deleteId)
+        .in('status', ['pending', 'confirmed', 'active'])
+        .limit(1);
+      if (abErr) throw abErr;
+      if (active && active.length > 0) {
+        setError(t('companyDash.vehicles.deleteBlockedActive'));
+        setDeleting(false);
+        return;
       }
+
+      const { error: updateErr } = await supabase
+        .from('vehicles')
+        .update({ deleted_at: new Date().toISOString(), is_published: false, status: 'inactive' })
+        .eq('id', deleteId);
+      if (updateErr) throw updateErr;
 
       setDeleteId(null);
       loadData();
@@ -343,7 +474,7 @@ export default function CompanyVehicles() {
         );
       })()}
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-dark-950">{t('companyDash.vehicles.myFleet')}</h1>
           <p className="text-dark-500 text-[15px]">
@@ -352,21 +483,33 @@ export default function CompanyVehicles() {
               : t('companyDash.vehicles.fleetCount', { count: vehicles.length })}
           </p>
         </div>
-        {(() => {
-          const maxV = plan?.max_vehicles ?? 3;
-          const atLimit = maxV !== -1 && vehicles.length >= maxV;
-          return (
-            <button
-              onClick={atLimit ? undefined : openAdd}
-              disabled={atLimit}
-              title={atLimit ? t('companyDash.vehicles.atLimitTooltip') : undefined}
-              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition-colors ${atLimit ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-primary-600 text-white hover:bg-primary-700'}`}
-            >
-              <Plus className="w-4 h-4" />
-              {t('companyDash.vehicles.addVehicle')}
-            </button>
-          );
-        })()}
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="w-4 h-4 text-dark-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+              placeholder={t('companyDash.vehicles.searchPlaceholder')}
+              className="pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all min-w-[220px]"
+            />
+          </div>
+          {(() => {
+            const maxV = plan?.max_vehicles ?? 3;
+            const atLimit = maxV !== -1 && vehicles.length >= maxV;
+            return (
+              <button
+                onClick={atLimit ? undefined : openAdd}
+                disabled={atLimit}
+                title={atLimit ? t('companyDash.vehicles.atLimitTooltip') : undefined}
+                className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition-colors ${atLimit ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-primary-600 text-white hover:bg-primary-700'}`}
+              >
+                <Plus className="w-4 h-4" />
+                {t('companyDash.vehicles.addVehicle')}
+              </button>
+            );
+          })()}
+        </div>
       </div>
 
       {error && !deleteId && !showForm && (
@@ -436,12 +579,88 @@ export default function CompanyVehicles() {
               )}
             </div>
 
+            <div className="sm:col-span-2 lg:col-span-3">
+              <label className="block text-xs font-medium text-dark-600 mb-1.5">
+                {t('companyDash.vehicles.gallery')} ({form.images.length}/{MAX_GALLERY})
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {form.images.map(url => (
+                  <div key={url} className="relative group aspect-[4/3] rounded-lg overflow-hidden border border-gray-200">
+                    <img src={url} alt="gallery" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeGalleryImage(url)}
+                      className="absolute top-1.5 right-1.5 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+                {form.images.length < MAX_GALLERY && (
+                  <label className="aspect-[4/3] rounded-lg border-2 border-dashed border-gray-300 hover:border-primary-400 flex flex-col items-center justify-center cursor-pointer transition-colors">
+                    {uploadingGallery ? (
+                      <Loader2 className="w-5 h-5 text-primary-600 animate-spin" />
+                    ) : (
+                      <>
+                        <ImageIcon className="w-6 h-6 text-gray-400 mb-1" />
+                        <span className="text-xs text-dark-500">{t('companyDash.vehicles.addImages')}</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={e => {
+                        if (e.target.files) handleGalleryUpload(e.target.files);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-3">
+              <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('companyDash.vehicles.features')}</label>
+              <div className="flex flex-wrap gap-2">
+                {AVAILABLE_FEATURES.map(f => {
+                  const active = form.features.includes(f);
+                  return (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => toggleFeature(f)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                        active ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-dark-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      {t(`companyDash.vehicles.feature_${f}`)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-3 flex items-center gap-4">
+              <label className="inline-flex items-center gap-2 text-sm text-dark-700">
+                <input type="checkbox" checked={form.is_published} onChange={e => setForm({ ...form, is_published: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                {t('companyDash.vehicles.publishImmediately')}
+              </label>
+              <label className="inline-flex items-center gap-2 text-sm text-dark-700">
+                <input type="checkbox" checked={form.is_available} onChange={e => setForm({ ...form, is_available: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                {t('companyDash.vehicles.available')}
+              </label>
+            </div>
+
             <div className="sm:col-span-2 lg:col-span-3 flex items-center gap-3 pt-2">
               <button type="submit" disabled={saving || uploadingImage} className="px-6 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all flex items-center gap-2">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {saving ? t('companyDash.common.saving') : editId ? t('companyDash.vehicles.submitUpdate') : t('companyDash.vehicles.submitAdd')}
               </button>
-              <button type="button" onClick={() => setShowForm(false)} className="px-5 py-2.5 text-sm font-medium text-dark-600 hover:text-dark-900 transition-colors">
+              <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="px-5 py-2.5 text-sm font-medium text-dark-600 hover:text-dark-900 transition-colors">
                 {t('companyDash.common.cancel')}
               </button>
             </div>
@@ -449,11 +668,15 @@ export default function CompanyVehicles() {
         </div>
       )}
 
-      {vehicles.length === 0 ? (
+      {filteredVehicles.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
           <Car className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-dark-600 font-medium">{t('companyDash.vehicles.noFleet')}</p>
-          <p className="text-sm text-dark-400 mt-1">{t('companyDash.vehicles.noFleetDesc')}</p>
+          <p className="text-dark-600 font-medium">
+            {search ? t('companyDash.vehicles.noResults') : t('companyDash.vehicles.noFleet')}
+          </p>
+          <p className="text-sm text-dark-400 mt-1">
+            {search ? t('companyDash.vehicles.noResultsDesc') : t('companyDash.vehicles.noFleetDesc')}
+          </p>
         </div>
       ) : (
         <>
@@ -467,13 +690,16 @@ export default function CompanyVehicles() {
                     <div className="w-full h-full flex items-center justify-center"><Car className="w-8 h-8 text-gray-300" /></div>
                   )}
                   <div className="absolute top-2 right-2 flex gap-1.5">
-                    <button onClick={() => togglePublish(v)} className={`p-1.5 rounded-lg shadow-sm transition-colors ${v.is_published ? 'bg-green-500 text-white' : 'bg-white text-dark-500'}`}>
+                    <button onClick={() => togglePublish(v)} title={v.is_published ? t('companyDash.vehicles.unpublish') : t('companyDash.vehicles.publish')} className={`p-1.5 rounded-lg shadow-sm transition-colors ${v.is_published ? 'bg-green-500 text-white' : 'bg-white text-dark-500'}`}>
                       {v.is_published ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                     </button>
-                    <button onClick={() => openEdit(v)} className="p-1.5 bg-white text-dark-500 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                    <button onClick={() => openEdit(v)} title={t('companyDash.common.edit')} className="p-1.5 bg-white text-dark-500 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => setDeleteId(v.id)} className="p-1.5 bg-white text-red-500 rounded-lg shadow-sm hover:bg-red-50 transition-colors">
+                    <button onClick={() => cloneVehicle(v)} title={t('companyDash.vehicles.clone')} className="p-1.5 bg-white text-blue-500 rounded-lg shadow-sm hover:bg-blue-50 transition-colors">
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setDeleteId(v.id)} title={t('companyDash.common.delete')} className="p-1.5 bg-white text-red-500 rounded-lg shadow-sm hover:bg-red-50 transition-colors">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>

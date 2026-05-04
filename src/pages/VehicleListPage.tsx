@@ -135,6 +135,7 @@ export default function VehicleListPage() {
       .eq('is_published', true)
       .eq('is_available', true)
       .eq('status', 'active')
+      .is('deleted_at', null)
       .gte('price_per_day', priceRange[0])
       .lte('price_per_day', priceRange[1]);
 

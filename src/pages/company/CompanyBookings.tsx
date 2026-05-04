@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Car, CalendarDays, Check, X, Loader2, CreditCard, Wallet, Building, Banknote, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Car, CalendarDays, Check, X, Loader2, CreditCard, Wallet, Building, Banknote, ChevronLeft, ChevronRight, Search, Download, StickyNote } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,6 +9,7 @@ import { companyNavItems } from '../../lib/companyNav';
 import { sendBookingApprovedEmail, sendBookingRejectedEmail, sendBookingCompletedEmail } from '../../lib/emailService';
 import { issueInvoiceAndNotify } from '../../lib/invoiceService';
 import { createNotification } from '../../lib/notificationService';
+import { exportToCSV } from '../../lib/csvExport';
 import {
   formatDate,
   bookingStatusColors,
@@ -29,6 +30,8 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
 
 const ONLINE_PAYMENT_METHODS = new Set(['stripe', 'paypal']);
 
+const REJECT_REASONS = ['maintenance', 'overloaded', 'missing_docs', 'other'] as const;
+
 type BookingWithRelations = Booking & { vehicle?: Vehicle };
 
 export default function CompanyBookings() {
@@ -44,7 +47,16 @@ export default function CompanyBookings() {
 
   const [approveModal, setApproveModal] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<string | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
+  const [rejectReasonKey, setRejectReasonKey] = useState<string>('maintenance');
+  const [rejectReasonText, setRejectReasonText] = useState('');
+
+  const [search, setSearch] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+
+  const [notesModal, setNotesModal] = useState<BookingWithRelations | null>(null);
+  const [notesValue, setNotesValue] = useState('');
+  const [savingNotes, setSavingNotes] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -53,7 +65,7 @@ export default function CompanyBookings() {
 
   useEffect(() => {
     setPage(1);
-  }, [tab]);
+  }, [tab, search, fromDate, toDate]);
 
   async function loadData() {
     try {
@@ -96,6 +108,24 @@ export default function CompanyBookings() {
     try {
       setActionLoading(id);
       setError(null);
+
+      // Conflict check: any confirmed/active booking for same vehicle overlapping dates
+      const { data: conflicts, error: conflictErr } = await supabase
+        .from('bookings')
+        .select('id, pickup_date, return_date')
+        .eq('vehicle_id', booking.vehicle_id)
+        .in('status', ['confirmed', 'active'])
+        .neq('id', booking.id)
+        .lt('pickup_date', booking.return_date)
+        .gt('return_date', booking.pickup_date);
+
+      if (conflictErr) throw conflictErr;
+      if (conflicts && conflicts.length > 0) {
+        setError(t('companyDash.bookings.conflictError'));
+        setActionLoading(null);
+        setApproveModal(null);
+        return;
+      }
 
       const { error: updateError } = await supabase
         .from('bookings')
@@ -165,7 +195,9 @@ export default function CompanyBookings() {
     const booking = bookings.find(b => b.id === id);
     if (!booking || !company) return;
 
-    const reason = rejectReason.trim() || t('companyDash.bookings.defaultRejectReason');
+    const reasonLabel = t(`companyDash.bookings.rejectReason_${rejectReasonKey}`);
+    const extra = rejectReasonText.trim();
+    const reason = extra ? `${reasonLabel} - ${extra}` : reasonLabel;
 
     try {
       setActionLoading(id);
@@ -208,7 +240,8 @@ export default function CompanyBookings() {
     } finally {
       setActionLoading(null);
       setRejectModal(null);
-      setRejectReason('');
+      setRejectReasonText('');
+      setRejectReasonKey('maintenance');
     }
   }
 
@@ -286,9 +319,57 @@ export default function CompanyBookings() {
     }
   }
 
-  const filtered = tab ? bookings.filter(b => b.status === tab) : bookings;
+  async function saveInternalNotes() {
+    if (!notesModal) return;
+    setSavingNotes(true);
+    const { error: upErr } = await supabase
+      .from('bookings')
+      .update({ internal_notes: notesValue })
+      .eq('id', notesModal.id);
+    setSavingNotes(false);
+    if (upErr) {
+      setError(upErr.message);
+      return;
+    }
+    setNotesModal(null);
+    setNotesValue('');
+    loadData();
+  }
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return bookings.filter(b => {
+      if (tab && b.status !== tab) return false;
+      if (q) {
+        const hay = `${b.client_name} ${b.client_email} ${b.client_phone || ''} ${b.vehicle?.brand || ''} ${b.vehicle?.model || ''} ${b.vehicle?.plate_number || ''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (fromDate && b.pickup_date < fromDate) return false;
+      if (toDate && b.return_date > toDate) return false;
+      return true;
+    });
+  }, [bookings, tab, search, fromDate, toDate]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
+  function exportCSV() {
+    const rows = filtered.map(b => ({
+      [t('companyDash.bookings.csvDate')]: formatDate(b.created_at, i18n.language),
+      [t('companyDash.bookings.csvClient')]: b.client_name || '',
+      [t('companyDash.bookings.csvEmail')]: b.client_email || '',
+      [t('companyDash.bookings.csvPhone')]: b.client_phone || '',
+      [t('companyDash.bookings.csvVehicle')]: b.vehicle ? `${b.vehicle.brand} ${b.vehicle.model}` : '',
+      [t('companyDash.bookings.csvPlate')]: b.vehicle?.plate_number || '',
+      [t('companyDash.bookings.csvPickup')]: b.pickup_date,
+      [t('companyDash.bookings.csvReturn')]: b.return_date,
+      [t('companyDash.bookings.csvDays')]: b.total_days,
+      [t('companyDash.bookings.csvStatus')]: bookingStatusLabel(b.status, t),
+      [t('companyDash.bookings.csvPayment')]: paymentStatusLabel(b.payment_status || 'pending', t),
+      [t('companyDash.bookings.csvAmount')]: b.total_price,
+    }));
+    exportToCSV(rows, `bookings-${new Date().toISOString().slice(0, 10)}`);
+  }
 
   const tabs: [string, string][] = [
     ['', t('companyDash.bookings.tabAll')],
@@ -301,15 +382,58 @@ export default function CompanyBookings() {
 
   return (
     <DashboardLayout title={t('companyDash.bookings.title')} navItems={companyNavItems}>
-      <h1 className="text-2xl font-bold text-dark-950 mb-1">{t('companyDash.bookings.heading')}</h1>
-      <p className="text-dark-500 mb-6 text-[15px]">{t('companyDash.bookings.subtitle')}</p>
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-dark-950 mb-1">{t('companyDash.bookings.heading')}</h1>
+          <p className="text-dark-500 text-[15px]">{t('companyDash.bookings.subtitle')}</p>
+        </div>
+        <button
+          onClick={exportCSV}
+          disabled={filtered.length === 0}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-dark-700 text-sm font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors"
+        >
+          <Download className="w-4 h-4" />
+          {t('companyDash.bookings.exportCsv')}
+        </button>
+      </div>
 
-      <div className="flex flex-wrap gap-1.5 mb-6">
+      <div className="flex flex-wrap gap-1.5 mb-4">
         {tabs.map(([v, l]) => (
           <button key={v} onClick={() => setTab(v)} className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${tab === v ? 'bg-primary-600 text-white' : 'bg-white text-dark-600 border border-gray-200 hover:bg-gray-50'}`}>
             {l}
           </button>
         ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <div className="relative md:col-span-1">
+          <Search className="w-4 h-4 text-dark-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={t('companyDash.bookings.searchPlaceholder')}
+            className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+          />
+        </div>
+        <div>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={e => setFromDate(e.target.value)}
+            placeholder={t('companyDash.bookings.from')}
+            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+          />
+        </div>
+        <div>
+          <input
+            type="date"
+            value={toDate}
+            onChange={e => setToDate(e.target.value)}
+            placeholder={t('companyDash.bookings.to')}
+            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+          />
+        </div>
       </div>
 
       {error && (
@@ -353,6 +477,11 @@ export default function CompanyBookings() {
                             {t('companyDash.common.deposit')}: {b.deposit_amount} EUR
                           </p>
                         ) : null}
+                        {b.internal_notes ? (
+                          <p className="text-[11px] text-amber-700 mt-0.5 italic flex items-center gap-1">
+                            <StickyNote className="w-3 h-3" /> {b.internal_notes.slice(0, 60)}{b.internal_notes.length > 60 ? '...' : ''}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
 
@@ -370,6 +499,14 @@ export default function CompanyBookings() {
                         </span>
                       )}
                       <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusColor}`}>{bookingStatusLabel(b.status, t)}</span>
+
+                      <button
+                        onClick={() => { setNotesModal(b); setNotesValue(b.internal_notes || ''); }}
+                        title={t('companyDash.bookings.internalNotes')}
+                        className="p-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors"
+                      >
+                        <StickyNote className="w-4 h-4" />
+                      </button>
 
                       {b.status === 'pending' && (
                         <div className="flex gap-1.5">
@@ -476,16 +613,28 @@ export default function CompanyBookings() {
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-bold text-dark-900 mb-2">{t('companyDash.bookings.rejectTitle')}</h3>
             <p className="text-sm text-dark-500 mb-4">{t('companyDash.bookings.rejectBody')}</p>
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-dark-700 mb-1.5">{t('companyDash.bookings.rejectReasonLabel')}</label>
+              <select
+                value={rejectReasonKey}
+                onChange={e => setRejectReasonKey(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-dark-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                {REJECT_REASONS.map(r => (
+                  <option key={r} value={r}>{t(`companyDash.bookings.rejectReason_${r}`)}</option>
+                ))}
+              </select>
+            </div>
             <textarea
-              value={rejectReason}
-              onChange={e => setRejectReason(e.target.value)}
+              value={rejectReasonText}
+              onChange={e => setRejectReasonText(e.target.value)}
               placeholder={t('companyDash.bookings.rejectPlaceholder')}
               rows={3}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-dark-800 placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none mb-4"
             />
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => { setRejectModal(null); setRejectReason(''); }}
+                onClick={() => { setRejectModal(null); setRejectReasonText(''); setRejectReasonKey('maintenance'); }}
                 className="px-4 py-2 text-sm font-medium text-dark-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 {t('companyDash.common.cancel')}
@@ -497,6 +646,38 @@ export default function CompanyBookings() {
               >
                 {actionLoading === rejectModal && <Loader2 className="w-4 h-4 animate-spin" />}
                 {t('companyDash.bookings.rejectAction')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {notesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-bold text-dark-900 mb-1">{t('companyDash.bookings.internalNotesTitle')}</h3>
+            <p className="text-xs text-dark-500 mb-4">{t('companyDash.bookings.internalNotesHint')}</p>
+            <textarea
+              value={notesValue}
+              onChange={e => setNotesValue(e.target.value)}
+              rows={5}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-dark-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none mb-4"
+              placeholder={t('companyDash.bookings.internalNotesPlaceholder')}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setNotesModal(null); setNotesValue(''); }}
+                className="px-4 py-2 text-sm font-medium text-dark-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                {t('companyDash.common.cancel')}
+              </button>
+              <button
+                onClick={saveInternalNotes}
+                disabled={savingNotes}
+                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {savingNotes && <Loader2 className="w-4 h-4 animate-spin" />}
+                {t('companyDash.common.save')}
               </button>
             </div>
           </div>

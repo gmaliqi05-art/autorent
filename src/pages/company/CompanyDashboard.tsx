@@ -43,7 +43,7 @@ export default function CompanyDashboard() {
     if (comp) {
       setCompany(comp as Company);
       const [v, b, p] = await Promise.all([
-        supabase.from('vehicles').select('*').eq('company_id', comp.id).order('created_at', { ascending: false }),
+        supabase.from('vehicles').select('*').eq('company_id', comp.id).is('deleted_at', null).order('created_at', { ascending: false }),
         supabase.from('bookings').select('*').eq('company_id', comp.id).order('created_at', { ascending: false }).limit(20),
         comp.subscription_plan_id
           ? supabase.from('subscription_plans').select('*').eq('id', comp.subscription_plan_id).maybeSingle()
@@ -57,9 +57,13 @@ export default function CompanyDashboard() {
   }
 
   const paidRevenue = bookings.filter(b => b.payment_status === 'paid').reduce((s, b) => s + Number(b.total_price), 0);
-  const totalRevenue = bookings
-    .filter(b => (b.status === 'completed' || b.status === 'active') && b.payment_status !== 'failed')
+  const completedRevenue = bookings
+    .filter(b => b.status === 'completed' && b.payment_status !== 'failed')
     .reduce((s, b) => s + Number(b.total_price), 0);
+  const activeRevenue = bookings
+    .filter(b => b.status === 'active' && b.payment_status !== 'failed')
+    .reduce((s, b) => s + Number(b.total_price), 0);
+  const totalRevenue = completedRevenue + activeRevenue;
   const pendingPayments = bookings.filter(b => b.payment_status === 'pending').reduce((s, b) => s + Number(b.total_price), 0);
   const pendingCount = bookings.filter(b => b.status === 'pending').length;
   const activeVehicles = vehicles.filter(v => v.is_published && v.is_available).length;
@@ -150,22 +154,24 @@ export default function CompanyDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <Link to="/kompania/pagesat" className="block">
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 hover:shadow-lg transition-shadow h-full">
+        <Link to="/kompania/pagesat" className="block cursor-pointer">
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 hover:shadow-lg hover:scale-[1.01] transition-all h-full">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
               <DollarSign className="w-6 h-6 text-white" />
             </div>
-            <p className="text-3xl font-bold text-white mb-1">{paidRevenue.toFixed(0)} EUR</p>
-            <p className="text-sm text-white/80">{t('companyDash.overview.paidRevenue')}</p>
+            <p className="text-3xl font-bold text-white mb-1">{completedRevenue.toFixed(0)} EUR</p>
+            <p className="text-sm text-white/80">{t('companyDash.overview.completedRevenue')}</p>
+            <p className="text-xs text-white/70 mt-1">+ {activeRevenue.toFixed(0)} EUR {t('companyDash.overview.activeRevenueNote')}</p>
           </div>
         </Link>
-        <Link to="/kompania/pagesat" className="block">
-          <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-6 hover:shadow-lg transition-shadow h-full">
+        <Link to="/kompania/pagesat" className="block cursor-pointer">
+          <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-6 hover:shadow-lg hover:scale-[1.01] transition-all h-full">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
               <Clock className="w-6 h-6 text-white" />
             </div>
             <p className="text-3xl font-bold text-white mb-1">{pendingPayments.toFixed(0)} EUR</p>
             <p className="text-sm text-white/80">{t('companyDash.overview.pendingPayments')}</p>
+            <p className="text-xs text-white/70 mt-1">{t('companyDash.overview.paidRevenue')}: {paidRevenue.toFixed(0)} EUR</p>
           </div>
         </Link>
 

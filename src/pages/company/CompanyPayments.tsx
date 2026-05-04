@@ -27,7 +27,7 @@ const PAYMENT_METHODS = ['stripe', 'paypal', 'bank_transfer', 'cash'];
 
 const ITEMS_PER_PAGE = 10;
 
-type Period = 'week' | 'month' | 'year' | 'all';
+type Period = 'week' | 'month' | 'year' | 'all' | 'custom';
 
 export default function CompanyPayments() {
   const { user } = useAuth();
@@ -40,6 +40,8 @@ export default function CompanyPayments() {
   const [selectedBooking, setSelectedBooking] = useState<(Booking & { vehicle?: Vehicle }) | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -48,7 +50,7 @@ export default function CompanyPayments() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [period]);
+  }, [period, customFrom, customTo]);
 
   async function loadData() {
     try {
@@ -85,6 +87,15 @@ export default function CompanyPayments() {
 
   function getFilteredBookings() {
     if (period === 'all') return bookings;
+    if (period === 'custom') {
+      if (!customFrom && !customTo) return bookings;
+      return bookings.filter(b => {
+        const d = b.created_at.slice(0, 10);
+        if (customFrom && d < customFrom) return false;
+        if (customTo && d > customTo) return false;
+        return true;
+      });
+    }
     const now = new Date();
     const cutoff = new Date();
     if (period === 'week') cutoff.setDate(now.getDate() - 7);
@@ -175,6 +186,7 @@ export default function CompanyPayments() {
     ['month', t('companyDash.payments.periodMonth')],
     ['year', t('companyDash.payments.periodYear')],
     ['all', t('companyDash.payments.periodAll')],
+    ['custom', t('companyDash.payments.periodCustom')],
   ];
 
   return (
@@ -184,18 +196,37 @@ export default function CompanyPayments() {
           <h1 className="text-2xl font-bold text-dark-950">{t('companyDash.payments.heading')}</h1>
           <p className="text-dark-500 mt-1 text-[15px]">{t('companyDash.payments.subtitle')}</p>
         </div>
-        <div className="flex bg-gray-100 rounded-xl p-1">
-          {periodTabs.map(([v, l]) => (
-            <button
-              key={v}
-              onClick={() => setPeriod(v)}
-              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
-                period === v ? 'bg-white text-dark-900 shadow-sm' : 'text-dark-400 hover:text-dark-600'
-              }`}
-            >
-              {l}
-            </button>
-          ))}
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex bg-gray-100 rounded-xl p-1">
+            {periodTabs.map(([v, l]) => (
+              <button
+                key={v}
+                onClick={() => setPeriod(v)}
+                className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+                  period === v ? 'bg-white text-dark-900 shadow-sm' : 'text-dark-400 hover:text-dark-600'
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          {period === 'custom' && (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={customFrom}
+                onChange={e => setCustomFrom(e.target.value)}
+                className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+              />
+              <span className="text-xs text-dark-400">-</span>
+              <input
+                type="date"
+                value={customTo}
+                onChange={e => setCustomTo(e.target.value)}
+                className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+              />
+            </div>
+          )}
         </div>
       </div>
 

@@ -94,7 +94,8 @@ export default function NearbyCompaniesMap() {
           .from('vehicles')
           .select('company_id')
           .eq('is_published', true)
-          .eq('is_available', true);
+          .eq('is_available', true)
+          .is('deleted_at', null);
         const vehCounts: Record<string, number> = {};
         (vehRes.data || []).forEach(v => {
           vehCounts[v.company_id] = (vehCounts[v.company_id] || 0) + 1;

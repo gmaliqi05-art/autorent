@@ -99,6 +99,7 @@ export interface Vehicle {
   status: 'draft' | 'active' | 'inactive' | 'maintenance';
   rating: number;
   total_reviews: number;
+  deleted_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -120,6 +121,7 @@ export interface Booking {
   payment_method: 'stripe' | 'paypal' | 'bank_transfer' | 'cash';
   payment_status: 'pending' | 'paid' | 'failed';
   notes: string;
+  internal_notes: string;
   client_name: string;
   client_phone: string;
   client_email: string;

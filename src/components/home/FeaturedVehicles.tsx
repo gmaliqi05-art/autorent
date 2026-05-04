@@ -57,6 +57,7 @@ export default function FeaturedVehicles({ settings }: { settings?: HomepageSett
       .eq('is_published', true)
       .eq('is_available', true)
       .eq('status', 'active')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(60)
       .then(({ data }) => {

@@ -39,13 +39,22 @@ export default function CompanySubscription() {
   const [changingTo, setChangingTo] = useState<string | null>(null);
   const [showChangePlan, setShowChangePlan] = useState(false);
   const [confirmPlan, setConfirmPlan] = useState<SubscriptionPlan | null>(null);
+  const [vehicleCount, setVehicleCount] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     Promise.all([
       supabase.from('companies').select('*').eq('owner_id', user.id).maybeSingle(),
       supabase.from('subscription_plans').select('*').eq('is_active', true).order('sort_order'),
-    ]).then(([{ data: companyData }, { data: plansData }]) => {
+    ]).then(async ([{ data: companyData }, { data: plansData }]) => {
+      if (companyData) {
+        const { count } = await supabase
+          .from('vehicles')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', (companyData as Company).id)
+          .is('deleted_at', null);
+        setVehicleCount(count || 0);
+      }
       const c = companyData as Company | null;
       const plans = (plansData || []) as SubscriptionPlan[];
       setCompany(c);
@@ -123,7 +132,24 @@ export default function CompanySubscription() {
     }
   }
 
+  function canDowngradeTo(plan: SubscriptionPlan): { ok: boolean; reason?: string } {
+    if (plan.max_vehicles === -1) return { ok: true };
+    if (vehicleCount > plan.max_vehicles) {
+      return {
+        ok: false,
+        reason: t('companyDash.subscription.downgradeBlocked', { count: vehicleCount, limit: plan.max_vehicles }),
+      };
+    }
+    return { ok: true };
+  }
+
   function requestPlanChange(plan: SubscriptionPlan) {
+    const check = canDowngradeTo(plan);
+    if (!check.ok) {
+      setFeedback({ type: 'error', message: check.reason || '' });
+      setTimeout(() => setFeedback(null), 5000);
+      return;
+    }
     setConfirmPlan(plan);
   }
 

@@ -55,6 +55,7 @@ export default function VehicleDetailPage() {
       .from('vehicles')
       .select('*, company:companies(*)')
       .eq('id', id)
+      .is('deleted_at', null)
       .maybeSingle();
 
     if (!data) { setLoading(false); return; }
