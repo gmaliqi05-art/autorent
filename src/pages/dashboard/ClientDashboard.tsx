@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Car, Clock, MapPin, FileText, ArrowRight, DollarSign, TrendingUp, Bell, CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
+import { CalendarDays, Car, Clock, MapPin, FileText, ArrowRight, DollarSign, TrendingUp, Bell, CheckCircle2, AlertTriangle, Info, X, ShieldCheck, ShieldAlert, RotateCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,6 +24,8 @@ export default function ClientDashboard() {
   const [bookings, setBookings] = useState<(Booking & { vehicle?: Vehicle })[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [docStatus, setDocStatus] = useState<'missing' | 'pending' | 'verified' | 'rejected'>('missing');
+  const [docRejectionReason, setDocRejectionReason] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -31,7 +33,7 @@ export default function ClientDashboard() {
   }, [user]);
 
   async function loadData() {
-    const [bookingsRes, notificationsRes] = await Promise.all([
+    const [bookingsRes, notificationsRes, docsRes] = await Promise.all([
       supabase
         .from('bookings')
         .select('*, vehicle:vehicles(*)')
@@ -44,21 +46,37 @@ export default function ClientDashboard() {
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
         .limit(20),
+      supabase
+        .from('client_documents')
+        .select('verified, rejection_reason, license_front_url, id_document_url')
+        .eq('client_id', user!.id)
+        .maybeSingle(),
     ]);
 
     setBookings((bookingsRes.data || []) as (Booking & { vehicle?: Vehicle })[]);
     setNotifications((notificationsRes.data || []) as Notification[]);
+    const docs = docsRes.data as { verified: boolean; rejection_reason: string | null; license_front_url: string | null; id_document_url: string | null } | null;
+    if (!docs || (!docs.license_front_url && !docs.id_document_url)) {
+      setDocStatus('missing');
+    } else if (docs.rejection_reason) {
+      setDocStatus('rejected');
+      setDocRejectionReason(docs.rejection_reason);
+    } else if (docs.verified) {
+      setDocStatus('verified');
+    } else {
+      setDocStatus('pending');
+    }
     setLoading(false);
   }
 
   const active = bookings.filter(b => b.status === 'active' || b.status === 'confirmed').length;
   const completed = bookings.filter(b => b.status === 'completed').length;
   const totalSpent = bookings
-    .filter(b => b.payment_status === 'paid')
-    .reduce((sum, b) => sum + b.total_price, 0);
+    .filter(b => b.status === 'completed' && b.payment_status !== 'failed')
+    .reduce((sum, b) => sum + Number(b.total_price || 0), 0);
   const pendingPayments = bookings
-    .filter(b => b.payment_status === 'pending' && b.status !== 'cancelled')
-    .reduce((sum, b) => sum + b.total_price, 0);
+    .filter(b => b.payment_status === 'pending' && b.status !== 'cancelled' && b.status !== 'rejected')
+    .reduce((sum, b) => sum + Number(b.total_price || 0), 0);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -81,6 +99,52 @@ export default function ClientDashboard() {
         </h1>
         <p className="text-dark-500 mt-1 text-[15px]">{t('clientDash.overview.subtitle')}</p>
       </div>
+
+      {docStatus !== 'verified' && (
+        <div className={`mb-6 rounded-2xl border p-4 flex items-center justify-between gap-4 ${
+          docStatus === 'missing' ? 'bg-red-50 border-red-200' :
+          docStatus === 'rejected' ? 'bg-red-50 border-red-200' :
+          'bg-amber-50 border-amber-200'
+        }`}>
+          <div className="flex items-start gap-3">
+            {docStatus === 'pending' ? (
+              <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            ) : (
+              <ShieldAlert className={`w-5 h-5 shrink-0 mt-0.5 ${docStatus === 'rejected' ? 'text-red-600' : 'text-red-600'}`} />
+            )}
+            <div>
+              <p className={`text-sm font-semibold ${docStatus === 'pending' ? 'text-amber-900' : 'text-red-900'}`}>
+                {docStatus === 'missing' && t('clientDash.overview.docsMissingTitle')}
+                {docStatus === 'pending' && t('clientDash.overview.docsPendingTitle')}
+                {docStatus === 'rejected' && t('clientDash.overview.docsRejectedTitle')}
+              </p>
+              <p className={`text-xs mt-0.5 ${docStatus === 'pending' ? 'text-amber-700' : 'text-red-700'}`}>
+                {docStatus === 'missing' && t('clientDash.overview.docsMissingDesc')}
+                {docStatus === 'pending' && t('clientDash.overview.docsPendingDesc')}
+                {docStatus === 'rejected' && (docRejectionReason || t('clientDash.overview.docsRejectedDesc'))}
+              </p>
+            </div>
+          </div>
+          {docStatus !== 'pending' && (
+            <Link
+              to="/dashboard/profili"
+              className="text-xs font-semibold text-red-700 hover:text-red-800 whitespace-nowrap"
+            >
+              {t('clientDash.overview.uploadDocs')}
+            </Link>
+          )}
+        </div>
+      )}
+
+      {docStatus === 'verified' && (
+        <div className="mb-6 rounded-2xl border border-green-200 bg-green-50 p-4 flex items-center gap-3">
+          <ShieldCheck className="w-5 h-5 text-green-600 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-green-900">{t('clientDash.overview.docsVerifiedTitle')}</p>
+            <p className="text-xs text-green-700">{t('clientDash.overview.docsVerifiedDesc')}</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard icon={<FileText className="w-5 h-5 text-primary-600" />} bg="bg-primary-50" value={bookings.length} label={t('clientDash.overview.totalBookings')} />
@@ -228,6 +292,15 @@ export default function ClientDashboard() {
                       <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${color}`}>
                         {bookingStatusLabel(b.status, t)}
                       </span>
+                      {b.status === 'completed' && b.vehicle_id && (
+                        <Link
+                          to={`/automjetet/${b.vehicle_id}`}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+                        >
+                          <RotateCw className="w-3 h-3" />
+                          {t('clientDash.overview.rebook')}
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>

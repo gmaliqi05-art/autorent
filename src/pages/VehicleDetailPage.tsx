@@ -89,6 +89,18 @@ export default function VehicleDetailPage() {
     setAvailabilityError('');
     setCheckingAvailability(true);
 
+    const { data: docs } = await supabase
+      .from('client_documents')
+      .select('verified, license_front_url, id_document_url')
+      .eq('client_id', user.id)
+      .maybeSingle();
+
+    if (!docs || !docs.verified || (!docs.license_front_url && !docs.id_document_url)) {
+      setCheckingAvailability(false);
+      setBookingError('Duhet te ngarkoni patenten dhe ta verifikoni para se te rezervoni. Shkoni te profili juaj per te ngarkuar dokumentet.');
+      return;
+    }
+
     const { data: conflictingBookings } = await supabase
       .from('bookings')
       .select('id')
