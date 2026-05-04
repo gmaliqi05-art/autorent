@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, Star, MapPin, Calendar, Fuel, Cog, Users, DoorOpen, Gauge, Shield, CheckCircle2, Loader2, Car, Building2, Phone, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -429,8 +430,49 @@ export default function VehicleDetailPage() {
     );
   }
 
+  const vehicleTitle = `${vehicle.brand} ${vehicle.model} ${vehicle.year} - Qira${company?.city ? ' ne ' + company.city : ''} | RentaKar`;
+  const vehicleDescription = `Rezervoni ${vehicle.brand} ${vehicle.model} ${vehicle.year}${company?.city ? ' ne ' + company.city : ''} per ${vehicle.price_per_day} EUR/dite. ${vehicle.transmission === 'automatike' ? 'Automatike' : 'Manuale'}, ${vehicle.fuel_type}, ${vehicle.seats} vende. Rezervim direkt online.`;
+  const vehicleImage = vehicle.main_image_url || 'https://rentcars.life/og-image.jpg';
+  const carSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Car',
+    name: `${vehicle.brand} ${vehicle.model}`,
+    brand: vehicle.brand,
+    model: vehicle.model,
+    vehicleModelDate: vehicle.year,
+    fuelType: vehicle.fuel_type,
+    vehicleTransmission: vehicle.transmission,
+    numberOfDoors: vehicle.doors,
+    vehicleSeatingCapacity: vehicle.seats,
+    image: vehicleImage,
+    offers: {
+      '@type': 'Offer',
+      price: Number(vehicle.price_per_day),
+      priceCurrency: 'EUR',
+      availability: vehicle.is_available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    },
+    ...(company?.rating && company.rating > 0 && company.total_reviews > 0 ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: company.rating,
+        reviewCount: company.total_reviews,
+      },
+    } : {}),
+  };
+
   return (
     <div className="min-h-screen bg-gray-50/80 pt-[68px]">
+      <Helmet>
+        <title>{vehicleTitle}</title>
+        <meta name="description" content={vehicleDescription} />
+        <link rel="canonical" href={`https://rentcars.life/automjetet/${vehicle.id}`} />
+        <meta property="og:title" content={vehicleTitle} />
+        <meta property="og:description" content={vehicleDescription} />
+        <meta property="og:image" content={vehicleImage} />
+        <meta property="og:url" content={`https://rentcars.life/automjetet/${vehicle.id}`} />
+        <meta property="og:type" content="product" />
+        <script type="application/ld+json">{JSON.stringify(carSchema)}</script>
+      </Helmet>
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link to="/automjetet" className="inline-flex items-center gap-1.5 text-sm text-dark-500 hover:text-dark-900 transition-colors">

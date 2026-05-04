@@ -17,7 +17,8 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       <div className="aspect-[16/10] bg-gray-100 overflow-hidden relative">
         <img
           src={vehicle.main_image_url || 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop'}
-          alt={vehicle.brand + ' ' + vehicle.model}
+          alt={`${vehicle.brand} ${vehicle.model} ${vehicle.year}${vehicle.company?.city ? ' - qira ne ' + vehicle.company.city : ''}`}
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
         />
         <div className="absolute top-3 left-3">

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Loader2, Car, ArrowUpDown, Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import type { Vehicle, Country, City } from '../lib/types';
 import VehicleCard from '../components/vehicles/VehicleCard';
@@ -198,6 +199,13 @@ export default function VehicleListPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/80 pt-[68px]">
+      <Helmet>
+        <title>Automjete me qira - RentaKar</title>
+        <meta name="description" content="Shfletoni qindra automjete me qira nga Kosova, Shqiperia dhe Maqedonia. Filtra sipas qytetit, kategorise, transmisionit dhe cmimit." />
+        <link rel="canonical" href="https://rentcars.life/automjetet" />
+        <meta property="og:title" content="Automjete me qira - RentaKar" />
+        <meta property="og:url" content="https://rentcars.life/automjetet" />
+      </Helmet>
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h1 className="text-3xl font-bold text-dark-950 mb-2">{t('vehicles.title')}</h1>

@@ -10,6 +10,7 @@ import TrustBanner from '../components/home/TrustBanner';
 import PricingSection from '../components/home/PricingSection';
 import { useHomepageSettings } from '../lib/useHomepageSettings';
 import { supabase } from '../lib/supabase';
+import { Helmet } from 'react-helmet-async';
 
 const NearbyCompaniesMap = lazy(() => import('../components/map/NearbyCompaniesMap'));
 
@@ -20,6 +21,13 @@ export default function HomePage() {
 
   return (
     <div className="overflow-hidden">
+      <Helmet>
+        <title>RentaKar - Qira automjetesh ne Kosove, Shqiperi & Maqedoni</title>
+        <meta name="description" content="Krahasoni dhe rezervoni automjete me qira nga kompanite me te mira ne Kosove, Shqiperi dhe Maqedoni. Cmime transparente, anulim falas." />
+        <link rel="canonical" href="https://rentcars.life/" />
+        <meta property="og:title" content="RentaKar - Qira automjetesh ne Ballkan" />
+        <meta property="og:url" content="https://rentcars.life/" />
+      </Helmet>
       <HeroSection settings={settings} />
       {settings.sections.show_categories && <CategoriesSection settings={settings} />}
       {settings.sections.show_featured && <FeaturedVehicles settings={settings} />}
