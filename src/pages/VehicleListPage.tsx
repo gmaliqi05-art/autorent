@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, Loader2, Car, ArrowUpDown } from 'lucide-react';
+import { Search, SlidersHorizontal, Loader2, Car, ArrowUpDown, Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import type { Vehicle, Country, City } from '../lib/types';
@@ -18,6 +18,9 @@ type VehicleWithCompany = Vehicle & {
   }
 };
 
+const PRICE_MIN = 0;
+const PRICE_MAX = 500;
+
 export default function VehicleListPage() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -29,10 +32,13 @@ export default function VehicleListPage() {
   const [transmission, setTransmission] = useState('');
   const [fuel, setFuel] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sort, setSort] = useState('newest');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 200]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([PRICE_MIN, PRICE_MAX]);
   const [selectedCountryId, setSelectedCountryId] = useState('');
   const [selectedCityId, setSelectedCityId] = useState('');
+  const [pickupDate, setPickupDate] = useState(searchParams.get('pickup') || '');
+  const [returnDate, setReturnDate] = useState(searchParams.get('return') || '');
 
   const [countries, setCountries] = useState<Country[]>([]);
   const [cities, setCities] = useState<City[]>([]);
@@ -74,21 +80,37 @@ export default function VehicleListPage() {
   }, []);
 
   useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(searchQuery), 250);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
+
+  useEffect(() => {
     loadVehicles();
-  }, [category, transmission, fuel, sort, priceRange, selectedCountryId, selectedCityId]);
+  }, [category, transmission, fuel, sort, priceRange, selectedCountryId, selectedCityId, debouncedSearch, pickupDate, returnDate]);
 
   useEffect(() => {
     if (selectedCountryId && cities.length > 0) {
       const filtered = cities.filter((city) => city.country_id === selectedCountryId);
       setFilteredCities(filtered);
-      if (filtered.length > 0 && !filtered.find((c) => c.id === selectedCityId)) {
+      if (filtered.length > 0 && selectedCityId && !filtered.find((c) => c.id === selectedCityId)) {
         setSelectedCityId('');
       }
     } else {
       setFilteredCities([]);
-      setSelectedCityId('');
     }
   }, [selectedCountryId, cities]);
+
+  useEffect(() => {
+    const cityParam = searchParams.get('city');
+    if (cityParam && cities.length > 0 && !selectedCityId) {
+      const match = cities.find(c => c.id === cityParam)
+        || cities.find(c => c.name.toLowerCase() === cityParam.toLowerCase());
+      if (match) {
+        setSelectedCountryId(match.country_id);
+        setSelectedCityId(match.id);
+      }
+    }
+  }, [cities, searchParams]);
 
   async function loadCountries() {
     const { data: countriesData } = await supabase
@@ -123,7 +145,7 @@ export default function VehicleListPage() {
     else if (sort === 'price_desc') query = query.order('price_per_day', { ascending: false });
     else query = query.order('created_at', { ascending: false });
 
-    const { data } = await query.limit(50);
+    const { data } = await query.limit(100);
     let results = (data || []) as VehicleWithCompany[];
 
     if (selectedCountryId) {
@@ -134,12 +156,25 @@ export default function VehicleListPage() {
       results = results.filter(v => v.company?.city_id === selectedCityId);
     }
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       results = results.filter(v =>
         `${v.brand} ${v.model}`.toLowerCase().includes(q) ||
         v.category.toLowerCase().includes(q)
       );
+    }
+
+    if (pickupDate && returnDate && results.length > 0) {
+      const ids = results.map(v => v.id);
+      const { data: conflicts } = await supabase
+        .from('bookings')
+        .select('vehicle_id')
+        .in('vehicle_id', ids)
+        .in('status', ['pending', 'confirmed', 'active'])
+        .lt('pickup_date', returnDate)
+        .gt('return_date', pickupDate);
+      const blocked = new Set((conflicts || []).map(c => c.vehicle_id as string));
+      results = results.filter(v => !blocked.has(v.id));
     }
 
     setVehicles(results);
@@ -151,13 +186,15 @@ export default function VehicleListPage() {
     setTransmission('');
     setFuel('');
     setSearchQuery('');
-    setPriceRange([0, 200]);
+    setPriceRange([PRICE_MIN, PRICE_MAX]);
     setSort('newest');
     setSelectedCountryId('');
     setSelectedCityId('');
+    setPickupDate('');
+    setReturnDate('');
   }
 
-  const hasActiveFilters = category || transmission || fuel || priceRange[0] > 0 || priceRange[1] < 200 || selectedCountryId || selectedCityId;
+  const hasActiveFilters = !!(category || transmission || fuel || priceRange[0] > PRICE_MIN || priceRange[1] < PRICE_MAX || selectedCountryId || selectedCityId || pickupDate || returnDate);
 
   return (
     <div className="min-h-screen bg-gray-50/80 pt-[68px]">
@@ -189,12 +226,37 @@ export default function VehicleListPage() {
                       type="text"
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && loadVehicles()}
                       placeholder={t('vehicles.searchPlaceholder')}
                       className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 placeholder:text-dark-300 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                     />
                   </div>
                 </FilterGroup>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <FilterGroup label={t('vehicles.pickupDate', 'Marrja')}>
+                    <div className="relative">
+                      <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-dark-400 pointer-events-none" />
+                      <input
+                        type="date"
+                        value={pickupDate}
+                        onChange={e => setPickupDate(e.target.value)}
+                        className="w-full pl-8 pr-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      />
+                    </div>
+                  </FilterGroup>
+                  <FilterGroup label={t('vehicles.returnDate', 'Kthimi')}>
+                    <div className="relative">
+                      <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-dark-400 pointer-events-none" />
+                      <input
+                        type="date"
+                        value={returnDate}
+                        min={pickupDate || undefined}
+                        onChange={e => setReturnDate(e.target.value)}
+                        className="w-full pl-8 pr-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      />
+                    </div>
+                  </FilterGroup>
+                </div>
 
                 <FilterGroup label={t('vehicles.country')}>
                   <select
@@ -278,18 +340,65 @@ export default function VehicleListPage() {
                 </FilterGroup>
 
                 <FilterGroup label={t('vehicles.priceRange', { min: priceRange[0], max: priceRange[1] })}>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] text-dark-500 mb-1">Min</label>
+                      <input
+                        type="number"
+                        min={PRICE_MIN}
+                        max={priceRange[1]}
+                        step={5}
+                        value={priceRange[0]}
+                        onChange={e => {
+                          const v = Math.max(PRICE_MIN, Math.min(priceRange[1], Number(e.target.value) || 0));
+                          setPriceRange([v, priceRange[1]]);
+                        }}
+                        className="w-full px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-dark-500 mb-1">Max</label>
+                      <input
+                        type="number"
+                        min={priceRange[0]}
+                        max={PRICE_MAX}
+                        step={5}
+                        value={priceRange[1]}
+                        onChange={e => {
+                          const v = Math.min(PRICE_MAX, Math.max(priceRange[0], Number(e.target.value) || 0));
+                          setPriceRange([priceRange[0], v]);
+                        }}
+                        className="w-full px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                      />
+                    </div>
+                  </div>
                   <input
                     type="range"
-                    min={0}
-                    max={200}
+                    min={PRICE_MIN}
+                    max={PRICE_MAX}
+                    step={5}
+                    value={priceRange[0]}
+                    onChange={e => {
+                      const v = Math.min(priceRange[1], Number(e.target.value));
+                      setPriceRange([v, priceRange[1]]);
+                    }}
+                    className="w-full accent-primary-600 mt-2"
+                  />
+                  <input
+                    type="range"
+                    min={PRICE_MIN}
+                    max={PRICE_MAX}
                     step={5}
                     value={priceRange[1]}
-                    onChange={e => setPriceRange([priceRange[0], Number(e.target.value)])}
+                    onChange={e => {
+                      const v = Math.max(priceRange[0], Number(e.target.value));
+                      setPriceRange([priceRange[0], v]);
+                    }}
                     className="w-full accent-primary-600"
                   />
                   <div className="flex justify-between text-[10px] text-dark-400 mt-1">
-                    <span>0EUR</span>
-                    <span>200EUR</span>
+                    <span>{PRICE_MIN}EUR</span>
+                    <span>{PRICE_MAX}EUR</span>
                   </div>
                 </FilterGroup>
               </div>

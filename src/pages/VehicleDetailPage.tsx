@@ -18,7 +18,7 @@ export default function VehicleDetailPage() {
   const { user, profile } = useAuth();
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
-  const [, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = (() => {
@@ -493,6 +493,46 @@ export default function VehicleDetailPage() {
                 </div>
               )}
             </div>
+
+            {reviews.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-dark-950">
+                    Vleresimet e klienteve ({company?.total_reviews || reviews.length})
+                  </h3>
+                  {company?.rating && company.rating > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <Star className="w-4 h-4 fill-accent-500 text-accent-500" />
+                      <span className="font-bold text-dark-900">{company.rating.toFixed(1)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-4">
+                  {reviews.map(r => (
+                    <div key={r.id} className="border-b border-gray-50 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-center gap-1 mb-1.5">
+                        {[1,2,3,4,5].map(star => (
+                          <Star
+                            key={star}
+                            className={`w-3.5 h-3.5 ${
+                              star <= r.rating
+                                ? 'fill-accent-500 text-accent-500'
+                                : 'text-gray-200'
+                            }`}
+                          />
+                        ))}
+                        <span className="text-xs text-dark-400 ml-2">
+                          {new Date(r.created_at).toLocaleDateString('sq-AL')}
+                        </span>
+                      </div>
+                      {r.comment && (
+                        <p className="text-sm text-dark-700 leading-relaxed">{r.comment}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {company && (
               <div className="bg-white rounded-2xl border border-gray-100 p-6">

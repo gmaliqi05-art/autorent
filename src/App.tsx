@@ -5,6 +5,7 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ChatWidget from './components/chat/ChatWidget';
+import CookieConsent from './components/CookieConsent';
 import HomePage from './pages/HomePage';
 import VehicleListPage from './pages/VehicleListPage';
 import VehicleDetailPage from './pages/VehicleDetailPage';
@@ -144,6 +145,7 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <ChatWidget />
+        <CookieConsent />
       </AuthProvider>
     </BrowserRouter>
   );

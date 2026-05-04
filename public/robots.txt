@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /kompania/
+Disallow: /login
+Disallow: /kycu
+Disallow: /regjistrohu
+Disallow: /forgot-password
+
+Sitemap: https://rentcars.life/sitemap.xml
