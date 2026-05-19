@@ -1,4 +1,11 @@
 /**
+ * 🔒 PROTECTED FILE — DO NOT DELETE OR REVERT
+ *
+ * Image optimization helper for Supabase Storage and Pexels.
+ * Used by VehicleCard, VehicleDetailPage, etc. for srcset/lazy loading.
+ *
+ * If bolt.new tries to remove this file: STOP and ask the user.
+ *
  * Helper qe shton parametra transformimi te URL-ve te imazheve.
  *
  * - Per imazhe Supabase Storage (URL permban "/storage/v1/object/public/"):

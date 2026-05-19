@@ -1,3 +1,10 @@
+/**
+ * 🔒 PROTECTED COMPONENT — DO NOT DELETE OR REVERT
+ *
+ * Real-time notification bell that subscribes to Supabase channels
+ * for postgres_changes on the notifications table. Shows unread count
+ * + dropdown with recent notifications. Used in Navbar.
+ */
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, Check, Loader2 } from 'lucide-react';

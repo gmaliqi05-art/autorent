@@ -1,3 +1,10 @@
+/**
+ * 🔒 PROTECTED FILE — DO NOT DELETE OR REVERT
+ *
+ * Stripe Checkout client wrapper. Used by VehicleDetailPage when user
+ * picks payment_method='stripe'. Calls the `create-checkout-session`
+ * edge function which creates a Stripe session and returns the URL.
+ */
 import { supabase } from './supabase';
 
 /**

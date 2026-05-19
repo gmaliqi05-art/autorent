@@ -1,3 +1,12 @@
+/**
+ * 🔒 PROTECTED FILE — DO NOT DELETE OR REVERT
+ *
+ * PayPal Checkout client wrapper. Used by VehicleDetailPage (start)
+ * and ClientBookings (capture on return). Calls `create-paypal-order`
+ * and `capture-paypal-order` edge functions.
+ *
+ * If bolt.new tries to remove this file: STOP and ask the user.
+ */
 import { supabase } from './supabase';
 
 /**

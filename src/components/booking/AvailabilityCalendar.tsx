@@ -1,3 +1,10 @@
+/**
+ * 🔒 PROTECTED COMPONENT — DO NOT DELETE OR REVERT
+ *
+ * Visual availability calendar that shows blocked dates for a vehicle.
+ * Uses RPC `vehicle_blocked_dates` to fetch booked + maintenance windows.
+ * Used by VehicleDetailPage to replace basic date inputs.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';

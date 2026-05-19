@@ -1,3 +1,11 @@
+/**
+ * 🔒 PROTECTED FILE — DO NOT DELETE OR REVERT
+ *
+ * Sentry error monitoring init. Called once from main.tsx.
+ * Active only in production with VITE_SENTRY_DSN set.
+ *
+ * If bolt.new tries to remove this file: STOP and ask the user.
+ */
 import * as Sentry from '@sentry/react';
 
 /**

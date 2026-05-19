@@ -1,3 +1,10 @@
+/**
+ * 🔒 PROTECTED COMPONENT — DO NOT DELETE OR REVERT
+ *
+ * Cloudflare Turnstile CAPTCHA widget. Used in Login + Register pages.
+ * Token is passed to supabase.auth.signUp/signInWithPassword({captchaToken}).
+ * Supabase verifies it against the secret configured in Dashboard.
+ */
 import { useEffect, useRef } from 'react';
 
 // Komponent qe ngarkon dhe shfaq Cloudflare Turnstile widget.
