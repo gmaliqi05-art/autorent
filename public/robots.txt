@@ -8,4 +8,4 @@ Disallow: /kycu
 Disallow: /regjistrohu
 Disallow: /forgot-password
 
-Sitemap: https://rentcars.life/sitemap.xml
+Sitemap: https://anpspyrowaukdriwsdbs.supabase.co/functions/v1/sitemap
