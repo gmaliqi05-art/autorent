@@ -32,9 +32,9 @@ export default function AdminHomepage() {
   const [uploadingHero, setUploadingHero] = useState(false);
   const [uploadingHeroMobile, setUploadingHeroMobile] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const heroFileRef = useRef<HTMLInputElement>(null);
-  const heroMobileFileRef = useRef<HTMLInputElement>(null);
-  const logoFileRef = useRef<HTMLInputElement>(null);
+  const heroFileRef = useRef<HTMLInputElement | null>(null);
+  const heroMobileFileRef = useRef<HTMLInputElement | null>(null);
+  const logoFileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -320,7 +320,7 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
               {uploadingHero ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
               {uploadingHero ? 'Duke ngarkuar...' : 'Ngarko foto'}
             </button>
-            <input ref={heroFileRef} type="file" accept="image/*" className="hidden" onChange={onUpload} />
+            <input ref={heroFileRef as React.LegacyRef<HTMLInputElement>} type="file" accept="image/*" className="hidden" onChange={onUpload} />
             <input
               type="text"
               value={hero.image_url}
@@ -401,7 +401,7 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
               {uploadingHeroMobile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
               {uploadingHeroMobile ? 'Duke ngarkuar...' : 'Ngarko foto mobile'}
             </button>
-            <input ref={heroMobileFileRef} type="file" accept="image/*" className="hidden" onChange={onUploadMobile} />
+            <input ref={heroMobileFileRef as React.LegacyRef<HTMLInputElement>} type="file" accept="image/*" className="hidden" onChange={onUploadMobile} />
             <input
               type="text"
               value={hero.image_url_mobile || ''}
@@ -582,7 +582,7 @@ function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, input
                   {uploadingLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                   {uploadingLogo ? 'Duke ngarkuar...' : 'Ngarko logon'}
                 </button>
-                <input ref={logoFileRef} type="file" accept="image/*" className="hidden" onChange={onUpload} />
+                <input ref={logoFileRef as React.LegacyRef<HTMLInputElement>} type="file" accept="image/*" className="hidden" onChange={onUpload} />
                 <p className="text-xs text-dark-400 mt-1.5">PNG me sfond transparent rekomandohet. Maks: 5MB</p>
               </div>
               <div>
@@ -823,14 +823,17 @@ function SectionsEditor({ sections, setSections, inputClass, labelClass }: Secti
                 onChange={v => setSections(s => ({ ...s, [item.key]: v }))}
                 label={item.label}
               />
-              {'titleKey' in item && sections[item.key] && (
+              {'titleKey' in item && 'subtitleKey' in item && sections[item.key] && (() => {
+                const titleKey = item.titleKey as keyof SectionsSettings;
+                const subtitleKey = item.subtitleKey as keyof SectionsSettings;
+                return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 ml-12">
                   <div>
                     <label className="block text-xs font-medium text-dark-500 mb-1">Titulli kryesor</label>
                     <input
                       type="text"
-                      value={sections[item.titleKey]}
-                      onChange={e => setSections(s => ({ ...s, [item.titleKey]: e.target.value }))}
+                      value={String(sections[titleKey] ?? '')}
+                      onChange={e => setSections(s => ({ ...s, [titleKey]: e.target.value }))}
                       className={inputClass}
                     />
                   </div>
@@ -838,13 +841,14 @@ function SectionsEditor({ sections, setSections, inputClass, labelClass }: Secti
                     <label className="block text-xs font-medium text-dark-500 mb-1">Nëntitulli (badge sipër)</label>
                     <input
                       type="text"
-                      value={sections[item.subtitleKey]}
-                      onChange={e => setSections(s => ({ ...s, [item.subtitleKey]: e.target.value }))}
+                      value={String(sections[subtitleKey] ?? '')}
+                      onChange={e => setSections(s => ({ ...s, [subtitleKey]: e.target.value }))}
                       className={inputClass}
                     />
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </div>
           ))}
         </div>

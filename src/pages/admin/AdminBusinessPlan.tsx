@@ -90,7 +90,7 @@ export default function AdminBusinessPlan() {
             <button onClick={loadData} className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium">
               <RefreshCw className="w-4 h-4" />Perditeso
             </button>
-            <button onClick={() => exportToCSV(monthlyData, 'business_plan')}
+            <button onClick={() => exportToCSV(monthlyData as unknown as Record<string, unknown>[], 'business_plan')}
               className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
               <Download className="w-4 h-4" />Eksporto
             </button>
