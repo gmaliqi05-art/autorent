@@ -55,16 +55,22 @@ Deno.serve(async (req: Request) => {
     return new Response("Method not allowed", { status: 405 });
   }
 
-  // Verifiko cron secret
-  const expectedSecret = Deno.env.get("CRON_SECRET");
-  const providedSecret = req.headers.get("x-cron-secret");
-  if (!expectedSecret || providedSecret !== expectedSecret) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
+
+  // Verifiko cron secret kunder Vault (jo env var) — me siguri
+  const providedSecret = req.headers.get("x-cron-secret");
+  if (!providedSecret) {
+    return new Response("Missing x-cron-secret header", { status: 401 });
+  }
+  const { data: isValid, error: verifyErr } = await supabase.rpc(
+    "is_cron_secret_valid",
+    { p_secret: providedSecret },
+  );
+  if (verifyErr || !isValid) {
+    return new Response("Unauthorized", { status: 401 });
+  }
 
   const now = new Date();
   const today = now.toISOString().split("T")[0];
