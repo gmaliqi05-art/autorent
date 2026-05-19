@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import type { SubscriptionPlan, Country, City } from '../lib/types';
+import TurnstileWidget from '../components/auth/TurnstileWidget';
 
 type TabType = 'client' | 'company';
 type BillingCycle = 'monthly' | 'yearly';
@@ -43,6 +44,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
 
   useEffect(() => {
     if (user && profile && !success) {
@@ -148,6 +150,10 @@ export default function RegisterPage() {
       setError(t('auth.passwordMin'));
       return;
     }
+    if (!captchaToken) {
+      setError(t('auth.captchaRequired') || 'Plotesoni verifikimin CAPTCHA');
+      return;
+    }
 
     setLoading(true);
 
@@ -188,6 +194,7 @@ export default function RegisterPage() {
         countryId: selectedCountryId,
         subscriptionPlanId: selectedPlanId || undefined,
         billingCycle: billing,
+        captchaToken,
       });
 
       if (result.error) {
@@ -199,7 +206,7 @@ export default function RegisterPage() {
       setLoading(false);
       setTimeout(() => navigate('/kompania'), 1500);
     } else {
-      const result = await signUp(email, password, fullName, selectedCountryId || undefined, selectedCityId || undefined);
+      const result = await signUp(email, password, fullName, selectedCountryId || undefined, selectedCityId || undefined, captchaToken);
       if (result.error) {
         setError(result.error);
         setLoading(false);
@@ -604,9 +611,16 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                <TurnstileWidget
+                  onVerify={setCaptchaToken}
+                  onExpire={() => setCaptchaToken('')}
+                  onError={() => setCaptchaToken('')}
+                  action="register"
+                />
+
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !captchaToken}
                   className="w-full py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-sm shadow-primary-600/20 active:scale-[0.98]"
                 >
                   {loading && <Loader2 className="w-4 h-4 animate-spin" />}

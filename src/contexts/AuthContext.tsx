@@ -17,6 +17,7 @@ interface CompanySignUpData {
   countryId?: string;
   subscriptionPlanId?: string;
   billingCycle?: 'monthly' | 'yearly';
+  captchaToken?: string;
 }
 
 interface AuthContextType {
@@ -25,9 +26,9 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   profileLoading: boolean;
-  signUp: (email: string, password: string, fullName: string, countryId?: string, cityId?: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, fullName: string, countryId?: string, cityId?: string, captchaToken?: string) => Promise<{ error: string | null }>;
   signUpCompany: (data: CompanySignUpData) => Promise<{ error: string | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string, captchaToken?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -83,11 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  async function signUp(email: string, password: string, fullName: string, countryId?: string, cityId?: string) {
+  async function signUp(email: string, password: string, fullName: string, countryId?: string, cityId?: string, captchaToken?: string) {
     const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: { full_name: fullName },
+        ...(captchaToken && captchaToken !== 'dev-mode' ? { captchaToken } : {}),
+      },
     });
     if (error) return { error: error.message };
 
@@ -113,7 +117,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: { data: { full_name: data.fullName } },
+      options: {
+        data: { full_name: data.fullName },
+        ...(data.captchaToken && data.captchaToken !== 'dev-mode' ? { captchaToken: data.captchaToken } : {}),
+      },
     });
     if (authError) return { error: authError.message };
     if (!authData.user) return { error: 'Regjistrimi deshtoi.' };
@@ -145,8 +152,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   }
 
-  async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  async function signIn(email: string, password: string, captchaToken?: string) {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      ...(captchaToken && captchaToken !== 'dev-mode' ? { options: { captchaToken } } : {}),
+    });
     if (error) return { error: error.message };
     return { error: null };
   }

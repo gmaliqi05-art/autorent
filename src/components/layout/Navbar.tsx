@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useHomepageSettings } from '../../lib/useHomepageSettings';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../LanguageSwitcher';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
   const { user, profile, signOut } = useAuth();
@@ -57,6 +58,8 @@ export default function Navbar() {
 
           <div className="flex items-center gap-1 sm:gap-2">
             <LanguageSwitcher variant={isTransparent ? 'navbar-dark' : 'navbar'} />
+
+            {user && <NotificationBell isTransparent={isTransparent} />}
 
             {user ? (
               <div className="relative">
