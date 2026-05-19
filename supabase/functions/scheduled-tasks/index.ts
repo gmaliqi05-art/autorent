@@ -1,0 +1,226 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+
+// Edge Function qe ekzekuton task-e te skeduluara.
+// Thirret nga pg_cron cdo 15 minuta (ose me shpesh).
+// Verifikon header X-Cron-Secret per t'u siguruar qe vetem cron mund ta thrresi.
+//
+// Deploy: `supabase functions deploy scheduled-tasks --no-verify-jwt`
+// (perdor verifikim me secret te brendshem ne vend te JWT)
+
+interface Booking {
+  id: string;
+  client_id: string;
+  company_id: string;
+  vehicle_id: string;
+  pickup_date: string;
+  return_date: string;
+  status: string;
+  payment_status: string;
+  total_price: number;
+  client_name: string;
+  client_email: string;
+  client_phone: string;
+  created_at: string;
+}
+
+interface Vehicle {
+  brand: string;
+  model: string;
+}
+
+interface Company {
+  name: string;
+  phone: string;
+  email: string;
+  city: string;
+}
+
+async function callSendEmail(supabase: ReturnType<typeof createClient>, params: {
+  recipientEmail: string;
+  recipientName: string;
+  emailType: string;
+  templateData: Record<string, unknown>;
+  referenceId?: string;
+  referenceType?: string;
+}) {
+  // Therrasim direkt funksionin send-email permes pg
+  const { error } = await supabase.functions.invoke("send-email", { body: params });
+  if (error) console.error("send-email failed:", error);
+}
+
+Deno.serve(async (req: Request) => {
+  // Vetem POST
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
+
+  // Verifiko cron secret
+  const expectedSecret = Deno.env.get("CRON_SECRET");
+  const providedSecret = req.headers.get("x-cron-secret");
+  if (!expectedSecret || providedSecret !== expectedSecret) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+  const tomorrowDate = new Date(now);
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = tomorrowDate.toISOString().split("T")[0];
+
+  const results = {
+    reminders_sent: 0,
+    auto_cancelled: 0,
+    activated: 0,
+    completed: 0,
+    errors: [] as string[],
+  };
+
+  // ===== 1. Pickup reminders 24h before =====
+  try {
+    const { data: upcoming } = await supabase
+      .from("bookings")
+      .select(`
+        id, client_id, company_id, vehicle_id, pickup_date, return_date,
+        status, payment_status, total_price, deposit_amount,
+        client_name, client_email, client_phone,
+        vehicle:vehicles(brand, model),
+        company:companies(name, phone, email, city)
+      `)
+      .eq("status", "confirmed")
+      .eq("pickup_date", tomorrow)
+      .is("pickup_reminder_sent_at", null);
+
+    for (const b of (upcoming || [])) {
+      // deno-lint-ignore no-explicit-any
+      const booking = b as any as Booking & { vehicle: Vehicle; company: Company; deposit_amount: number };
+      try {
+        await callSendEmail(supabase, {
+          recipientEmail: booking.client_email,
+          recipientName: booking.client_name,
+          emailType: "pickup_reminder",
+          templateData: {
+            vehicleName: `${booking.vehicle?.brand} ${booking.vehicle?.model}`,
+            companyName: booking.company?.name || "",
+            companyPhone: booking.company?.phone || "",
+            pickupDate: new Date(booking.pickup_date).toLocaleDateString("sq-AL"),
+            pickupTime: "Sipas marreveshjes",
+            pickupLocation: booking.company?.city || "",
+            deposit: booking.deposit_amount || 0,
+          },
+          referenceId: booking.id,
+          referenceType: "booking",
+        });
+        await supabase
+          .from("bookings")
+          .update({ pickup_reminder_sent_at: new Date().toISOString() })
+          .eq("id", booking.id);
+        results.reminders_sent++;
+      } catch (e) {
+        results.errors.push(`reminder ${booking.id}: ${(e as Error).message}`);
+      }
+    }
+  } catch (e) {
+    results.errors.push(`reminders block: ${(e as Error).message}`);
+  }
+
+  // ===== 2. Auto-cancel pending bookings older than 48h =====
+  try {
+    const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
+    const { data: stale } = await supabase
+      .from("bookings")
+      .select("id, client_id, client_email, client_name, vehicle:vehicles(brand, model)")
+      .eq("status", "pending")
+      .lt("created_at", cutoff);
+
+    for (const b of (stale || [])) {
+      // deno-lint-ignore no-explicit-any
+      const booking = b as any;
+      try {
+        await supabase
+          .from("bookings")
+          .update({
+            status: "cancelled",
+            cancelled_at: new Date().toISOString(),
+            cancelled_by: null,
+            internal_notes: "Auto-cancelled: pending mbi 48h pa konfirmim",
+          })
+          .eq("id", booking.id);
+
+        await callSendEmail(supabase, {
+          recipientEmail: booking.client_email,
+          recipientName: booking.client_name,
+          emailType: "booking_cancelled",
+          templateData: {
+            vehicleName: `${booking.vehicle?.brand} ${booking.vehicle?.model}`,
+            cancelDate: new Date().toLocaleDateString("sq-AL"),
+          },
+          referenceId: booking.id,
+          referenceType: "booking",
+        });
+        results.auto_cancelled++;
+      } catch (e) {
+        results.errors.push(`auto-cancel ${booking.id}: ${(e as Error).message}`);
+      }
+    }
+  } catch (e) {
+    results.errors.push(`auto-cancel block: ${(e as Error).message}`);
+  }
+
+  // ===== 3. Activate confirmed bookings on pickup day =====
+  try {
+    const { data: activating, error: actErr } = await supabase
+      .from("bookings")
+      .update({ status: "active" })
+      .eq("status", "confirmed")
+      .lte("pickup_date", today)
+      .select("id");
+    if (actErr) throw actErr;
+    results.activated = activating?.length || 0;
+  } catch (e) {
+    results.errors.push(`activate block: ${(e as Error).message}`);
+  }
+
+  // ===== 4. Complete active bookings after return date =====
+  try {
+    const { data: completing, error: cmpErr } = await supabase
+      .from("bookings")
+      .update({ status: "completed" })
+      .eq("status", "active")
+      .lt("return_date", today)
+      .select("id, client_id, client_email, client_name, vehicle:vehicles(brand, model), pickup_date, return_date");
+    if (cmpErr) throw cmpErr;
+    results.completed = completing?.length || 0;
+
+    // Dergo email kerkim recensioni
+    for (const b of (completing || [])) {
+      // deno-lint-ignore no-explicit-any
+      const booking = b as any;
+      try {
+        await callSendEmail(supabase, {
+          recipientEmail: booking.client_email,
+          recipientName: booking.client_name,
+          emailType: "review_request",
+          templateData: {
+            vehicleName: `${booking.vehicle?.brand} ${booking.vehicle?.model}`,
+          },
+          referenceId: booking.id,
+          referenceType: "booking",
+        });
+      } catch (e) {
+        results.errors.push(`review-req ${booking.id}: ${(e as Error).message}`);
+      }
+    }
+  } catch (e) {
+    results.errors.push(`complete block: ${(e as Error).message}`);
+  }
+
+  return new Response(JSON.stringify({ ok: true, ...results }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+});

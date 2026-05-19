@@ -105,7 +105,7 @@ export default function ClientBookings() {
 
   const pendingPaymentsTotal = useMemo(
     () => bookings
-      .filter(b => b.payment_status === 'pending' && b.status !== 'cancelled' && b.status !== 'rejected')
+      .filter(b => b.payment_status === 'pending' && b.status !== 'cancelled')
       .reduce((sum, b) => sum + Number(b.total_price || 0), 0),
     [bookings]
   );
