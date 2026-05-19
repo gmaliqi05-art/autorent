@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarDays, Car, FileText, MapPin, Loader2, CreditCard, Wallet, Building, Banknote, Download, AlertTriangle, ChevronLeft, ChevronRight, Star, X, CheckCircle2, Search, RotateCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { capturePaypalOrder } from '../../lib/paypalService';
 import type { Booking, Vehicle, Company } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { clientNavItems } from '../../lib/clientNav';
@@ -60,10 +61,41 @@ export default function ClientBookings() {
     t('clientDash.bookings.ratingExcellent'),
   ];
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [paypalCapturing, setPaypalCapturing] = useState(false);
+  const [paypalMessage, setPaypalMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   useEffect(() => {
     if (!user) return;
     loadBookings();
   }, [user]);
+
+  // Handle PayPal return: kur user kthehet me ?paypal=return&token=<orderId>, capture
+  useEffect(() => {
+    if (!user) return;
+    const paypal = searchParams.get('paypal');
+    const token = searchParams.get('token');
+    if (paypal === 'return' && token) {
+      setPaypalCapturing(true);
+      capturePaypalOrder(token).then((res) => {
+        setPaypalCapturing(false);
+        if (res.error) {
+          setPaypalMessage({ type: 'error', text: `Pagesa PayPal deshtoi: ${res.error}` });
+        } else {
+          setPaypalMessage({ type: 'success', text: 'Pagesa juaj me PayPal u perfundua me sukses!' });
+          loadBookings();
+        }
+        // Pastro params nga URL
+        setSearchParams({}, { replace: true });
+        setTimeout(() => setPaypalMessage(null), 6000);
+      });
+    } else if (paypal === 'cancelled') {
+      setPaypalMessage({ type: 'error', text: 'Pagesa PayPal u anulua.' });
+      setSearchParams({}, { replace: true });
+      setTimeout(() => setPaypalMessage(null), 5000);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, searchParams]);
 
   async function loadBookings() {
     setLoading(true);
@@ -105,7 +137,7 @@ export default function ClientBookings() {
 
   const pendingPaymentsTotal = useMemo(
     () => bookings
-      .filter(b => b.payment_status === 'pending' && b.status !== 'cancelled' && b.status !== 'rejected')
+      .filter(b => b.payment_status === 'pending' && b.status !== 'cancelled')
       .reduce((sum, b) => sum + Number(b.total_price || 0), 0),
     [bookings]
   );
@@ -192,6 +224,27 @@ export default function ClientBookings() {
     <DashboardLayout title={t('clientNav.bookings')} navItems={clientNavItems}>
       <h1 className="text-2xl font-bold text-dark-950 mb-1">{t('clientDash.bookings.title')}</h1>
       <p className="text-dark-500 mb-6 text-[15px]">{t('clientDash.bookings.subtitle')}</p>
+
+      {paypalCapturing && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3">
+          <Loader2 className="w-5 h-5 text-blue-600 animate-spin shrink-0" />
+          <p className="text-sm text-blue-700 font-medium">Duke perfunduar pagesen me PayPal...</p>
+        </div>
+      )}
+
+      {paypalMessage && (
+        <div className={`mb-4 border rounded-xl p-4 flex items-center gap-3 ${
+          paypalMessage.type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+        }`}>
+          {paypalMessage.type === 'success'
+            ? <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+            : <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+          }
+          <p className={`text-sm font-medium ${paypalMessage.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
+            {paypalMessage.text}
+          </p>
+        </div>
+      )}
 
       {pendingPaymentsTotal > 0 && (
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between gap-4">

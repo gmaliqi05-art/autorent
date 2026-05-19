@@ -17,6 +17,7 @@ interface CompanySignUpData {
   countryId?: string;
   subscriptionPlanId?: string;
   billingCycle?: 'monthly' | 'yearly';
+  captchaToken?: string;
 }
 
 interface AuthContextType {
@@ -25,9 +26,9 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   profileLoading: boolean;
-  signUp: (email: string, password: string, fullName: string, countryId?: string, cityId?: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, fullName: string, countryId?: string, cityId?: string, captchaToken?: string) => Promise<{ error: string | null }>;
   signUpCompany: (data: CompanySignUpData) => Promise<{ error: string | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string, captchaToken?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -83,11 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  async function signUp(email: string, password: string, fullName: string, countryId?: string, cityId?: string) {
+  async function signUp(email: string, password: string, fullName: string, countryId?: string, cityId?: string, captchaToken?: string) {
     const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: { full_name: fullName },
+        ...(captchaToken && captchaToken !== 'dev-mode' ? { captchaToken } : {}),
+      },
     });
     if (error) return { error: error.message };
 
@@ -113,66 +117,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: { data: { full_name: data.fullName } },
+      options: {
+        data: { full_name: data.fullName },
+        ...(data.captchaToken && data.captchaToken !== 'dev-mode' ? { captchaToken: data.captchaToken } : {}),
+      },
     });
     if (authError) return { error: authError.message };
     if (!authData.user) return { error: 'Regjistrimi deshtoi.' };
 
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ role: 'company_admin', phone: data.phone })
-      .eq('id', authData.user.id);
-    if (profileError) return { error: profileError.message };
+    // Thirr RPC-n atomike — ben update profile.role + insert company ne nje transaksion
+    const { data: companyData, error: rpcError } = await supabase.rpc('create_company_for_current_user', {
+      p_name: data.companyName,
+      p_phone: data.phone,
+      p_email: data.email,
+      p_city: data.city,
+      p_country: data.country,
+      p_city_id: data.cityId ?? null,
+      p_country_id: data.countryId ?? null,
+      p_subscription_plan_id: data.subscriptionPlanId ?? null,
+      p_billing_cycle: data.billingCycle || 'monthly',
+    });
 
-    const slug = data.companyName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-
-    const companyInsert: Record<string, unknown> = {
-      owner_id: authData.user.id,
-      name: data.companyName,
-      slug: `${slug}-${Date.now()}`,
-      phone: data.phone,
-      email: data.email,
-      city: data.city,
-      country: data.country,
-    };
-    if (data.countryId) {
-      companyInsert.country_id = data.countryId;
-    }
-    if (data.cityId) {
-      companyInsert.city_id = data.cityId;
-    }
-    if (data.subscriptionPlanId) {
-      const cycle = data.billingCycle || 'monthly';
-      const now = new Date();
-      const expiresAt = new Date(now);
-      if (cycle === 'yearly') {
-        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-      } else {
-        expiresAt.setMonth(expiresAt.getMonth() + 1);
-      }
-      companyInsert.subscription_plan_id = data.subscriptionPlanId;
-      companyInsert.subscription_status = 'active';
-      companyInsert.subscription_billing_cycle = cycle;
-      companyInsert.subscription_expires_at = expiresAt.toISOString();
-      companyInsert.subscription_renewed_at = now.toISOString();
-      companyInsert.subscription_auto_renew = true;
-    }
-
-    const { data: companyData, error: companyError } = await supabase
-      .from('companies')
-      .insert(companyInsert)
-      .select()
-      .single();
-    if (companyError) return { error: companyError.message };
+    if (rpcError) return { error: rpcError.message };
 
     if (companyData) {
       await sendWelcomeCompanyEmail(
         data.email,
         data.companyName,
-        companyData.id
+        (companyData as { id: string }).id
       );
     }
 
@@ -180,8 +152,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   }
 
-  async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  async function signIn(email: string, password: string, captchaToken?: string) {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      ...(captchaToken && captchaToken !== 'dev-mode' ? { options: { captchaToken } } : {}),
+    });
     if (error) return { error: error.message };
     return { error: null };
   }

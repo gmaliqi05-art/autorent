@@ -11,6 +11,13 @@ dist
 dist-ssr
 *.local
 
+# Vite dev artifacts (bolt-generated)
+vite.config.ts.timestamp-*.mjs
+*.timestamp-*.mjs
+
+# Test coverage
+coverage/
+
 .vscode/*
 !.vscode/extensions.json
 .idea

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Fuel, Users, Cog, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Vehicle } from '../../lib/types';
+import { getOptimizedImageUrl } from '../../lib/imageOptimizer';
 
 interface VehicleCardProps {
   vehicle: Vehicle & { company?: { id: string; name: string; slug: string; city: string; rating: number } };
@@ -16,9 +17,16 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     >
       <div className="aspect-[16/10] bg-gray-100 overflow-hidden relative">
         <img
-          src={vehicle.main_image_url || 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop'}
+          src={getOptimizedImageUrl(
+            vehicle.main_image_url || 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg',
+            { width: 600, height: 400, quality: 75 },
+          )}
+          srcSet={`${getOptimizedImageUrl(vehicle.main_image_url || 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg', { width: 600, height: 400, quality: 75 })} 1x, ${getOptimizedImageUrl(vehicle.main_image_url || 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg', { width: 1200, height: 800, quality: 75 })} 2x`}
           alt={`${vehicle.brand} ${vehicle.model} ${vehicle.year}${vehicle.company?.city ? ' - qira ne ' + vehicle.company.city : ''}`}
           loading="lazy"
+          decoding="async"
+          width={600}
+          height={400}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
         />
         <div className="absolute top-3 left-3">

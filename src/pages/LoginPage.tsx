@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Car, Eye, EyeOff, Loader2, Shield, Building2, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
+import TurnstileWidget from '../components/auth/TurnstileWidget';
 
 export default function LoginPage() {
   const { signIn, user, profile } = useAuth();
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
 
   useEffect(() => {
     if (user && profile) {
@@ -23,9 +25,13 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!captchaToken) {
+      setError(t('auth.captchaRequired') || 'Plotesoni verifikimin CAPTCHA');
+      return;
+    }
     setError('');
     setLoading(true);
-    const result = await signIn(email, password);
+    const result = await signIn(email, password, captchaToken);
     if (result.error) {
       setError(t('auth.loginError'));
       setLoading(false);
@@ -109,9 +115,17 @@ export default function LoginPage() {
                 {t('auth.forgotPassword')}
               </Link>
             </div>
+
+            <TurnstileWidget
+              onVerify={setCaptchaToken}
+              onExpire={() => setCaptchaToken('')}
+              onError={() => setCaptchaToken('')}
+              action="login"
+            />
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !captchaToken}
               className="w-full py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-sm shadow-primary-600/20 active:scale-[0.98]"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}

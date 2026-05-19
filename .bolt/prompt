@@ -3,3 +3,66 @@ For all designs I ask you to make, have them be beautiful, not cookie cutter. Ma
 By default, this template supports JSX syntax with Tailwind CSS classes, React hooks, and Lucide React for icons. Do not install other packages for UI themes, icons, etc unless absolutely necessary or I request them.
 
 Use icons from lucide-react for logos.
+
+# CRITICAL — DO NOT DELETE OR REVERT THESE FILES
+
+This project has production-grade integrations that MUST be preserved. NEVER delete or revert these files unless I explicitly ask you to:
+
+## Edge Functions (supabase/functions/)
+- `_shared/cors.ts` — strict CORS allowlist helper (used by all functions)
+- `_shared/rateLimit.ts` — Postgres-backed rate limiter
+- `send-email/index.ts` — Resend integration (real email sending)
+- `delete-account/index.ts` — anonymizes bookings, deletes user
+- `create-checkout-session/index.ts` — Stripe Checkout
+- `stripe-webhook/index.ts` — Stripe webhook handler (no-JWT verification)
+- `create-paypal-order/index.ts` — PayPal order creation
+- `capture-paypal-order/index.ts` — PayPal capture after approval
+- `scheduled-tasks/index.ts` — cron tasks (reminders, auto-cancel, transitions)
+- `sitemap/index.ts` — dynamic sitemap.xml generator
+
+## Frontend libs (src/lib/)
+- `stripeService.ts` — client-side Stripe wrapper
+- `paypalService.ts` — client-side PayPal wrapper
+- `sentry.ts` — Sentry error monitoring init
+- `imageOptimizer.ts` — image transformation helper
+
+## Components
+- `src/components/booking/AvailabilityCalendar.tsx` — visual date picker with blocked dates
+- `src/components/booking/PaymentMethodSelector.tsx` — KEEP the dynamic bank account loading
+- `src/components/auth/TurnstileWidget.tsx` — Cloudflare Turnstile CAPTCHA
+- `src/components/layout/NotificationBell.tsx` — real-time Supabase notifications
+
+## Database migrations (supabase/migrations/)
+NEVER delete any migration file. Migrations are append-only history.
+Key recent migrations to preserve:
+- `20260519120000_security_hardening_role_and_atomic_signup.sql`
+- `20260519130000_create_bank_accounts_table.sql`
+- `20260519140000_review_rating_aggregates.sql`
+- `20260519150000_vehicle_blocked_dates_rpc.sql`
+- `20260519160000_setup_cron_for_scheduled_tasks.sql`
+- `20260519170000_activate_cron_with_vault_secret.sql`
+- `20260519180000_enable_realtime_notifications.sql`
+- `20260519190000_rate_limiter.sql`
+- `20260519200000_add_paypal_columns.sql`
+
+## Config files — DO NOT REVERT
+- `.env.example` — documents all required env vars (Resend, Stripe, PayPal, Turnstile, Sentry)
+- `tsconfig.app.json` — `noUnusedLocals` and `noUnusedParameters` are intentionally `false`
+- `public/robots.txt` — Sitemap line points to Supabase Edge Function (NOT a static file)
+- `vitest.config.ts` — test configuration
+- `.github/workflows/ci.yml` — CI pipeline
+- `src/test/setup.ts` — test setup
+
+## DO NOT
+- Do NOT create or restore `public/sitemap.xml` (the static sitemap is replaced by an edge function)
+- Do NOT revert `src/contexts/AuthContext.tsx` `signUpCompany` to the 3-step pattern — it uses RPC `create_company_for_current_user` for atomicity
+- Do NOT revert `supabase/functions/delete-account/index.ts` CORS to `Access-Control-Allow-Origin: "*"` — it uses the shared `_shared/cors.ts` helper
+- Do NOT shorten the `README.md` back to the bolt template — it contains setup documentation
+- Do NOT push `vite.config.ts.timestamp-*.mjs` files (they are in .gitignore)
+
+## ALWAYS
+- Before any change, pull latest from `main` branch in GitHub
+- When adding new features, ADD files, don't delete existing ones
+- Respect existing migration files — append new migrations, never modify old ones
+
+If you are about to delete or revert any of the files listed above, STOP and ask me first.
