@@ -118,61 +118,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (authError) return { error: authError.message };
     if (!authData.user) return { error: 'Regjistrimi deshtoi.' };
 
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ role: 'company_admin', phone: data.phone })
-      .eq('id', authData.user.id);
-    if (profileError) return { error: profileError.message };
+    // Thirr RPC-n atomike — ben update profile.role + insert company ne nje transaksion
+    const { data: companyData, error: rpcError } = await supabase.rpc('create_company_for_current_user', {
+      p_name: data.companyName,
+      p_phone: data.phone,
+      p_email: data.email,
+      p_city: data.city,
+      p_country: data.country,
+      p_city_id: data.cityId ?? null,
+      p_country_id: data.countryId ?? null,
+      p_subscription_plan_id: data.subscriptionPlanId ?? null,
+      p_billing_cycle: data.billingCycle || 'monthly',
+    });
 
-    const slug = data.companyName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-
-    const companyInsert: Record<string, unknown> = {
-      owner_id: authData.user.id,
-      name: data.companyName,
-      slug: `${slug}-${Date.now()}`,
-      phone: data.phone,
-      email: data.email,
-      city: data.city,
-      country: data.country,
-    };
-    if (data.countryId) {
-      companyInsert.country_id = data.countryId;
-    }
-    if (data.cityId) {
-      companyInsert.city_id = data.cityId;
-    }
-    if (data.subscriptionPlanId) {
-      const cycle = data.billingCycle || 'monthly';
-      const now = new Date();
-      const expiresAt = new Date(now);
-      if (cycle === 'yearly') {
-        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-      } else {
-        expiresAt.setMonth(expiresAt.getMonth() + 1);
-      }
-      companyInsert.subscription_plan_id = data.subscriptionPlanId;
-      companyInsert.subscription_status = 'active';
-      companyInsert.subscription_billing_cycle = cycle;
-      companyInsert.subscription_expires_at = expiresAt.toISOString();
-      companyInsert.subscription_renewed_at = now.toISOString();
-      companyInsert.subscription_auto_renew = true;
-    }
-
-    const { data: companyData, error: companyError } = await supabase
-      .from('companies')
-      .insert(companyInsert)
-      .select()
-      .single();
-    if (companyError) return { error: companyError.message };
+    if (rpcError) return { error: rpcError.message };
 
     if (companyData) {
       await sendWelcomeCompanyEmail(
         data.email,
         data.companyName,
-        companyData.id
+        (companyData as { id: string }).id
       );
     }
 

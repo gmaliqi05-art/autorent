@@ -10,6 +10,7 @@ import PaymentMethodSelector, { type PaymentMethodType } from '../components/boo
 import { sendBookingConfirmationToClient, sendBookingNotificationToCompany } from '../lib/emailService';
 import { createInvoice } from '../lib/invoiceService';
 import { createNotification } from '../lib/notificationService';
+import { startStripeCheckout } from '../lib/stripeService';
 
 type BookingStep = 'dates' | 'invoice' | 'payment' | 'success';
 
@@ -236,6 +237,19 @@ export default function VehicleDetailPage() {
       referenceId: bookingData.id,
       referenceType: 'booking',
     });
+
+    // Per pagese me karte, ridrejto ne Stripe Checkout.
+    // Webhook-u do ta beje update payment_status='paid' & status='confirmed'.
+    if (paymentMethod === 'stripe') {
+      const { error: stripeError } = await startStripeCheckout(bookingData.id);
+      if (stripeError) {
+        setBookingError(`Rezervimi u krijua, por pagesa deshtoi: ${stripeError}. Mund ta provoni perseri nga dashboardi.`);
+        setBooking(false);
+        return;
+      }
+      // Nese kaloi me sukses, page do te ridrejtohet — nuk arrijme me poshte
+      return;
+    }
 
     setStep('success');
     setBooking(false);
