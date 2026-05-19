@@ -8,10 +8,12 @@ import type { Vehicle, Company, Review } from '../lib/types';
 import BookingInvoice from '../components/booking/BookingInvoice';
 import PaymentMethodSelector, { type PaymentMethodType } from '../components/booking/PaymentMethodSelector';
 import AvailabilityCalendar from '../components/booking/AvailabilityCalendar';
+import { getOptimizedImageUrl } from '../lib/imageOptimizer';
 import { sendBookingConfirmationToClient, sendBookingNotificationToCompany } from '../lib/emailService';
 import { createInvoice } from '../lib/invoiceService';
 import { createNotification } from '../lib/notificationService';
 import { startStripeCheckout } from '../lib/stripeService';
+import { startPaypalCheckout } from '../lib/paypalService';
 
 type BookingStep = 'dates' | 'invoice' | 'payment' | 'success';
 
@@ -239,7 +241,17 @@ export default function VehicleDetailPage() {
         setBooking(false);
         return;
       }
-      // Nese kaloi me sukses, page do te ridrejtohet — nuk arrijme me poshte
+      return;
+    }
+
+    // PayPal: krijo PayPal order dhe ridrejto perdoruesin tek faqja e aprovimit
+    if (paymentMethod === 'paypal') {
+      const { error: paypalError } = await startPaypalCheckout(bookingData.id);
+      if (paypalError) {
+        setBookingError(`Rezervimi u krijua, por pagesa PayPal deshtoi: ${paypalError}. Mund ta provoni perseri nga dashboardi.`);
+        setBooking(false);
+        return;
+      }
       return;
     }
 
@@ -507,8 +519,15 @@ export default function VehicleDetailPage() {
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <div className="aspect-[16/9] bg-gray-100">
                 <img
-                  src={vehicle.main_image_url || 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=1200&h=675&fit=crop'}
+                  src={getOptimizedImageUrl(
+                    vehicle.main_image_url || 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg',
+                    { width: 1200, height: 675, quality: 85 },
+                  )}
                   alt={vehicle.brand + ' ' + vehicle.model}
+                  loading="eager"
+                  decoding="async"
+                  width={1200}
+                  height={675}
                   className="w-full h-full object-cover"
                 />
               </div>

@@ -35,6 +35,9 @@ jobs:
         run: npm run lint
         continue-on-error: true  # ESLint warnings should not block (te paktene per momentin)
 
+      - name: Tests (Vitest)
+        run: npm test
+
       - name: Build
         run: npm run build
         env:
