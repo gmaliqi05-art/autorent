@@ -1,0 +1,56 @@
+{
+  "name": "RentaKar — Qira automjetesh",
+  "short_name": "RentaKar",
+  "description": "Krahasoni dhe rezervoni automjete me qira ne Kosove, Shqiperi dhe Maqedoni. Cmime transparente, anulim falas.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#0066ff",
+  "lang": "sq",
+  "dir": "ltr",
+  "categories": ["travel", "lifestyle", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Shfleto automjete",
+      "short_name": "Automjete",
+      "description": "Shfleto te gjitha automjetet ne dispozicion",
+      "url": "/automjetet",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Rezervimet e mia",
+      "short_name": "Rezervimet",
+      "description": "Shih rezervimet e tua",
+      "url": "/dashboard/rezervimet",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
