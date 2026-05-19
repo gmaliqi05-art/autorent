@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Typecheck, Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true  # ESLint warnings should not block (te paktene per momentin)
+
+      - name: Build
+        run: npm run build
+        env:
+          # Placeholder env vars per build (jo secrets reale)
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key
+          VITE_SITE_URL: https://rentcars.life
+
+      - name: Check build output size
+        run: |
+          echo "## Build output sizes" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          du -sh dist/* >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  migrations-validate:
+    name: Validate Supabase migrations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check migrations are SQL files
+        run: |
+          if ls supabase/migrations/*.sql 1> /dev/null 2>&1; then
+            echo "Gjet $(ls supabase/migrations/*.sql | wc -l) migration files"
+          else
+            echo "Asnje migration file nuk u gjet"
+            exit 1
+          fi
+
+      - name: Verify migration filenames pattern
+        run: |
+          for f in supabase/migrations/*.sql; do
+            filename=$(basename "$f")
+            if ! [[ "$filename" =~ ^[0-9]{14}_[a-z0-9_]+\.sql$ ]]; then
+              echo "::error file=$f::Migration filename nuk respekton pattern-in YYYYMMDDHHMMSS_snake_case.sql"
+              exit 1
+            fi
+          done
+          echo "Te gjitha migrations respektojne pattern-in"

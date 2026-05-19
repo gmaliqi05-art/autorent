@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { handleCorsPreflight, jsonResponse } from "../_shared/cors.ts";
+import { checkRateLimit, extractRateLimitKey } from "../_shared/rateLimit.ts";
 
 interface EmailRequest {
   recipientEmail: string;
@@ -81,6 +82,30 @@ Deno.serve(async (req: Request) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Verifiko user-in nga JWT (perdoret per rate-limit key)
+    const authHeader = req.headers.get("Authorization");
+    let userId: string | undefined;
+    if (authHeader) {
+      const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: userData } = await userClient.auth.getUser();
+      userId = userData.user?.id;
+    }
+
+    // Rate limit: 30 emails/min per user, 10/min per IP nese pa user
+    const rateLimitKey = extractRateLimitKey(req, "send-email", userId);
+    const allowed = await checkRateLimit(supabase, {
+      key: rateLimitKey,
+      maxCount: userId ? 30 : 10,
+      windowSeconds: 60,
+    });
+    if (!allowed) {
+      return jsonResponse(req, {
+        error: "Too many requests. Provoni perseri pas nje minute.",
+      }, 429);
+    }
 
     const emailRequest = (await req.json()) as EmailRequest;
     const {

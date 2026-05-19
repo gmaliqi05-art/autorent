@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import Stripe from "npm:stripe@17.5.0";
 import { handleCorsPreflight, jsonResponse } from "../_shared/cors.ts";
+import { checkRateLimit, extractRateLimitKey } from "../_shared/rateLimit.ts";
 
 interface CheckoutRequest {
   bookingId: string;
@@ -41,6 +42,19 @@ Deno.serve(async (req: Request) => {
       return jsonResponse(req, { error: "Unauthorized" }, 401);
     }
     const userId = userData.user.id;
+
+    // Rate limit: 10 checkout sessions/min per user (anti spam)
+    const adminForRateLimit = createClient(supabaseUrl, serviceKey);
+    const allowed = await checkRateLimit(adminForRateLimit, {
+      key: extractRateLimitKey(req, "create-checkout-session", userId),
+      maxCount: 10,
+      windowSeconds: 60,
+    });
+    if (!allowed) {
+      return jsonResponse(req, {
+        error: "Too many requests. Provoni perseri pas nje minute.",
+      }, 429);
+    }
 
     // Parse body
     const body = (await req.json()) as CheckoutRequest;
