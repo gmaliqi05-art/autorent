@@ -7,7 +7,6 @@ import { useAuth } from '../contexts/AuthContext';
 import type { Vehicle, Company, Review } from '../lib/types';
 import BookingInvoice from '../components/booking/BookingInvoice';
 import PaymentMethodSelector, { type PaymentMethodType } from '../components/booking/PaymentMethodSelector';
-import AvailabilityCalendar from '../components/booking/AvailabilityCalendar';
 import { sendBookingConfirmationToClient, sendBookingNotificationToCompany } from '../lib/emailService';
 import { createInvoice } from '../lib/invoiceService';
 import { createNotification } from '../lib/notificationService';
@@ -36,6 +35,15 @@ export default function VehicleDetailPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType | ''>('');
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [availabilityError, setAvailabilityError] = useState('');
+
+  function handlePickupChange(value: string) {
+    setPickupDate(value);
+    if (value && (!returnDate || returnDate <= value)) {
+      const d = new Date(value);
+      d.setDate(d.getDate() + 1);
+      setReturnDate(d.toISOString().split('T')[0]);
+    }
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -622,35 +630,32 @@ export default function VehicleDetailPage() {
             <div className="sticky top-24">
               <div className="bg-white rounded-2xl border border-gray-100 p-6">
                 <h3 className="font-semibold text-dark-950 mb-5">Rezervo tani</h3>
-
-                <AvailabilityCalendar
-                  vehicleId={vehicle.id}
-                  pickupDate={pickupDate}
-                  returnDate={returnDate}
-                  onSelect={(p, r) => {
-                    setPickupDate(p);
-                    setReturnDate(r);
-                  }}
-                />
-
-                <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
-                  <div className="bg-gray-50 rounded-lg p-2.5">
-                    <p className="text-[10px] uppercase font-medium text-dark-400">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-dark-600 mb-1.5">
                       <Calendar className="w-3 h-3 inline mr-1" />
-                      Marrja
-                    </p>
-                    <p className="font-semibold text-dark-900 mt-0.5">
-                      {pickupDate ? new Date(pickupDate).toLocaleDateString('sq-AL') : '—'}
-                    </p>
+                      Data e marrjes
+                    </label>
+                    <input
+                      type="date"
+                      min={today}
+                      value={pickupDate}
+                      onChange={e => handlePickupChange(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                    />
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-2.5">
-                    <p className="text-[10px] uppercase font-medium text-dark-400">
+                  <div>
+                    <label className="block text-xs font-medium text-dark-600 mb-1.5">
                       <Calendar className="w-3 h-3 inline mr-1" />
-                      Kthimi
-                    </p>
-                    <p className="font-semibold text-dark-900 mt-0.5">
-                      {returnDate ? new Date(returnDate).toLocaleDateString('sq-AL') : '—'}
-                    </p>
+                      Data e kthimit
+                    </label>
+                    <input
+                      type="date"
+                      min={pickupDate || today}
+                      value={returnDate}
+                      onChange={e => setReturnDate(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                    />
                   </div>
                 </div>
 

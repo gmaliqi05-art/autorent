@@ -75,7 +75,7 @@ export default function ClientDashboard() {
     .filter(b => b.status === 'completed' && b.payment_status !== 'failed')
     .reduce((sum, b) => sum + Number(b.total_price || 0), 0);
   const pendingPayments = bookings
-    .filter(b => b.payment_status === 'pending' && b.status !== 'cancelled')
+    .filter(b => b.payment_status === 'pending' && b.status !== 'cancelled' && b.status !== 'rejected')
     .reduce((sum, b) => sum + Number(b.total_price || 0), 0);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;

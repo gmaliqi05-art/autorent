@@ -1,20 +1,10 @@
-import { useEffect, useState } from 'react';
-import { CreditCard, Building, Wallet, Banknote, CheckCircle2, AlertCircle } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { CreditCard, Building, Wallet, Banknote, CheckCircle2 } from 'lucide-react';
 
 export type PaymentMethodType = 'stripe' | 'paypal' | 'bank_transfer' | 'cash';
 
 interface PaymentMethodSelectorProps {
   selected: PaymentMethodType | '';
   onSelect: (method: PaymentMethodType) => void;
-}
-
-interface BankAccount {
-  bank_name: string;
-  account_holder: string;
-  iban: string;
-  swift: string;
-  currency: string;
 }
 
 const methods: { id: PaymentMethodType; label: string; description: string; icon: React.ReactNode; color: string }[] = [
@@ -49,30 +39,6 @@ const methods: { id: PaymentMethodType; label: string; description: string; icon
 ];
 
 export default function PaymentMethodSelector({ selected, onSelect }: PaymentMethodSelectorProps) {
-  const [bankAccount, setBankAccount] = useState<BankAccount | null>(null);
-  const [bankLoading, setBankLoading] = useState(false);
-
-  useEffect(() => {
-    if (selected !== 'bank_transfer' || bankAccount) return;
-    let cancelled = false;
-    setBankLoading(true);
-    (async () => {
-      const { data } = await supabase
-        .from('bank_accounts')
-        .select('bank_name, account_holder, iban, swift, currency')
-        .eq('is_primary', true)
-        .eq('is_active', true)
-        .maybeSingle();
-      if (!cancelled) {
-        setBankAccount(data as BankAccount | null);
-        setBankLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [selected, bankAccount]);
-
   return (
     <div className="space-y-3">
       <h3 className="font-bold text-dark-950 text-lg">Zgjidhni metoden e pageses</h3>
@@ -112,26 +78,12 @@ export default function PaymentMethodSelector({ selected, onSelect }: PaymentMet
       {selected === 'bank_transfer' && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mt-4">
           <p className="text-sm font-semibold text-emerald-800 mb-2">Detajet e transferit bankar</p>
-          {bankLoading ? (
-            <p className="text-xs text-emerald-600">Duke ngarkuar detajet...</p>
-          ) : bankAccount ? (
-            <div className="space-y-1 text-xs text-emerald-700">
-              <p>Banka: <span className="font-medium">{bankAccount.bank_name}</span></p>
-              <p>IBAN: <span className="font-mono font-medium">{bankAccount.iban}</span></p>
-              {bankAccount.swift && <p>SWIFT/BIC: <span className="font-mono">{bankAccount.swift}</span></p>}
-              {bankAccount.account_holder && <p>Perfituesi: <span className="font-medium">{bankAccount.account_holder}</span></p>}
-              <p>Valuta: <span className="font-medium">{bankAccount.currency}</span></p>
-              <p className="mt-2 text-emerald-600 italic">Rezervimi do te konfirmohet pasi te verifikohet pagesa.</p>
-            </div>
-          ) : (
-            <div className="flex items-start gap-2 text-xs text-amber-700">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <p>
-                Detajet bankare nuk jane te konfiguruara ende. Ju lutem zgjidhni nje metode tjeter
-                ose kontaktoni mbeshtetjen.
-              </p>
-            </div>
-          )}
+          <div className="space-y-1 text-xs text-emerald-700">
+            <p>Banka: Raiffeisen Bank Kosovo</p>
+            <p>IBAN: XK06 1234 5678 9012 3456</p>
+            <p>Perfituesi: RentaKar SH.P.K</p>
+            <p className="mt-2 text-emerald-600 italic">Rezervimi do te konfirmohet pasi te verifikohet pagesa.</p>
+          </div>
         </div>
       )}
 
