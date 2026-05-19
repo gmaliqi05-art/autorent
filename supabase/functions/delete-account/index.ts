@@ -1,21 +1,15 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { handleCorsPreflight, jsonResponse } from "../_shared/cors.ts";
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
+  const preflight = handleCorsPreflight(req);
+  if (preflight) return preflight;
 
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return json({ error: "Missing authorization header" }, 401);
+      return jsonResponse(req, { error: "Missing authorization header" }, 401);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -28,7 +22,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: userData, error: userErr } = await userClient.auth.getUser();
     if (userErr || !userData.user) {
-      return json({ error: "Unauthorized" }, 401);
+      return jsonResponse(req, { error: "Unauthorized" }, 401);
     }
 
     const userId = userData.user.id;
@@ -41,11 +35,11 @@ Deno.serve(async (req: Request) => {
       .in("status", ["pending", "confirmed", "active"]);
 
     if (bookingsErr) {
-      return json({ error: bookingsErr.message }, 500);
+      return jsonResponse(req, { error: bookingsErr.message }, 500);
     }
 
     if (activeBookings && activeBookings.length > 0) {
-      return json({
+      return jsonResponse(req, {
         error: "Nuk mund te fshihet llogaria ndersa keni rezervime aktive ose te konfirmuara. Anuloni ose perfundoni rezervimet e para.",
       }, 400);
     }
@@ -80,18 +74,11 @@ Deno.serve(async (req: Request) => {
     // Finally delete the auth user
     const { error: deleteErr } = await admin.auth.admin.deleteUser(userId);
     if (deleteErr) {
-      return json({ error: deleteErr.message }, 500);
+      return jsonResponse(req, { error: deleteErr.message }, 500);
     }
 
-    return json({ success: true });
+    return jsonResponse(req, { success: true });
   } catch (err) {
-    return json({ error: (err as Error).message }, 500);
+    return jsonResponse(req, { error: (err as Error).message }, 500);
   }
 });
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
