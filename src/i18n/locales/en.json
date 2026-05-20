@@ -33,7 +33,6 @@
     "total": "Total",
     "all": "All",
     "filter": "Filter",
-    "clear": "Clear",
     "send": "Send",
     "open": "Open",
     "free": "Free",
@@ -349,7 +348,9 @@
     "seatsLabel": "{{count}} seats",
     "autoShort": "Auto",
     "manualShort": "Manual",
-    "priceLabel": "{{price}} EUR/day"
+    "priceLabel": "{{price}} EUR/day",
+    "pickupDate": "Pickup date",
+    "returnDate": "Return date"
   },
   "vehicleDetail": {
     "specs": "Specifications",
@@ -474,7 +475,8 @@
     "startJourneyDesc": "Create a free account and access hundreds of premium vehicles across the region.",
     "startBenefit1": "Fast and secure booking",
     "startBenefit2": "Free cancellation up to 48 hours",
-    "startBenefit3": "24/7 support"
+    "startBenefit3": "24/7 support",
+    "captchaRequired": "Please complete the CAPTCHA verification"
   },
   "dashboard": {
     "overview": "Overview",
@@ -852,7 +854,9 @@
       "vehiclesPanel": "Vehicles",
       "bookingsPanel": "Bookings",
       "noVehicles": "No vehicles yet",
-      "noBookings": "No bookings yet"
+      "noBookings": "No bookings yet",
+      "completedRevenue": "Completed revenue",
+      "activeRevenueNote": "Only from successfully completed bookings"
     },
     "status": {
       "pending": "Pending",
@@ -928,7 +932,26 @@
       "fuel_benzine": "Petrol",
       "fuel_nafte": "Diesel",
       "fuel_elektrike": "Electric",
-      "fuel_hibride": "Hybrid"
+      "fuel_hibride": "Hybrid",
+      "galleryMax": "Maximum 5 additional images",
+      "validationImage": "Main image is required",
+      "validationBrand": "Brand is required",
+      "validationModel": "Model is required",
+      "validationPlate": "Plate is required",
+      "validationPrice": "Price must be greater than 0",
+      "validationPublish": "Fill all fields before publishing",
+      "deleteBlockedActive": "Cannot delete a vehicle with active bookings",
+      "searchPlaceholder": "Search by brand, model or plate...",
+      "gallery": "Image gallery",
+      "addImages": "Add images",
+      "features": "Features",
+      "publishImmediately": "Publish immediately",
+      "available": "Available",
+      "noResults": "No vehicles found",
+      "noResultsDesc": "Try changing filters or add a new vehicle",
+      "unpublish": "Unpublish",
+      "publish": "Publish",
+      "clone": "Clone"
     },
     "bookings": {
       "title": "Bookings",
@@ -960,7 +983,29 @@
       "notifCompletedTitle": "Booking completed",
       "notifCompletedMsg": "Your booking for {{vehicle}} has ended. Thanks for using RentaKar!",
       "notifStartedTitle": "Booking started",
-      "notifStartedMsg": "Your booking for {{vehicle}} has started. Have a great trip!"
+      "notifStartedMsg": "Your booking for {{vehicle}} has started. Have a great trip!",
+      "conflictError": "Booking conflict: vehicle is already booked for this period",
+      "csvDate": "Date",
+      "csvClient": "Client",
+      "csvEmail": "Email",
+      "csvPhone": "Phone",
+      "csvVehicle": "Vehicle",
+      "csvPlate": "Plate",
+      "csvPickup": "Pickup",
+      "csvReturn": "Return",
+      "csvDays": "Days",
+      "csvStatus": "Status",
+      "csvPayment": "Payment method",
+      "csvAmount": "Amount",
+      "exportCsv": "Export CSV",
+      "searchPlaceholder": "Search by client, vehicle or plate...",
+      "from": "From",
+      "to": "To",
+      "internalNotes": "Internal notes",
+      "rejectReasonLabel": "Rejection reason (optional)",
+      "internalNotesTitle": "Internal notes for this booking",
+      "internalNotesHint": "Only your team sees these",
+      "internalNotesPlaceholder": "Add notes for this booking..."
     },
     "payments": {
       "title": "Payments",
@@ -1002,7 +1047,8 @@
       "csvMethod": "Method",
       "csvStatus": "Status",
       "csvAmount": "Amount",
-      "csvDeposit": "Deposit"
+      "csvDeposit": "Deposit",
+      "periodCustom": "Custom"
     },
     "subscription": {
       "title": "Subscription",
@@ -1052,7 +1098,8 @@
       "yearlyDiscount": "-20%",
       "confirmTitle": "Confirm plan change",
       "confirmBody": "You are switching from {{from}} to {{to}}. The new cost will be {{price}}. Continue?",
-      "confirmContinue": "Yes, continue"
+      "confirmContinue": "Yes, continue",
+      "downgradeBlocked": "Cannot downgrade to a lower plan with this number of active vehicles"
     },
     "settings": {
       "title": "Settings",
@@ -1077,7 +1124,21 @@
       "locationNotSet": "Not set yet. Click on the map or use \"Use my location\".",
       "saveChanges": "Save changes",
       "savedSuccess": "Changes saved successfully!",
-      "saveError": "Something went wrong while saving. Please try again."
+      "saveError": "Something went wrong while saving. Please try again.",
+      "logo": "Logo",
+      "logoHint": "PNG / JPG / WebP. Max 2MB. Transparent background recommended.",
+      "cover": "Cover image",
+      "coverHint": "Large image shown on your profile. Max 5MB.",
+      "sectionHours": "Working hours",
+      "hoursHint": "Set hours for each day of the week",
+      "closed": "Closed",
+      "open": "Open"
     }
+  },
+  "cookies": {
+    "title": "We use cookies",
+    "accept": "Accept all",
+    "decline": "Decline",
+    "policyLink": "Cookie policy"
   }
 }

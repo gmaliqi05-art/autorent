@@ -4,11 +4,53 @@ import {
   Upload, X, Check, ChevronDown, ChevronUp, RefreshCw, Palette,
   Type, AlignLeft, Link as LinkIcon, Car, Tag, Plus, Trash2, ArrowUp, ArrowDown
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import type { HeroSettings, LogoSettings, NavbarSettings, SectionsSettings } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
 import { defaultHero, defaultLogo, defaultNavbar, defaultSections } from '../../lib/useHomepageSettings';
+import { pickLocalized } from '../../lib/i18nHelpers';
+
+/**
+ * Disa fusha ne homepage_settings ruhen si objekte multilingual {sq, en, de}
+ * (psh hero.subtitle, navbar.vehicles_link_text). React s'mund t'i render-oje
+ * objekte si value te input-it -> CRASH.
+ *
+ * `normalizeLocalized()` i kthen ne stringa per editim ne gjuhen aktuale.
+ * `mergeLocalized()` i kthen prap si objekte multilingual kur ruhen, duke
+ * mbajtur vleren ne gjuhet e tjera.
+ */
+function normalizeLocalized<T extends Record<string, unknown>>(obj: T): T {
+  const out: Record<string, unknown> = {};
+  for (const k of Object.keys(obj)) {
+    const v = obj[k];
+    if (v && typeof v === 'object' && !Array.isArray(v) && ('sq' in v || 'en' in v || 'de' in v)) {
+      out[k] = pickLocalized(v as { sq?: string; en?: string; de?: string });
+    } else {
+      out[k] = v;
+    }
+  }
+  return out as T;
+}
+
+function mergeLocalized<T extends Record<string, unknown>>(
+  edited: T,
+  original: Partial<T>,
+  lang: string,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const k of Object.keys(edited)) {
+    const orig = original[k as keyof T];
+    const newVal = edited[k];
+    if (orig && typeof orig === 'object' && !Array.isArray(orig) && ('sq' in orig || 'en' in orig || 'de' in orig)) {
+      out[k] = { ...(orig as object), [lang]: newVal };
+    } else {
+      out[k] = newVal;
+    }
+  }
+  return out;
+}
 
 type Tab = 'hero' | 'logo' | 'navbar' | 'sections' | 'categories';
 
@@ -21,11 +63,21 @@ const tabs: { id: Tab; label: string; icon: React.ReactNode; desc: string }[] = 
 ];
 
 export default function AdminHomepage() {
+  const { i18n } = useTranslation();
+  const currentLang = (i18n.language || 'sq').slice(0, 2);
+
   const [activeTab, setActiveTab] = useState<Tab>('hero');
   const [hero, setHero] = useState<HeroSettings>(defaultHero);
   const [logo, setLogo] = useState<LogoSettings>(defaultLogo);
   const [navbar, setNavbar] = useState<NavbarSettings>(defaultNavbar);
   const [sections, setSections] = useState<SectionsSettings>(defaultSections);
+  // Ruajme te dhenat e papershtatura (me multilingual objects) per merge ne save
+  const [rawData, setRawData] = useState<{
+    hero: Record<string, unknown>;
+    logo: Record<string, unknown>;
+    navbar: Record<string, unknown>;
+    sections: Record<string, unknown>;
+  }>({ hero: {}, logo: {}, navbar: {}, sections: {} });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -36,17 +88,32 @@ export default function AdminHomepage() {
   const heroMobileFileRef = useRef<HTMLInputElement | null>(null);
   const logoFileRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => { loadAll(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [currentLang]);
 
   async function loadAll() {
     const { data } = await supabase.from('homepage_settings').select('key, value');
     if (data) {
+      const raw = { hero: {}, logo: {}, navbar: {}, sections: {} } as typeof rawData;
       for (const row of data) {
-        if (row.key === 'hero') setHero({ ...defaultHero, ...(row.value as Partial<HeroSettings>) });
-        if (row.key === 'logo') setLogo({ ...defaultLogo, ...(row.value as Partial<LogoSettings>) });
-        if (row.key === 'navbar') setNavbar({ ...defaultNavbar, ...(row.value as Partial<NavbarSettings>) });
-        if (row.key === 'sections') setSections({ ...defaultSections, ...(row.value as Partial<SectionsSettings>) });
+        const v = (row.value || {}) as Record<string, unknown>;
+        if (row.key === 'hero') {
+          raw.hero = v;
+          setHero({ ...defaultHero, ...normalizeLocalized(v) } as HeroSettings);
+        }
+        if (row.key === 'logo') {
+          raw.logo = v;
+          setLogo({ ...defaultLogo, ...normalizeLocalized(v) } as LogoSettings);
+        }
+        if (row.key === 'navbar') {
+          raw.navbar = v;
+          setNavbar({ ...defaultNavbar, ...normalizeLocalized(v) } as NavbarSettings);
+        }
+        if (row.key === 'sections') {
+          raw.sections = v;
+          setSections({ ...defaultSections, ...normalizeLocalized(v) } as SectionsSettings);
+        }
       }
+      setRawData(raw);
     }
     setLoading(false);
   }
@@ -58,10 +125,10 @@ export default function AdminHomepage() {
     setSaveError(null);
     let key = activeTab as string;
     let value: Record<string, unknown> = {};
-    if (activeTab === 'hero') value = hero as unknown as Record<string, unknown>;
-    if (activeTab === 'logo') value = logo as unknown as Record<string, unknown>;
-    if (activeTab === 'navbar') value = navbar as unknown as Record<string, unknown>;
-    if (activeTab === 'sections') value = sections as unknown as Record<string, unknown>;
+    if (activeTab === 'hero') value = mergeLocalized(hero as unknown as Record<string, unknown>, rawData.hero, currentLang);
+    if (activeTab === 'logo') value = mergeLocalized(logo as unknown as Record<string, unknown>, rawData.logo, currentLang);
+    if (activeTab === 'navbar') value = mergeLocalized(navbar as unknown as Record<string, unknown>, rawData.navbar, currentLang);
+    if (activeTab === 'sections') value = mergeLocalized(sections as unknown as Record<string, unknown>, rawData.sections, currentLang);
 
     const { error } = await supabase.from('homepage_settings').upsert(
       { key, value, updated_at: new Date().toISOString() },
@@ -72,6 +139,8 @@ export default function AdminHomepage() {
       setSaveError(error.message);
       return;
     }
+    // Update raw cache me valuet e reja
+    setRawData((prev) => ({ ...prev, [key]: value }));
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   }
@@ -128,7 +197,15 @@ export default function AdminHomepage() {
       <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-dark-950">Menaxhimi i Ballines</h1>
-          <p className="text-dark-500 mt-1 text-[15px]">Kontrollo komplet Homepage-in, logon, navigimin dhe seksionet</p>
+          <p className="text-dark-500 mt-1 text-[15px]">
+            Kontrollo komplet Homepage-in, logon, navigimin dhe seksionet
+          </p>
+          <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
+            <Globe className="w-3.5 h-3.5 text-amber-700" />
+            <span className="text-xs text-amber-800">
+              Po editon ne gjuhen: <strong>{currentLang.toUpperCase()}</strong>. Ndrysho gjuhen nga Navbar per te edituar gjuhe tjeter.
+            </span>
+          </div>
         </div>
         {activeTab !== 'categories' && (
           <div className="flex flex-col items-end gap-2">

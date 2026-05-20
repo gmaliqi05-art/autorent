@@ -33,7 +33,6 @@
     "total": "Totali",
     "all": "Te gjitha",
     "filter": "Filtro",
-    "clear": "Pastro",
     "send": "Dergo",
     "open": "Hap",
     "free": "Falas",
@@ -349,7 +348,9 @@
     "seatsLabel": "{{count}} vende",
     "autoShort": "Auto",
     "manualShort": "Manuale",
-    "priceLabel": "{{price}} EUR/dite"
+    "priceLabel": "{{price}} EUR/dite",
+    "pickupDate": "Data e marrjes",
+    "returnDate": "Data e kthimit"
   },
   "vehicleDetail": {
     "specs": "Specifikimet",
@@ -474,7 +475,8 @@
     "startJourneyDesc": "Krijoni llogari falas dhe aksesoni qindra automjete premium ne te gjithe rajonin.",
     "startBenefit1": "Rezervim i shpejte dhe i sigurt",
     "startBenefit2": "Anulim falas deri ne 48 ore",
-    "startBenefit3": "Mbeshtetje 24/7"
+    "startBenefit3": "Mbeshtetje 24/7",
+    "captchaRequired": "Plotesoni verifikimin CAPTCHA"
   },
   "dashboard": {
     "overview": "Pamja e pergjithshme",
@@ -852,7 +854,9 @@
       "vehiclesPanel": "Automjetet",
       "bookingsPanel": "Rezervimet",
       "noVehicles": "Nuk keni automjete",
-      "noBookings": "Nuk ka rezervime"
+      "noBookings": "Nuk ka rezervime",
+      "completedRevenue": "Te ardhura te kompletuara",
+      "activeRevenueNote": "Vetem nga rezervimet te kompletuara me sukses"
     },
     "status": {
       "pending": "Ne pritje",
@@ -928,7 +932,26 @@
       "fuel_benzine": "Benzine",
       "fuel_nafte": "Nafte",
       "fuel_elektrike": "Elektrike",
-      "fuel_hibride": "Hibride"
+      "fuel_hibride": "Hibride",
+      "galleryMax": "Maksimumi 5 imazhe shtese",
+      "validationImage": "Imazhi kryesor eshte i detyrueshem",
+      "validationBrand": "Marka eshte e detyrueshme",
+      "validationModel": "Modeli eshte i detyrueshem",
+      "validationPlate": "Targa eshte e detyrueshme",
+      "validationPrice": "Cmimi duhet te jete me i madh se 0",
+      "validationPublish": "Plotesoni te gjitha fushat para publikimit",
+      "deleteBlockedActive": "Nuk mund te fshish nje vetur me rezervime aktive",
+      "searchPlaceholder": "Kerko per marke, model ose targa...",
+      "gallery": "Galeria e imazheve",
+      "addImages": "Shto imazhe",
+      "features": "Karakteristikat",
+      "publishImmediately": "Publiko menjehere",
+      "available": "I disponueshem",
+      "noResults": "Nuk u gjeten automjete",
+      "noResultsDesc": "Provo te ndryshosh filtrat ose shto nje automjet te ri",
+      "unpublish": "Cpubliko",
+      "publish": "Publiko",
+      "clone": "Klono"
     },
     "bookings": {
       "title": "Rezervimet",
@@ -960,7 +983,29 @@
       "notifCompletedTitle": "Rezervimi perfundoi",
       "notifCompletedMsg": "Rezervimi juaj per {{vehicle}} ka perfunduar. Faleminderit qe perdoret RentaKar!",
       "notifStartedTitle": "Rezervimi filloi",
-      "notifStartedMsg": "Rezervimi juaj per {{vehicle}} ka filluar. Gezuar udhetimin!"
+      "notifStartedMsg": "Rezervimi juaj per {{vehicle}} ka filluar. Gezuar udhetimin!",
+      "conflictError": "Konflikt rezervimi: vetura eshte e zene per kete periudhe",
+      "csvDate": "Data",
+      "csvClient": "Klienti",
+      "csvEmail": "Email",
+      "csvPhone": "Telefoni",
+      "csvVehicle": "Automjeti",
+      "csvPlate": "Targa",
+      "csvPickup": "Marrja",
+      "csvReturn": "Kthimi",
+      "csvDays": "Dite",
+      "csvStatus": "Statusi",
+      "csvPayment": "Metoda e pageses",
+      "csvAmount": "Shuma",
+      "exportCsv": "Eksporto CSV",
+      "searchPlaceholder": "Kerko per klient, automjet ose targa...",
+      "from": "Nga",
+      "to": "Deri",
+      "internalNotes": "Shenime te brendshme",
+      "rejectReasonLabel": "Arsyeja e refuzimit (opsionale)",
+      "internalNotesTitle": "Shenime te brendshme per kete rezervim",
+      "internalNotesHint": "Vetem ekipi yt i sheh keto",
+      "internalNotesPlaceholder": "Shtoni shenime per kete rezervim..."
     },
     "payments": {
       "title": "Pagesat",
@@ -1002,7 +1047,8 @@
       "csvMethod": "Metoda",
       "csvStatus": "Statusi",
       "csvAmount": "Shuma",
-      "csvDeposit": "Depozita"
+      "csvDeposit": "Depozita",
+      "periodCustom": "I personalizuar"
     },
     "subscription": {
       "title": "Abonimi",
@@ -1052,7 +1098,8 @@
       "yearlyDiscount": "-20%",
       "confirmTitle": "Konfirmo ndryshimin e planit",
       "confirmBody": "Po ndryshoni nga {{from}} ne {{to}}. Kostoja e re do te jete {{price}}. A deshironi te vazhdoni?",
-      "confirmContinue": "Po, vazhdo"
+      "confirmContinue": "Po, vazhdo",
+      "downgradeBlocked": "Nuk mund te zbresesh ne nje plan me te ulet me kete numer veturash aktive"
     },
     "settings": {
       "title": "Cilesimet",
@@ -1077,7 +1124,21 @@
       "locationNotSet": "Nuk eshte caktuar ende. Kliko ne harte ose perdor \"Vendosi ketu\".",
       "saveChanges": "Ruaj ndryshimet",
       "savedSuccess": "Ndryshimet u ruajten me sukses!",
-      "saveError": "Ndodhi nje gabim gjate ruajtjes. Provoni perseri."
+      "saveError": "Ndodhi nje gabim gjate ruajtjes. Provoni perseri.",
+      "logo": "Logo",
+      "logoHint": "PNG / JPG / WebP. Max 2MB. Sfond transparent rekomandohet.",
+      "cover": "Imazh i kopertines",
+      "coverHint": "Imazhi i madh qe shfaqet ne profilin tend. Max 5MB.",
+      "sectionHours": "Orari i punes",
+      "hoursHint": "Caktoni orarin per cdo dite te javes",
+      "closed": "I mbyllur",
+      "open": "I hapur"
     }
+  },
+  "cookies": {
+    "title": "Ne perdorim cookies",
+    "accept": "Prano te gjitha",
+    "decline": "Refuzo",
+    "policyLink": "Politika e cookies"
   }
 }

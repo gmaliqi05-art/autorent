@@ -13,7 +13,7 @@
     "yes": "Ja",
     "no": "Nein",
     "viewAll": "Alle ansehen",
-    "clear": "Löschen",
+    "clear": "Zurücksetzen",
     "seeMore": "Mehr anzeigen",
     "from": "Von",
     "to": "Bis",
@@ -33,7 +33,6 @@
     "total": "Gesamt",
     "all": "Alle",
     "filter": "Filter",
-    "clear": "Zurücksetzen",
     "send": "Senden",
     "open": "Öffnen",
     "free": "Kostenlos",
@@ -349,7 +348,9 @@
     "seatsLabel": "{{count}} Sitze",
     "autoShort": "Auto",
     "manualShort": "Manuell",
-    "priceLabel": "{{price}} EUR/Tag"
+    "priceLabel": "{{price}} EUR/Tag",
+    "pickupDate": "Abholdatum",
+    "returnDate": "Rueckgabedatum"
   },
   "vehicleDetail": {
     "specs": "Spezifikationen",
@@ -474,7 +475,8 @@
     "startJourneyDesc": "Erstellen Sie ein kostenloses Konto und greifen Sie auf Hunderte von Premium-Fahrzeugen in der gesamten Region zu.",
     "startBenefit1": "Schnelle und sichere Buchung",
     "startBenefit2": "Kostenlose Stornierung bis zu 48 Stunden",
-    "startBenefit3": "24/7 Support"
+    "startBenefit3": "24/7 Support",
+    "captchaRequired": "Bitte schliessen Sie die CAPTCHA-Verifizierung ab"
   },
   "dashboard": {
     "overview": "Übersicht",
@@ -852,7 +854,9 @@
       "vehiclesPanel": "Fahrzeuge",
       "bookingsPanel": "Buchungen",
       "noVehicles": "Noch keine Fahrzeuge",
-      "noBookings": "Noch keine Buchungen"
+      "noBookings": "Noch keine Buchungen",
+      "completedRevenue": "Abgeschlossene Einnahmen",
+      "activeRevenueNote": "Nur aus erfolgreich abgeschlossenen Buchungen"
     },
     "status": {
       "pending": "Ausstehend",
@@ -928,7 +932,26 @@
       "fuel_benzine": "Benzin",
       "fuel_nafte": "Diesel",
       "fuel_elektrike": "Elektro",
-      "fuel_hibride": "Hybrid"
+      "fuel_hibride": "Hybrid",
+      "galleryMax": "Maximal 5 zusaetzliche Bilder",
+      "validationImage": "Hauptbild ist erforderlich",
+      "validationBrand": "Marke ist erforderlich",
+      "validationModel": "Modell ist erforderlich",
+      "validationPlate": "Kennzeichen ist erforderlich",
+      "validationPrice": "Preis muss groesser als 0 sein",
+      "validationPublish": "Alle Felder vor der Veroeffentlichung ausfuellen",
+      "deleteBlockedActive": "Fahrzeug mit aktiven Buchungen kann nicht geloescht werden",
+      "searchPlaceholder": "Nach Marke, Modell oder Kennzeichen suchen...",
+      "gallery": "Bildergalerie",
+      "addImages": "Bilder hinzufuegen",
+      "features": "Ausstattung",
+      "publishImmediately": "Sofort veroeffentlichen",
+      "available": "Verfuegbar",
+      "noResults": "Keine Fahrzeuge gefunden",
+      "noResultsDesc": "Filter aendern oder neues Fahrzeug hinzufuegen",
+      "unpublish": "Veroeffentlichung aufheben",
+      "publish": "Veroeffentlichen",
+      "clone": "Klonen"
     },
     "bookings": {
       "title": "Buchungen",
@@ -960,7 +983,29 @@
       "notifCompletedTitle": "Buchung abgeschlossen",
       "notifCompletedMsg": "Ihre Buchung fuer {{vehicle}} ist beendet. Vielen Dank fuer die Nutzung von RentaKar!",
       "notifStartedTitle": "Buchung gestartet",
-      "notifStartedMsg": "Ihre Buchung fuer {{vehicle}} hat begonnen. Gute Fahrt!"
+      "notifStartedMsg": "Ihre Buchung fuer {{vehicle}} hat begonnen. Gute Fahrt!",
+      "conflictError": "Buchungskonflikt: Fahrzeug ist bereits fuer diesen Zeitraum gebucht",
+      "csvDate": "Datum",
+      "csvClient": "Kunde",
+      "csvEmail": "E-Mail",
+      "csvPhone": "Telefon",
+      "csvVehicle": "Fahrzeug",
+      "csvPlate": "Kennzeichen",
+      "csvPickup": "Abholung",
+      "csvReturn": "Rueckgabe",
+      "csvDays": "Tage",
+      "csvStatus": "Status",
+      "csvPayment": "Zahlungsmethode",
+      "csvAmount": "Betrag",
+      "exportCsv": "CSV exportieren",
+      "searchPlaceholder": "Nach Kunde, Fahrzeug oder Kennzeichen suchen...",
+      "from": "Von",
+      "to": "Bis",
+      "internalNotes": "Interne Notizen",
+      "rejectReasonLabel": "Ablehnungsgrund (optional)",
+      "internalNotesTitle": "Interne Notizen fuer diese Buchung",
+      "internalNotesHint": "Nur Ihr Team sieht diese",
+      "internalNotesPlaceholder": "Notizen fuer diese Buchung hinzufuegen..."
     },
     "payments": {
       "title": "Zahlungen",
@@ -1002,7 +1047,8 @@
       "csvMethod": "Methode",
       "csvStatus": "Status",
       "csvAmount": "Betrag",
-      "csvDeposit": "Kaution"
+      "csvDeposit": "Kaution",
+      "periodCustom": "Benutzerdefiniert"
     },
     "subscription": {
       "title": "Abonnement",
@@ -1052,7 +1098,8 @@
       "yearlyDiscount": "-20%",
       "confirmTitle": "Planaenderung bestaetigen",
       "confirmBody": "Sie wechseln von {{from}} zu {{to}}. Die neuen Kosten betragen {{price}}. Fortfahren?",
-      "confirmContinue": "Ja, fortfahren"
+      "confirmContinue": "Ja, fortfahren",
+      "downgradeBlocked": "Kann nicht zu einem niedrigeren Plan mit dieser Anzahl aktiver Fahrzeuge wechseln"
     },
     "settings": {
       "title": "Einstellungen",
@@ -1077,7 +1124,21 @@
       "locationNotSet": "Noch nicht gesetzt. Klicken Sie auf die Karte oder verwenden Sie \"Mein Standort\".",
       "saveChanges": "Aenderungen speichern",
       "savedSuccess": "Aenderungen erfolgreich gespeichert!",
-      "saveError": "Beim Speichern ist ein Fehler aufgetreten. Bitte erneut versuchen."
+      "saveError": "Beim Speichern ist ein Fehler aufgetreten. Bitte erneut versuchen.",
+      "logo": "Logo",
+      "logoHint": "PNG / JPG / WebP. Max. 2 MB. Transparenter Hintergrund empfohlen.",
+      "cover": "Titelbild",
+      "coverHint": "Grosses Bild, das in Ihrem Profil angezeigt wird. Max. 5 MB.",
+      "sectionHours": "Oeffnungszeiten",
+      "hoursHint": "Stunden fuer jeden Wochentag festlegen",
+      "closed": "Geschlossen",
+      "open": "Geoeffnet"
     }
+  },
+  "cookies": {
+    "title": "Wir verwenden Cookies",
+    "accept": "Alle akzeptieren",
+    "decline": "Ablehnen",
+    "policyLink": "Cookie-Richtlinie"
   }
 }
