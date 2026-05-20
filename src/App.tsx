@@ -3,9 +3,11 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
+import MobileBottomNav from './components/layout/MobileBottomNav';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ChatWidget from './components/chat/ChatWidget';
 import CookieConsent from './components/CookieConsent';
+import { useStandaloneMode } from './lib/useStandaloneMode';
 
 // Eager pages (used on initial load — homepage + listings + auth)
 import HomePage from './pages/HomePage';
@@ -89,11 +91,14 @@ function ScrollToTop() {
 }
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
+  const { isAppMode } = useStandaloneMode();
+
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <div className="flex-1">{children}</div>
-      <Footer />
+      {!isAppMode && <Navbar />}
+      {/* Ne app mode shtojme padding-top per status bar/notch */}
+      <div className={`flex-1 ${isAppMode ? 'pt-safe pb-20' : ''}`}>{children}</div>
+      {!isAppMode && <Footer />}
     </div>
   );
 }
@@ -171,7 +176,15 @@ export default function App() {
         </Suspense>
         <ChatWidget />
         <CookieConsent />
+        <AppModeBottomNav />
       </AuthProvider>
     </BrowserRouter>
   );
+}
+
+/** Shfaqet vetem ne app mode (PWA standalone ose Capacitor native) */
+function AppModeBottomNav() {
+  const { isAppMode } = useStandaloneMode();
+  if (!isAppMode) return null;
+  return <MobileBottomNav />;
 }

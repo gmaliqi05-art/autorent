@@ -23,6 +23,33 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ============================================================================
+   PWA / App Mode — safe area insets per notch / dynamic island / home indicator
+   Aktive kur display-mode: standalone (Add to Home Screen) ose Capacitor native.
+   ============================================================================ */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .pt-safe {
+    padding-top: calc(env(safe-area-inset-top) + 0.5rem);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Ne app mode, hiqim overflow-anchor (anti-jitter) dhe blokojme pull-to-refresh
+   ne ato pages ku nuk eshte i nevojshem */
+@media (display-mode: standalone) {
+  body {
+    overscroll-behavior-y: contain;
+  }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

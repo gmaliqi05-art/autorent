@@ -18,6 +18,17 @@ vite.config.ts.timestamp-*.mjs
 # Test coverage
 coverage/
 
+# Capacitor native folders (gjenerohen lokalisht me `npx cap add android/ios`)
+android/
+ios/
+.capacitor/
+
+# Capacitor sensitive (signing keys)
+*.keystore
+*.jks
+google-services.json
+GoogleService-Info.plist
+
 .vscode/*
 !.vscode/extensions.json
 .idea

@@ -12,9 +12,20 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "app:sync": "npm run build && npx cap sync",
+    "app:add:android": "npx cap add android",
+    "app:add:ios": "npx cap add ios",
+    "app:open:android": "npx cap open android",
+    "app:open:ios": "npx cap open ios",
+    "app:run:android": "npm run build && npx cap sync android && npx cap run android",
+    "app:run:ios": "npm run build && npx cap sync ios && npx cap run ios"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "@sentry/react": "^10.53.1",
     "@stripe/react-stripe-js": "^6.4.0",
     "@stripe/stripe-js": "^9.6.0",
@@ -33,6 +44,9 @@
     "react-router-dom": "^7.13.0"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^7.6.5",
+    "@capacitor/ios": "^8.3.4",
     "@eslint/js": "^9.9.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
