@@ -14,7 +14,10 @@ export type EmailType =
   | 'company_suspended'
   | 'welcome_client'
   | 'welcome_company'
-  | 'booking_invoice';
+  | 'booking_invoice'
+  | 'cash_hold_authorized'
+  | 'cash_hold_released'
+  | 'cash_hold_captured';
 
 interface EmailData {
   recipientEmail: string;

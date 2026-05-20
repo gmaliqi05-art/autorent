@@ -64,6 +64,7 @@ Deno.serve(async (req: Request) => {
       .select(`
         id, client_id, deposit_amount, total_price, status, payment_status, payment_method,
         cash_hold_payment_intent_id, cash_hold_status,
+        pickup_date, return_date,
         vehicle:vehicles(brand, model, year),
         company:companies(name)
       `)
@@ -115,9 +116,35 @@ Deno.serve(async (req: Request) => {
       .update({
         cash_hold_payment_intent_id: intent.id,
         cash_hold_amount: holdAmountEur,
-        cash_hold_status: "authorized", // Update preliminar (webhook do ta konfirmoje)
+        cash_hold_status: "authorized",
+        cash_hold_authorized_at: new Date().toISOString(),
       })
       .eq("id", booking.id);
+
+    // Fire-and-forget: dergo email klientit per autorizimin
+    // (perdorim supabase.functions.invoke me await per te kapur errors)
+    try {
+      await admin.functions.invoke("send-email", {
+        body: {
+          recipientEmail: userData.user.email,
+          recipientName: userData.user.user_metadata?.full_name || userData.user.email,
+          emailType: "cash_hold_authorized",
+          templateData: {
+            recipientName: userData.user.user_metadata?.full_name || "Klient",
+            vehicleName,
+            companyName: company?.name || "RentaKar",
+            holdAmount: holdAmountEur,
+            pickupDate: booking.pickup_date,
+            returnDate: booking.return_date,
+            supportEmail: "info@rentcars.life",
+          },
+          referenceId: booking.id,
+          referenceType: "booking",
+        },
+      });
+    } catch (e) {
+      console.error("send-email failed (non-blocking):", e);
+    }
 
     return jsonResponse(req, {
       clientSecret: intent.client_secret,

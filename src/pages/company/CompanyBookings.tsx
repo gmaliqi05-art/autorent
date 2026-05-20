@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Car, CalendarDays, Check, X, Loader2, CreditCard, Wallet, Building, Banknote, ChevronLeft, ChevronRight, Search, Download, StickyNote, Unlock, AlertTriangle } from 'lucide-react';
+import { Car, CalendarDays, Check, X, Loader2, CreditCard, Wallet, Building, Banknote, ChevronLeft, ChevronRight, Search, Download, StickyNote, Unlock, AlertTriangle, HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -11,6 +11,7 @@ import { issueInvoiceAndNotify } from '../../lib/invoiceService';
 import { createNotification } from '../../lib/notificationService';
 import { exportToCSV } from '../../lib/csvExport';
 import { releaseCashHold, captureCashHold } from '../../lib/stripeClient';
+import CashHoldHelpModal from '../../components/booking/CashHoldHelpModal';
 import {
   formatDate,
   bookingStatusColors,
@@ -63,6 +64,12 @@ export default function CompanyBookings() {
   const [holdMessage, setHoldMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [captureModal, setCaptureModal] = useState<BookingWithRelations | null>(null);
   const [captureReason, setCaptureReason] = useState('');
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  const hasAnyCashHold = useMemo(() =>
+    bookings.some(b => b.payment_method === 'cash' && b.cash_hold_status),
+    [bookings]
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -443,6 +450,15 @@ export default function CompanyBookings() {
         <div>
           <h1 className="text-2xl font-bold text-dark-950 mb-1">{t('companyDash.bookings.heading')}</h1>
           <p className="text-dark-500 text-[15px]">{t('companyDash.bookings.subtitle')}</p>
+          {hasAnyCashHold && (
+            <button
+              onClick={() => setHelpOpen(true)}
+              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              Si funksionon Cash Hold?
+            </button>
+          )}
         </div>
         <button
           onClick={exportCSV}
@@ -744,12 +760,24 @@ export default function CompanyBookings() {
         </div>
       )}
 
+      <CashHoldHelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+
       {captureModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl border border-gray-100 p-6 w-full max-w-md mx-4 shadow-xl">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
-              <h3 className="text-lg font-bold text-dark-900">Kap penalitetin</h3>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <h3 className="text-lg font-bold text-dark-900">Kap penalitetin</h3>
+              </div>
+              <button
+                onClick={() => { setCaptureModal(null); setHelpOpen(true); }}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                title="Si funksionon?"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                Ndihmë
+              </button>
             </div>
             <p className="text-sm text-dark-500 mb-4">
               Do tërhiqet <strong>{captureModal.cash_hold_amount} EUR</strong> nga karta e

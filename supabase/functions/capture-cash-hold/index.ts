@@ -46,8 +46,9 @@ Deno.serve(async (req: Request) => {
       .from("bookings")
       .select(`
         id, company_id, cash_hold_payment_intent_id, cash_hold_status, cash_hold_amount,
-        internal_notes,
-        company:companies(owner_id)
+        internal_notes, client_email, client_name,
+        vehicle:vehicles(brand, model),
+        company:companies(owner_id, name)
       `)
       .eq("id", bookingId)
       .maybeSingle();
@@ -99,6 +100,33 @@ Deno.serve(async (req: Request) => {
         internal_notes: note.trim(),
       })
       .eq("id", bookingId);
+
+    // Dergo email klientit qe garancia u kap
+    try {
+      // deno-lint-ignore no-explicit-any
+      const v = (booking as any).vehicle;
+      // deno-lint-ignore no-explicit-any
+      const c = (booking as any).company;
+      await admin.functions.invoke("send-email", {
+        body: {
+          recipientEmail: booking.client_email,
+          recipientName: booking.client_name,
+          emailType: "cash_hold_captured",
+          templateData: {
+            recipientName: booking.client_name || "Klient",
+            vehicleName: v ? `${v.brand} ${v.model}` : "Automjet",
+            companyName: c?.name || "RentaKar",
+            capturedAmount: captureAmount / 100,
+            reason: reason || "Pa shpjegim",
+            supportEmail: "info@rentcars.life",
+          },
+          referenceId: bookingId,
+          referenceType: "booking",
+        },
+      });
+    } catch (e) {
+      console.error("send-email failed (non-blocking):", e);
+    }
 
     return jsonResponse(req, {
       success: true,
