@@ -3,10 +3,12 @@ import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import App from './App.tsx';
 import { initSentry, SentryErrorBoundary } from './lib/sentry';
+import { registerServiceWorker } from './lib/registerSW';
 import './index.css';
 import './i18n';
 
 initSentry();
+registerServiceWorker();
 
 function ErrorFallback() {
   return (

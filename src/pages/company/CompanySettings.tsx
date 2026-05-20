@@ -1,11 +1,12 @@
-import { useState, useEffect, lazy, Suspense, useRef } from 'react';
-import { Loader2, CheckCircle2, AlertCircle, MapPin, Navigation, Upload, Image as ImageIcon, Clock } from 'lucide-react';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Loader2, CheckCircle2, AlertCircle, MapPin, Navigation, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Company } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { companyNavItems } from '../../lib/companyNav';
+import ImageUploader from '../../components/common/ImageUploader';
 
 const LocationPickerMap = lazy(() => import('../../components/map/LocationPickerMap'));
 
@@ -55,10 +56,6 @@ const initialForm: FormState = {
   working_hours: DEFAULT_HOURS,
 };
 
-const MAX_LOGO_SIZE = 2 * 1024 * 1024;
-const MAX_COVER_SIZE = 5 * 1024 * 1024;
-const ALLOWED_IMAGE = ['image/jpeg', 'image/png', 'image/webp'];
-
 export default function CompanySettings() {
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -69,10 +66,6 @@ export default function CompanySettings() {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
   const [geoLocating, setGeoLocating] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
-  const logoInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -172,34 +165,6 @@ export default function CompanySettings() {
     );
   }
 
-  async function uploadImage(file: File, kind: 'logo' | 'cover') {
-    if (!company) return;
-    if (!ALLOWED_IMAGE.includes(file.type)) {
-      setFeedback({ type: 'error', message: t('companyDash.settings.imageInvalid') });
-      return;
-    }
-    const max = kind === 'logo' ? MAX_LOGO_SIZE : MAX_COVER_SIZE;
-    if (file.size > max) {
-      setFeedback({ type: 'error', message: kind === 'logo' ? t('companyDash.settings.logoTooLarge') : t('companyDash.settings.coverTooLarge') });
-      return;
-    }
-    if (kind === 'logo') setUploadingLogo(true); else setUploadingCover(true);
-    setFeedback(null);
-
-    const ext = file.name.split('.').pop();
-    const path = `companies/${company.id}/${kind}-${Date.now()}.${ext}`;
-    const { error: upErr } = await supabase.storage.from('vehicle-images').upload(path, file, { upsert: true });
-    if (upErr) {
-      if (kind === 'logo') setUploadingLogo(false); else setUploadingCover(false);
-      setFeedback({ type: 'error', message: upErr.message });
-      return;
-    }
-    const { data: pub } = supabase.storage.from('vehicle-images').getPublicUrl(path);
-    const url = pub.publicUrl;
-    updateField(kind === 'logo' ? 'logo_url' : 'cover_image_url', url);
-    if (kind === 'logo') setUploadingLogo(false); else setUploadingCover(false);
-  }
-
   function setDayClosed(day: string, closed: boolean) {
     setForm(prev => ({
       ...prev,
@@ -277,77 +242,35 @@ export default function CompanySettings() {
             <div>
               <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('companyDash.settings.logo')}</label>
               <div className="flex items-start gap-4">
-                <div className="w-20 h-20 rounded-xl bg-gray-50 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
-                  {form.logo_url ? (
-                    <img src={form.logo_url} alt="logo" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImageIcon className="w-6 h-6 text-dark-300" />
-                  )}
-                </div>
-                <div className="flex-1 space-y-2">
-                  <input type="url" value={form.logo_url} onChange={e => updateField('logo_url', e.target.value)} placeholder="https://..." className={inputClass} />
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => logoInputRef.current?.click()}
-                      disabled={uploadingLogo}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-700 text-xs font-semibold rounded-lg hover:bg-primary-100 transition-colors disabled:opacity-60"
-                    >
-                      {uploadingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                      {t('companyDash.settings.uploadLogo')}
-                    </button>
-                    <span className="text-xs text-dark-400">{t('companyDash.settings.logoHint')}</span>
-                  </div>
-                  <input
-                    ref={logoInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) uploadImage(f, 'logo');
-                      e.target.value = '';
-                    }}
+                <div className="w-24">
+                  <ImageUploader
+                    value={form.logo_url}
+                    onChange={(url) => updateField('logo_url', url)}
+                    bucket="company-media"
+                    pathPrefix={company?.id || ''}
+                    aspectRatio="aspect-square"
+                    maxSizeMB={2}
+                    emptyText="Ngarko logo"
                   />
+                </div>
+                <div className="flex-1 flex items-center text-xs text-dark-400">
+                  {t('companyDash.settings.logoHint')}
                 </div>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('companyDash.settings.cover')}</label>
-              <div className="space-y-2">
-                <div className="w-full aspect-[3/1] rounded-xl bg-gray-50 border border-gray-200 overflow-hidden flex items-center justify-center">
-                  {form.cover_image_url ? (
-                    <img src={form.cover_image_url} alt="cover" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImageIcon className="w-8 h-8 text-dark-300" />
-                  )}
-                </div>
-                <input type="url" value={form.cover_image_url} onChange={e => updateField('cover_image_url', e.target.value)} placeholder="https://..." className={inputClass} />
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => coverInputRef.current?.click()}
-                    disabled={uploadingCover}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-700 text-xs font-semibold rounded-lg hover:bg-primary-100 transition-colors disabled:opacity-60"
-                  >
-                    {uploadingCover ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                    {t('companyDash.settings.uploadCover')}
-                  </button>
-                  <span className="text-xs text-dark-400">{t('companyDash.settings.coverHint')}</span>
-                </div>
-                <input
-                  ref={coverInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) uploadImage(f, 'cover');
-                    e.target.value = '';
-                  }}
-                />
-              </div>
+              <ImageUploader
+                value={form.cover_image_url}
+                onChange={(url) => updateField('cover_image_url', url)}
+                bucket="company-media"
+                pathPrefix={company?.id || ''}
+                aspectRatio="aspect-[3/1]"
+                maxSizeMB={5}
+                emptyText="Ngarko cover image"
+              />
+              <p className="mt-1.5 text-xs text-dark-400">{t('companyDash.settings.coverHint')}</p>
             </div>
 
             <div>

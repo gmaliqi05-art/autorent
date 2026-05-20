@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Plus, Save, Loader2, CheckCircle, Image, Link, AlignLeft, Calendar, Eye, EyeOff } from 'lucide-react';
+import { Plus, Save, Loader2, CheckCircle, Link, AlignLeft, Calendar, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
 import { useNavigate } from 'react-router-dom';
+import ImageUploader from '../../components/common/ImageUploader';
 
 const positions = [
   { value: 'homepage_banner', label: 'Banner kryesor i Ballines', desc: 'Vendoset ne kryefaqe, shume vizibel' },
@@ -79,17 +80,15 @@ export default function AdminCreateAd() {
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                 <p className="text-xs text-gray-400 mt-1">{form.description.length}/250</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">URL Imazhit</label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Image className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
-                      placeholder="https://images.pexels.com/..." className="w-full pl-9 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                  </div>
-                </div>
-                {form.image_url && <img src={form.image_url} alt="Preview" className="mt-2 h-24 w-full object-cover rounded-lg border border-gray-200" />}
-              </div>
+              <ImageUploader
+                value={form.image_url}
+                onChange={(url) => setForm((f) => ({ ...f, image_url: url }))}
+                bucket="ad-images"
+                pathPrefix="ads"
+                aspectRatio="aspect-[16/9]"
+                label="Imazhi i reklames"
+                emptyText="Ngarko imazhin e reklames"
+              />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">URL destinacioni (ku shkon klikimi)</label>
                 <div className="relative">

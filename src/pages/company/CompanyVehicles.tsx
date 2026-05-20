@@ -565,16 +565,6 @@ export default function CompanyVehicles() {
                       className="hidden"
                     />
                   </label>
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <Input
-                      label={t('companyDash.vehicles.orImageUrl')}
-                      value={form.main_image_url}
-                      onChange={v => {
-                        setForm({ ...form, main_image_url: v });
-                        if (v) setImagePreview(v);
-                      }}
-                    />
-                  </div>
                 </div>
               )}
             </div>

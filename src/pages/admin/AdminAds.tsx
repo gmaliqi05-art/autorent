@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import type { PlatformAd } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
+import ImageUploader from '../../components/common/ImageUploader';
 
 const positions = [
   { value: 'homepage_banner', label: 'Baneri kryesor' },
@@ -163,9 +164,16 @@ export default function AdminAds() {
               <label className="block text-xs font-medium text-dark-600 mb-1.5">Pershkrimi</label>
               <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} className={`${inputClass} resize-none`} />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-dark-600 mb-1.5">URL e imazhit</label>
-              <input value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} className={inputClass} placeholder="https://..." />
+            <div className="md:col-span-2">
+              <ImageUploader
+                value={form.image_url}
+                onChange={(url) => setForm((f) => ({ ...f, image_url: url }))}
+                bucket="ad-images"
+                pathPrefix="ads"
+                aspectRatio="aspect-[16/9]"
+                label="Imazhi i reklames"
+                emptyText="Ngarko imazhin"
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-dark-600 mb-1.5">Link URL</label>

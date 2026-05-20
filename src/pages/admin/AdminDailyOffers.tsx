@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
 import { format } from 'date-fns';
+import ImageUploader from '../../components/common/ImageUploader';
 
 interface DailyOffer {
   id: string;
@@ -188,9 +189,15 @@ export default function AdminDailyOffers() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Image URL (opsionale)</label>
-                  <input value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
-                    placeholder="https://..." className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                  <ImageUploader
+                    value={form.image_url || ''}
+                    onChange={(url) => setForm((f) => ({ ...f, image_url: url }))}
+                    bucket="ad-images"
+                    pathPrefix="daily-offers"
+                    aspectRatio="aspect-[16/9]"
+                    label="Imazhi i ofertes (opsional)"
+                    emptyText="Ngarko imazhin"
+                  />
                 </div>
                 <div className="flex items-center gap-3">
                   <input type="checkbox" id="offer_active" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))}
