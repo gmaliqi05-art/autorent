@@ -19,7 +19,8 @@
     "app:open:android": "npx cap open android",
     "app:open:ios": "npx cap open ios",
     "app:run:android": "npm run build && npx cap sync android && npx cap run android",
-    "app:run:ios": "npm run build && npx cap sync ios && npx cap run ios"
+    "app:run:ios": "npm run build && npx cap sync ios && npx cap run ios",
+    "icons:generate": "node scripts/generate-icons.cjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",
@@ -62,6 +63,7 @@
     "globals": "^15.9.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.4.35",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
