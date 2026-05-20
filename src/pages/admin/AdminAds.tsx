@@ -147,7 +147,7 @@ export default function AdminAds() {
       </div>
 
       {(creating || editing) && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6 animate-fade-in">
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6 animate-fade-in">
           <h2 className="text-lg font-semibold text-dark-950 mb-5">{creating ? 'Reklame e re' : 'Ndrysho reklamen'}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -207,7 +207,7 @@ export default function AdminAds() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {ads.map(ad => (
-          <div key={ad.id} className={`bg-white rounded-2xl border border-gray-100 overflow-hidden group ${!ad.is_active ? 'opacity-60' : ''}`}>
+          <div key={ad.id} className={`bg-white rounded-lg border border-gray-200 overflow-hidden group ${!ad.is_active ? 'opacity-60' : ''}`}>
             {ad.image_url && (
               <div className="h-36 bg-gray-100 relative overflow-hidden">
                 <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover" />
@@ -254,7 +254,7 @@ export default function AdminAds() {
           </div>
         ))}
         {ads.length === 0 && (
-          <div className="md:col-span-2 bg-white rounded-2xl border border-gray-100 p-12 text-center">
+          <div className="md:col-span-2 bg-white rounded-lg border border-gray-200 p-12 text-center">
             <Megaphone className="w-10 h-10 text-gray-300 mx-auto mb-3" />
             <p className="text-sm text-dark-500">Nuk ka reklama. Klikoni "Reklame e re" per te filluar.</p>
           </div>

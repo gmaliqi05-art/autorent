@@ -189,7 +189,7 @@ export default function AdminEmails() {
           <Loader2 className="w-7 h-7 text-primary-600 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
+        <div className="bg-white rounded-lg border border-gray-200 p-16 text-center">
           <Mail className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-dark-600 font-medium">Nuk ka emaile</p>
         </div>

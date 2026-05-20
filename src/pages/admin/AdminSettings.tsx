@@ -82,7 +82,7 @@ export default function AdminSettings() {
 
       <div className="space-y-6">
         {payment && (
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
               <CreditCard className="w-5 h-5 text-green-600" />
               <h2 className="font-semibold text-dark-950">Metodat e pageses</h2>
@@ -170,7 +170,7 @@ export default function AdminSettings() {
         )}
 
         {chat && (
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
               <MessageSquare className="w-5 h-5 text-primary-600" />
               <h2 className="font-semibold text-dark-950">Cilesimet e Chat-it</h2>
@@ -204,7 +204,7 @@ export default function AdminSettings() {
         )}
 
         {platform && (
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
               <Building2 className="w-5 h-5 text-amber-600" />
               <h2 className="font-semibold text-dark-950">Informacionet e platformes</h2>

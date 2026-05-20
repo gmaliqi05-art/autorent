@@ -59,7 +59,8 @@ const AdminDailyOffers = lazy(() => import('./pages/admin/AdminDailyOffers'));
 const AdminCreateAd = lazy(() => import('./pages/admin/AdminCreateAd'));
 const AdminLegalPages = lazy(() => import('./pages/admin/AdminLegalPages'));
 
-// Lazy: legal pages (rarely visited)
+// Lazy: legal & info pages (rarely visited)
+const AboutPlatformPage = lazy(() => import('./pages/AboutPlatformPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage'));
 const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'));
@@ -159,6 +160,7 @@ export default function App() {
             <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
             <Route path="/automjetet" element={<PublicLayout><VehicleListPage /></PublicLayout>} />
             <Route path="/automjetet/:id" element={<PublicLayout><VehicleDetailPage /></PublicLayout>} />
+            <Route path="/per-platformen" element={<PublicLayout><AboutPlatformPage /></PublicLayout>} />
             <Route path="/politika-privatesise" element={<PublicLayout><PrivacyPolicyPage /></PublicLayout>} />
             <Route path="/kushtet-perdorimit" element={<PublicLayout><TermsOfUsePage /></PublicLayout>} />
             <Route path="/politika-cookie" element={<PublicLayout><CookiePolicyPage /></PublicLayout>} />

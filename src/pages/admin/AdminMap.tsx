@@ -149,7 +149,7 @@ function AdminMapView() {
         <StatCard icon={<Car className="w-5 h-5 text-blue-600" />} label="Vetura aktive" value={companies.reduce((s, c) => s + (c.vehicleCount || 0), 0)} bg="bg-blue-50" />
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
         <div className="flex flex-col sm:flex-row gap-3 p-4 border-b border-gray-100">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />

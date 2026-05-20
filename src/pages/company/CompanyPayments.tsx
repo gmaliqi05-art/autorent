@@ -232,38 +232,29 @@ export default function CompanyPayments() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
-          icon={<DollarSign className="w-5 h-5 text-white" />}
-          bg="bg-gradient-to-br from-green-500 to-green-600"
+          icon={<DollarSign className="w-4 h-4 text-dark-500" />}
           value={`${totalRevenue.toFixed(0)} EUR`}
           label={t('companyDash.payments.totalRevenue')}
-          trend={<ArrowUpRight className="w-3.5 h-3.5 text-green-500" />}
-          gradient
         />
         <StatCard
-          icon={<Clock className="w-5 h-5 text-white" />}
-          bg="bg-gradient-to-br from-amber-500 to-amber-600"
+          icon={<Clock className="w-4 h-4 text-dark-500" />}
           value={`${pendingRevenue.toFixed(0)} EUR`}
           label={t('companyDash.payments.pendingRevenue')}
-          gradient
         />
         <StatCard
-          icon={<CreditCard className="w-5 h-5 text-white" />}
-          bg="bg-gradient-to-br from-blue-500 to-blue-600"
+          icon={<CreditCard className="w-4 h-4 text-dark-500" />}
           value={totalTransactions.toString()}
           label={t('companyDash.payments.successfulTransactions')}
-          gradient
         />
         <StatCard
-          icon={<Wallet className="w-5 h-5 text-white" />}
-          bg="bg-gradient-to-br from-teal-500 to-teal-600"
+          icon={<Wallet className="w-4 h-4 text-dark-500" />}
           value={`${depositRevenue.toFixed(0)} EUR`}
           label={t('companyDash.payments.depositsCollected')}
-          gradient
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="font-semibold text-dark-950 mb-5">{t('companyDash.payments.byMethod')}</h2>
           <div className="space-y-4">
             {paymentMethodStats.length === 0 ? (
@@ -298,7 +289,7 @@ export default function CompanyPayments() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="font-semibold text-dark-950 mb-5">{t('companyDash.payments.statusOverview')}</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl">
@@ -328,7 +319,7 @@ export default function CompanyPayments() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100">
+      <div className="bg-white rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="font-semibold text-dark-950">{t('companyDash.payments.transactionsHeader', { count: filtered.length })}</h2>
           <button
@@ -494,29 +485,20 @@ export default function CompanyPayments() {
 
 function StatCard({
   icon,
-  bg,
   value,
   label,
-  trend,
-  gradient = false,
 }: {
   icon: React.ReactNode;
-  bg: string;
   value: string;
   label: string;
-  trend?: React.ReactNode;
-  gradient?: boolean;
 }) {
   return (
-    <div className={`rounded-2xl p-6 ${gradient ? bg : 'bg-white border border-gray-100'}`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${gradient ? 'bg-white/20' : bg}`}>
-          {icon}
-        </div>
-        {trend && <div className="bg-white rounded-full p-1.5">{trend}</div>}
+    <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="shrink-0">{icon}</span>
+        <p className="text-xs text-dark-500 uppercase tracking-wide">{label}</p>
       </div>
-      <p className={`text-2xl font-bold mb-1 ${gradient ? 'text-white' : 'text-dark-950'}`}>{value}</p>
-      <p className={`text-sm ${gradient ? 'text-white/80' : 'text-dark-500'}`}>{label}</p>
+      <p className="text-2xl font-semibold text-dark-950">{value}</p>
     </div>
   );
 }

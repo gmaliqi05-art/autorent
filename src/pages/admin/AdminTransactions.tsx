@@ -115,35 +115,35 @@ export default function AdminTransactions() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           icon={<DollarSign className="w-5 h-5 text-white" />}
-          bg="bg-gradient-to-br from-green-500 to-green-600"
+          bg="bg-white border border-gray-200"
           value={`${totalVolume.toFixed(0)} EUR`}
           label="Volumet total"
           gradient
         />
         <StatCard
           icon={<CreditCard className="w-5 h-5 text-white" />}
-          bg="bg-gradient-to-br from-blue-500 to-blue-600"
+          bg="bg-white border border-gray-200"
           value={`${successRate.toFixed(1)}%`}
           label="Success rate"
           gradient
         />
         <StatCard
           icon={<FileText className="w-5 h-5 text-white" />}
-          bg="bg-gradient-to-br from-purple-500 to-purple-600"
+          bg="bg-white border border-gray-200"
           value={`${avgTransaction.toFixed(0)} EUR`}
           label="Vlera mesatare"
           gradient
         />
         <StatCard
           icon={<Building2 className="w-5 h-5 text-white" />}
-          bg="bg-gradient-to-br from-red-500 to-red-600"
+          bg="bg-white border border-gray-200"
           value={failedCount.toString()}
           label="Pagesa te deshtuara"
           gradient
         />
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 mb-8 p-6">
+      <div className="bg-white rounded-lg border border-gray-200 mb-8 p-6">
         <h2 className="font-semibold text-dark-950 mb-4">Filtra</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
@@ -201,7 +201,7 @@ export default function AdminTransactions() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100">
+      <div className="bg-white rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="font-semibold text-dark-950">Transaksionet ({filtered.length})</h2>
           <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 text-xs font-semibold rounded-lg hover:bg-primary-100 transition-colors">

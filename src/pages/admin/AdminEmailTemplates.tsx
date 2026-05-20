@@ -296,7 +296,7 @@ export default function AdminEmailTemplates() {
           <Loader2 className="w-7 h-7 text-primary-600 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
+        <div className="bg-white rounded-lg border border-gray-200 p-16 text-center">
           <Mail className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-dark-600 font-medium">Nuk u gjet asnje template</p>
         </div>
@@ -384,7 +384,7 @@ export default function AdminEmailTemplates() {
       {modal && modal.mode !== 'preview' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-dark-950/50 backdrop-blur-sm" onClick={() => !saving && setModal(null)} />
-          <div className="relative bg-white rounded-2xl border border-gray-100 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
+          <div className="relative bg-white rounded-lg border border-gray-200 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-dark-950">
@@ -527,7 +527,7 @@ export default function AdminEmailTemplates() {
       {modal && modal.mode === 'preview' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-dark-950/50 backdrop-blur-sm" onClick={() => setModal(null)} />
-          <div className="relative bg-white rounded-2xl border border-gray-100 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
+          <div className="relative bg-white rounded-lg border border-gray-200 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-dark-950">Preview Template</h2>
@@ -601,7 +601,7 @@ export default function AdminEmailTemplates() {
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-dark-950/50 backdrop-blur-sm" onClick={() => !deleting && setDeleteId(null)} />
-          <div className="relative bg-white rounded-2xl border border-gray-100 p-6 w-full max-w-sm shadow-xl">
+          <div className="relative bg-white rounded-lg border border-gray-200 p-6 w-full max-w-sm shadow-xl">
             <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-6 h-6 text-red-600" />
             </div>

@@ -517,7 +517,7 @@ export default function CompanyVehicles() {
       )}
 
       {showForm && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6 animate-slide-down">
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6 animate-slide-down">
           <h3 className="font-semibold text-dark-950 mb-5">{editId ? t('companyDash.vehicles.editVehicle') : t('companyDash.vehicles.addNew')}</h3>
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>
@@ -659,7 +659,7 @@ export default function CompanyVehicles() {
       )}
 
       {filteredVehicles.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
+        <div className="bg-white rounded-lg border border-gray-200 p-16 text-center">
           <Car className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="text-dark-600 font-medium">
             {search ? t('companyDash.vehicles.noResults') : t('companyDash.vehicles.noFleet')}

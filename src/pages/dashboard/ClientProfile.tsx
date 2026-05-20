@@ -196,7 +196,7 @@ export default function ClientProfile() {
         <h1 className="text-2xl font-bold text-dark-950 mb-1">{t('clientDash.profile.title')}</h1>
         <p className="text-dark-500 mb-8 text-[15px]">{t('clientDash.profile.subtitle')}</p>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <form onSubmit={handleSave} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.email')}</label>
@@ -285,7 +285,7 @@ export default function ClientProfile() {
 
         {user && <ClientDocumentsCard userId={user.id} />}
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
           <h2 className="text-lg font-semibold text-dark-950 mb-1">{t('clientDash.profile.changePassword')}</h2>
           <p className="text-dark-500 text-sm mb-5">{t('clientDash.profile.changePasswordSubtitle')}</p>
           <form onSubmit={handlePasswordChange} className="space-y-5">
@@ -379,7 +379,7 @@ export default function ClientProfile() {
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-dark-950/40 backdrop-blur-sm" onClick={() => !deleting && setShowDeleteModal(false)} />
-          <div className="relative bg-white rounded-2xl border border-gray-100 p-6 w-full max-w-md shadow-xl">
+          <div className="relative bg-white rounded-lg border border-gray-200 p-6 w-full max-w-md shadow-xl">
             <div className="flex flex-col items-center text-center mb-4">
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
                 <AlertTriangle className="w-6 h-6 text-red-600" />

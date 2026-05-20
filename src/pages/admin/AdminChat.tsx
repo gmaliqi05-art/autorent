@@ -139,7 +139,7 @@ export default function AdminChat() {
       </div>
 
       {(creating || editing) && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6 animate-fade-in">
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6 animate-fade-in">
           <h2 className="text-lg font-semibold text-dark-950 mb-5">{creating ? 'Pergjigje e re' : 'Ndrysho pergjigjen'}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -193,7 +193,7 @@ export default function AdminChat() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

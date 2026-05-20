@@ -196,7 +196,7 @@ export default function AdminUsers() {
         <StatCard icon={<TrendingUp className="w-5 h-5 text-primary-600" />} label="Kete muaj" value={newThisMonth} bg="bg-primary-50" iconBg="bg-primary-100" />
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
@@ -250,7 +250,7 @@ export default function AdminUsers() {
                       <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+                            <div className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-white shrink-0">
                               {u.full_name?.charAt(0)?.toUpperCase() || 'U'}
                             </div>
                             <div className="min-w-0">
@@ -319,7 +319,7 @@ export default function AdminUsers() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-lg font-bold text-white shrink-0">
+                <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-bold text-white shrink-0">
                   {selectedUser.full_name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
                 <div>
@@ -467,7 +467,7 @@ function SortTh({ label, field, current, dir, onSort, align }: { label: string; 
 
 function StatCard({ icon, label, value, bg, iconBg }: { icon: React.ReactNode; label: string; value: number; bg: string; iconBg: string }) {
   return (
-    <div className={`${bg} rounded-2xl border border-gray-100 p-4`}>
+    <div className={`${bg} rounded-lg border border-gray-200 p-4`}>
       <div className={`${iconBg} w-9 h-9 rounded-lg flex items-center justify-center mb-3`}>{icon}</div>
       <p className="text-xl font-bold text-dark-950">{value}</p>
       <p className="text-xs text-dark-500 mt-0.5">{label}</p>

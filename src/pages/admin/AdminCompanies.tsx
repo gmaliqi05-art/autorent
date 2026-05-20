@@ -219,7 +219,7 @@ export default function AdminCompanies() {
         <StatCard icon={<CalendarDays className="w-5 h-5 text-primary-600" />} label="Rezervime aktive" value={totalActiveBookings} sub="Ne progres tani" bg="bg-primary-50" iconBg="bg-primary-100" />
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">

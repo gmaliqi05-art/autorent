@@ -309,7 +309,7 @@ export default function AdminSubscriptions() {
       {tabView === 'plans' && (
         <>
           {(creating || editing) && (
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-8">
+            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
               <h2 className="text-lg font-semibold text-dark-950 mb-5">{creating ? 'Plan i ri' : 'Ndrysho planin'}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
@@ -479,7 +479,7 @@ export default function AdminSubscriptions() {
             })}
           </div>
 
-          <div className="mt-10 bg-white rounded-2xl border border-gray-100 p-6">
+          <div className="mt-10 bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-base font-bold text-dark-950 mb-1">Pamja paraprake e planeve ne Homepage</h3>
             <p className="text-xs text-dark-400 mb-6">Kjo eshte saktesisht si shfaqen planet ne faqen kryesore per vizitoret e ri.</p>
             <HomepagePricingPreview plans={plans.filter(p => p.is_active)} />
@@ -488,7 +488,7 @@ export default function AdminSubscriptions() {
       )}
 
       {tabView === 'subscribers' && (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>

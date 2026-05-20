@@ -226,7 +226,7 @@ export default function AdminHomepage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden sticky top-[88px]">
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden sticky top-[88px]">
             <div className="p-4 border-b border-gray-100">
               <p className="text-xs font-semibold text-dark-500 uppercase tracking-wide">Seksionet</p>
             </div>
@@ -302,7 +302,7 @@ export default function AdminHomepage() {
 function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
@@ -701,7 +701,7 @@ function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, input
         </div>
       </SectionCard>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
         <p className="text-xs font-semibold text-dark-600 uppercase tracking-wide mb-4">Parashikim ne Navbar</p>
         <div className="space-y-3">
           <div>
@@ -1067,7 +1067,7 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 p-12 flex items-center justify-center">
+      <div className="bg-white rounded-lg border border-gray-200 p-12 flex items-center justify-center">
         <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
       </div>
     );
@@ -1075,7 +1075,7 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-start justify-between gap-4 mb-2">
           <div>
             <h2 className="text-lg font-bold text-dark-950">Kategorite e Automjeteve</h2>
@@ -1132,7 +1132,7 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
 
       <div className="space-y-4">
         {rows.map((row, idx) => (
-          <div key={row.key} className="bg-white rounded-2xl border border-gray-100 p-5">
+          <div key={row.key} className="bg-white rounded-lg border border-gray-200 p-5">
             <div className="flex items-start gap-4">
               <div className="w-24 h-20 rounded-xl bg-gray-100 overflow-hidden shrink-0">
                 {row.image_url && <img src={row.image_url} alt={row.label_sq} className="w-full h-full object-cover" />}

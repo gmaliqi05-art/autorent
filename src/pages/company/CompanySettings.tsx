@@ -232,7 +232,7 @@ export default function CompanySettings() {
         <p className="text-dark-500 mb-8 text-[15px]">{t('companyDash.settings.subtitle')}</p>
 
         <form onSubmit={handleSave} className="space-y-6">
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+          <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-5">
             <h2 className="text-sm font-semibold text-dark-400 uppercase tracking-wide">{t('companyDash.settings.sectionBasic')}</h2>
             <div>
               <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('companyDash.settings.name')}</label>
@@ -283,7 +283,7 @@ export default function CompanySettings() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+          <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-5">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-dark-400" />
               <h2 className="text-sm font-semibold text-dark-400 uppercase tracking-wide">{t('companyDash.settings.sectionHours')}</h2>
@@ -328,7 +328,7 @@ export default function CompanySettings() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+          <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-5">
             <h2 className="text-sm font-semibold text-dark-400 uppercase tracking-wide">{t('companyDash.settings.sectionContact')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -342,7 +342,7 @@ export default function CompanySettings() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+          <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-5">
             <h2 className="text-sm font-semibold text-dark-400 uppercase tracking-wide">{t('companyDash.settings.sectionLocation')}</h2>
             <div>
               <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('companyDash.settings.address')}</label>

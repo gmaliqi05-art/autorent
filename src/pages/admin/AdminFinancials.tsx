@@ -235,7 +235,7 @@ export default function AdminFinancials() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="font-semibold text-dark-950 mb-5">Shperndarja e rezervimeve</h2>
           <div className="space-y-3">
             {statusDistribution.map(s => (
@@ -252,7 +252,7 @@ export default function AdminFinancials() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="font-semibold text-dark-950 mb-5">Abonimet aktive</h2>
           <div className="space-y-3 mb-5">
             {plans.map(plan => {
@@ -279,7 +279,7 @@ export default function AdminFinancials() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="font-semibold text-dark-950 mb-5">Metodat e pageses</h2>
           {paymentMethodStats.length === 0 ? (
             <p className="text-sm text-dark-400 text-center py-8">Nuk ka pagesa per kete periudhe</p>
@@ -310,7 +310,7 @@ export default function AdminFinancials() {
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="font-semibold text-dark-950 mb-5">Statusi i pagesave</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl">
@@ -339,7 +339,7 @@ export default function AdminFinancials() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-5">
             <Car className="w-5 h-5 text-primary-600" />
             <h2 className="font-semibold text-dark-950">Top 10 automjetet</h2>
@@ -366,7 +366,7 @@ export default function AdminFinancials() {
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-5">
             <Building className="w-5 h-5 text-amber-600" />
             <h2 className="font-semibold text-dark-950">Performanca sipas kategorise</h2>
@@ -398,7 +398,7 @@ export default function AdminFinancials() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-5">
             <Users className="w-5 h-5 text-blue-600" />
             <h2 className="font-semibold text-dark-950">Top 10 klientet</h2>
@@ -425,7 +425,7 @@ export default function AdminFinancials() {
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-5">
             <MapPin className="w-5 h-5 text-red-600" />
             <h2 className="font-semibold text-dark-950">Shperndarja gjeografike</h2>
@@ -456,7 +456,7 @@ export default function AdminFinancials() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 mb-8">
+      <div className="bg-white rounded-lg border border-gray-200 mb-8">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
           <Receipt className="w-5 h-5 text-primary-600" />
           <h2 className="font-semibold text-dark-950">Raporti i faturave</h2>
@@ -552,7 +552,7 @@ export default function AdminFinancials() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100">
+      <div className="bg-white rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-100">
           <h2 className="font-semibold text-dark-950">Te ardhurat sipas kompanise</h2>
         </div>

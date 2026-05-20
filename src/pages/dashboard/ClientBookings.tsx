@@ -333,7 +333,7 @@ export default function ClientBookings() {
           <Loader2 className="w-7 h-7 text-primary-600 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
+        <div className="bg-white rounded-lg border border-gray-200 p-16 text-center">
           <FileText className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-dark-600 font-medium">{t('clientDash.bookings.noBookings')}</p>
         </div>
@@ -481,7 +481,7 @@ export default function ClientBookings() {
       {cancellationPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-dark-950/40 backdrop-blur-sm" onClick={() => !cancelling && setCancellationPreview(null)} />
-          <div className="relative bg-white rounded-2xl border border-gray-100 p-6 w-full max-w-md shadow-xl">
+          <div className="relative bg-white rounded-lg border border-gray-200 p-6 w-full max-w-md shadow-xl">
             <div className="flex flex-col items-center text-center">
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
                 <AlertTriangle className="w-6 h-6 text-red-600" />
@@ -539,7 +539,7 @@ export default function ClientBookings() {
       {reviewBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-dark-950/40 backdrop-blur-sm" onClick={() => !submittingReview && setReviewBooking(null)} />
-          <div className="relative bg-white rounded-2xl border border-gray-100 p-6 w-full max-w-md shadow-xl">
+          <div className="relative bg-white rounded-lg border border-gray-200 p-6 w-full max-w-md shadow-xl">
             {reviewSuccess ? (
               <div className="flex flex-col items-center text-center py-4">
                 <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-4">

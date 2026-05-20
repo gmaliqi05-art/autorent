@@ -520,7 +520,7 @@ export default function CompanyBookings() {
           <Loader2 className="w-7 h-7 text-primary-600 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
+        <div className="bg-white rounded-lg border border-gray-200 p-16 text-center">
           <CalendarDays className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-dark-600 font-medium">{t('companyDash.bookings.noBookings')}</p>
         </div>
@@ -764,7 +764,7 @@ export default function CompanyBookings() {
 
       {captureModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 w-full max-w-md mx-4 shadow-xl">
+          <div className="bg-white rounded-lg border border-gray-200 p-6 w-full max-w-md mx-4 shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-600" />

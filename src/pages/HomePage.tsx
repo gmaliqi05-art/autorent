@@ -3,11 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FeaturedVehicles from '../components/home/FeaturedVehicles';
-import HowItWorks from '../components/home/HowItWorks';
-import Testimonials from '../components/home/Testimonials';
-import CompanyCTA from '../components/home/CompanyCTA';
-import TrustBanner from '../components/home/TrustBanner';
-import PricingSection from '../components/home/PricingSection';
 import { useHomepageSettings } from '../lib/useHomepageSettings';
 import { supabase } from '../lib/supabase';
 import { Helmet } from 'react-helmet-async';
@@ -16,6 +11,15 @@ const NearbyCompaniesMap = lazy(() => import('../components/map/NearbyCompaniesM
 
 type HeroCity = { id: string; name: string };
 
+/**
+ * Homepage e thjeshte qe fokusohet ne vizituesin qe kerkon nje vetur:
+ *  - Hero me kerkim
+ *  - Kategorite
+ *  - Veturat e zgjedhura
+ *  - Harta me kompani te afërt
+ *
+ * Info gjeneral per platformen, abonime, deshmi, etj. jane lëvizur ne /per-platformen.
+ */
 export default function HomePage() {
   const settings = useHomepageSettings();
 
@@ -32,11 +36,6 @@ export default function HomePage() {
       {settings.sections.show_categories && <CategoriesSection settings={settings} />}
       {settings.sections.show_featured && <FeaturedVehicles settings={settings} />}
       <MapSection />
-      {settings.sections.show_how_it_works && <HowItWorks />}
-      {settings.sections.show_testimonials && <Testimonials />}
-      <PricingSection />
-      {settings.sections.show_company_cta && <CompanyCTA />}
-      {settings.sections.show_trust_banner && <TrustBanner />}
     </div>
   );
 }

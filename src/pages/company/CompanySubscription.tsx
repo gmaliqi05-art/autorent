@@ -216,7 +216,7 @@ export default function CompanySubscription() {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
           <div className="flex items-start justify-between mb-5">
             <div>
               <p className="text-xs font-semibold text-dark-400 uppercase tracking-wide mb-2">{t('companyDash.subscription.currentPlan')}</p>
@@ -319,7 +319,7 @@ export default function CompanySubscription() {
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
               <h3 className="text-base font-semibold text-dark-900">

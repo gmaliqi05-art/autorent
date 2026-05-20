@@ -150,7 +150,7 @@ export default function AdminCreateAd() {
                   {form.image_url ? (
                     <img src={form.image_url} alt={form.title} className="w-full h-24 object-cover" />
                   ) : (
-                    <div className="w-full h-24 bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
+                    <div className="w-full h-24 bg-white border border-gray-200 flex items-center justify-center">
                       <span className="text-primary-400 text-sm">Pa imazh</span>
                     </div>
                   )}
