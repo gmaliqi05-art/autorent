@@ -14,8 +14,9 @@ import { createInvoice } from '../lib/invoiceService';
 import { createNotification } from '../lib/notificationService';
 import { startStripeCheckout } from '../lib/stripeService';
 import { startPaypalCheckout } from '../lib/paypalService';
+import CashHoldForm from '../components/booking/CashHoldForm';
 
-type BookingStep = 'dates' | 'invoice' | 'payment' | 'success';
+type BookingStep = 'dates' | 'invoice' | 'payment' | 'cash_hold' | 'success';
 
 export default function VehicleDetailPage() {
   const { id } = useParams();
@@ -37,6 +38,7 @@ export default function VehicleDetailPage() {
   const [bookingError, setBookingError] = useState('');
   const [step, setStep] = useState<BookingStep>('dates');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType | ''>('');
+  const [cashBookingId, setCashBookingId] = useState<string | null>(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [availabilityError, setAvailabilityError] = useState('');
 
@@ -255,6 +257,15 @@ export default function VehicleDetailPage() {
       return;
     }
 
+    // Cash me garanci: pas krijimit te bookingit, kerko karten per hold
+    if (paymentMethod === 'cash') {
+      setCashBookingId(bookingData.id);
+      setStep('cash_hold');
+      setBooking(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     setStep('success');
     setBooking(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -386,6 +397,30 @@ export default function VehicleDetailPage() {
               {booking && <Loader2 className="w-4 h-4 animate-spin" />}
               {booking ? 'Duke perfunduar...' : 'Konfirmo rezervimin'}
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'cash_hold' && cashBookingId) {
+    return (
+      <div className="min-h-screen bg-gray-50/80 pt-[68px]">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <h2 className="text-xl font-bold text-dark-950 mb-2">Garanci për pagesën me kesh</h2>
+            <p className="text-sm text-dark-500 mb-6">
+              Per te konfirmuar rezervimin me pagese ne lokal, na duhet nje karte si garanci.
+              Asnje shume nuk do t'ju merret realisht — kompania e liron pas pages kesh.
+            </p>
+            <CashHoldForm
+              bookingId={cashBookingId}
+              onSuccess={() => setStep('success')}
+              onError={(msg) => setBookingError(msg)}
+            />
+            {bookingError && (
+              <p className="mt-4 text-sm text-red-600">{bookingError}</p>
+            )}
           </div>
         </div>
       </div>

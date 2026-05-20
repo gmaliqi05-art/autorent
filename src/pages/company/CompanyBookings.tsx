@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Car, CalendarDays, Check, X, Loader2, CreditCard, Wallet, Building, Banknote, ChevronLeft, ChevronRight, Search, Download, StickyNote } from 'lucide-react';
+import { Car, CalendarDays, Check, X, Loader2, CreditCard, Wallet, Building, Banknote, ChevronLeft, ChevronRight, Search, Download, StickyNote, Unlock, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,6 +10,7 @@ import { sendBookingApprovedEmail, sendBookingRejectedEmail, sendBookingComplete
 import { issueInvoiceAndNotify } from '../../lib/invoiceService';
 import { createNotification } from '../../lib/notificationService';
 import { exportToCSV } from '../../lib/csvExport';
+import { releaseCashHold, captureCashHold } from '../../lib/stripeClient';
 import {
   formatDate,
   bookingStatusColors,
@@ -58,10 +59,52 @@ export default function CompanyBookings() {
   const [notesValue, setNotesValue] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
 
+  const [holdActionLoading, setHoldActionLoading] = useState<string | null>(null);
+  const [holdMessage, setHoldMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [captureModal, setCaptureModal] = useState<BookingWithRelations | null>(null);
+  const [captureReason, setCaptureReason] = useState('');
+
   useEffect(() => {
     if (!user) return;
     loadData();
   }, [user]);
+
+  async function handleReleaseHold(b: BookingWithRelations) {
+    if (!confirm(`Lironi garancin ${b.cash_hold_amount || 100} EUR? Klienti pagoi kesh.`)) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    setHoldActionLoading(b.id);
+    const result = await releaseCashHold(b.id, session.access_token);
+    setHoldActionLoading(null);
+    if ('error' in result) {
+      setHoldMessage({ type: 'error', text: result.error });
+    } else {
+      setHoldMessage({ type: 'success', text: `Garancia ${b.cash_hold_amount} EUR u lirua. Klienti nuk paguan asgje me kart.` });
+      loadData();
+    }
+    setTimeout(() => setHoldMessage(null), 6000);
+  }
+
+  async function handleCaptureHold() {
+    if (!captureModal) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const id = captureModal.id;
+    setHoldActionLoading(id);
+    const result = await captureCashHold(id, session.access_token, {
+      reason: captureReason.trim() || undefined,
+    });
+    setHoldActionLoading(null);
+    setCaptureModal(null);
+    setCaptureReason('');
+    if ('error' in result) {
+      setHoldMessage({ type: 'error', text: result.error });
+    } else {
+      setHoldMessage({ type: 'success', text: `Penaliteti ${result.capturedAmount} EUR u tërhoq nga karta e klientit.` });
+      loadData();
+    }
+    setTimeout(() => setHoldMessage(null), 6000);
+  }
 
   useEffect(() => {
     setPage(1);
@@ -382,6 +425,20 @@ export default function CompanyBookings() {
 
   return (
     <DashboardLayout title={t('companyDash.bookings.title')} navItems={companyNavItems}>
+      {holdMessage && (
+        <div className={`mb-4 border rounded-xl p-4 flex items-center gap-3 ${
+          holdMessage.type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+        }`}>
+          {holdMessage.type === 'success'
+            ? <Check className="w-5 h-5 text-green-600 shrink-0" />
+            : <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+          }
+          <p className={`text-sm font-medium ${holdMessage.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
+            {holdMessage.text}
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-dark-950 mb-1">{t('companyDash.bookings.heading')}</h1>
@@ -546,6 +603,41 @@ export default function CompanyBookings() {
                           {isActioning ? <Loader2 className="w-4 h-4 animate-spin" /> : t('companyDash.bookings.complete')}
                         </button>
                       )}
+
+                      {b.payment_method === 'cash' && b.cash_hold_status === 'authorized' && (
+                        <>
+                          <button
+                            onClick={() => handleReleaseHold(b)}
+                            disabled={holdActionLoading === b.id}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-green-50 text-green-700 text-xs font-semibold rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50"
+                            title="Lësho garancin (klienti pagoi kesh)"
+                          >
+                            {holdActionLoading === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Unlock className="w-3.5 h-3.5" />}
+                            Lësho {b.cash_hold_amount}EUR
+                          </button>
+                          <button
+                            onClick={() => { setCaptureModal(b); setCaptureReason(''); }}
+                            disabled={holdActionLoading === b.id}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-50 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
+                            title="Kape penalitetin (klienti nuk u shfaq)"
+                          >
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            Kape
+                          </button>
+                        </>
+                      )}
+                      {b.payment_method === 'cash' && b.cash_hold_status === 'released' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-[10px] font-semibold">
+                          <Check className="w-3 h-3" />
+                          Hold u lirua
+                        </span>
+                      )}
+                      {b.payment_method === 'cash' && b.cash_hold_status === 'captured' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-700 rounded-full text-[10px] font-semibold">
+                          <AlertTriangle className="w-3 h-3" />
+                          Penalitet i kapur
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -646,6 +738,47 @@ export default function CompanyBookings() {
               >
                 {actionLoading === rejectModal && <Loader2 className="w-4 h-4 animate-spin" />}
                 {t('companyDash.bookings.rejectAction')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {captureModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 w-full max-w-md mx-4 shadow-xl">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <h3 className="text-lg font-bold text-dark-900">Kap penalitetin</h3>
+            </div>
+            <p className="text-sm text-dark-500 mb-4">
+              Do tërhiqet <strong>{captureModal.cash_hold_amount} EUR</strong> nga karta e
+              <strong> {captureModal.client_name}</strong>. Kjo bëhet kur klienti nuk shfaqet ose nuk paguan.
+            </p>
+            <label className="block text-xs font-semibold text-dark-600 uppercase tracking-wide mb-1.5">
+              Arsyeja (opsionale)
+            </label>
+            <textarea
+              value={captureReason}
+              onChange={(e) => setCaptureReason(e.target.value)}
+              rows={3}
+              placeholder="P.sh. Klienti nuk u shfaq dhe nuk u përgjigj në thirrje..."
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20"
+            />
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setCaptureModal(null)}
+                className="px-4 py-2 text-sm font-semibold text-dark-600 hover:bg-gray-50 rounded-lg"
+              >
+                Anulo
+              </button>
+              <button
+                onClick={handleCaptureHold}
+                disabled={holdActionLoading === captureModal.id}
+                className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {holdActionLoading === captureModal.id && <Loader2 className="w-4 h-4 animate-spin" />}
+                Kape {captureModal.cash_hold_amount} EUR
               </button>
             </div>
           </div>

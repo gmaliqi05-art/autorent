@@ -119,12 +119,18 @@ export interface Booking {
   deposit_amount: number;
   status: 'pending' | 'confirmed' | 'active' | 'completed' | 'cancelled';
   payment_method: 'stripe' | 'paypal' | 'bank_transfer' | 'cash';
-  payment_status: 'pending' | 'paid' | 'failed';
+  payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
   notes: string;
   internal_notes: string;
   client_name: string;
   client_phone: string;
   client_email: string;
+  // Cash hold (Stripe Authorization)
+  cash_hold_payment_intent_id?: string | null;
+  cash_hold_amount?: number | null;
+  cash_hold_status?: 'authorized' | 'released' | 'captured' | 'expired' | 'failed' | null;
+  cash_hold_authorized_at?: string | null;
+  cash_hold_resolved_at?: string | null;
   created_at: string;
   updated_at: string;
 }
