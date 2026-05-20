@@ -57,6 +57,17 @@ export default function Navbar() {
           </Link>
 
           <div className="flex items-center gap-1 sm:gap-2">
+            <Link
+              to="/per-platformen"
+              className={`hidden md:inline-block px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                isTransparent
+                  ? 'text-white/80 hover:text-white hover:bg-white/10'
+                  : 'text-dark-600 hover:text-dark-950 hover:bg-gray-50'
+              }`}
+            >
+              Për platformën
+            </Link>
+
             <LanguageSwitcher variant={isTransparent ? 'navbar-dark' : 'navbar'} />
 
             {user && <NotificationBell isTransparent={isTransparent} />}

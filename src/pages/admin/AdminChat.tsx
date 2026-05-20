@@ -139,7 +139,7 @@ export default function AdminChat() {
       </div>
 
       {(creating || editing) && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6 animate-fade-in">
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
           <h2 className="text-lg font-semibold text-dark-950 mb-5">{creating ? 'Pergjigje e re' : 'Ndrysho pergjigjen'}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>

@@ -274,7 +274,7 @@ export default function ClientProfile() {
                 {saving ? t('clientDash.profile.saving') : t('clientDash.profile.save')}
               </button>
               {profileMessage && (
-                <span className={`flex items-center gap-1.5 text-sm font-medium animate-fade-in ${profileMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                <span className={`flex items-center gap-1.5 text-sm font-medium ${profileMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
                   {profileMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
                   {profileMessage.text}
                 </span>
@@ -353,7 +353,7 @@ export default function ClientProfile() {
                 {changingPassword ? t('clientDash.profile.changing') : t('clientDash.profile.changeButton')}
               </button>
               {passwordMessage && (
-                <span className={`flex items-center gap-1.5 text-sm font-medium animate-fade-in ${passwordMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                <span className={`flex items-center gap-1.5 text-sm font-medium ${passwordMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
                   {passwordMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
                   {passwordMessage.text}
                 </span>

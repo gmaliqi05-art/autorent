@@ -571,7 +571,7 @@ export default function ClientBookings() {
                         onMouseEnter={() => setReviewHover(star)}
                         onMouseLeave={() => setReviewHover(0)}
                         onClick={() => setReviewRating(star)}
-                        className="transition-transform hover:scale-110"
+                        className="transition-transform"
                       >
                         <Star
                           className={`w-8 h-8 transition-colors ${

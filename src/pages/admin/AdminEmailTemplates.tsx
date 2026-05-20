@@ -223,7 +223,7 @@ export default function AdminEmailTemplates() {
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-600/20"
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Template i ri

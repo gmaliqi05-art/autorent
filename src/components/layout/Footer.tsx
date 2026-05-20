@@ -62,6 +62,11 @@ export default function Footer() {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/per-platformen" className="text-sm hover:text-white transition-colors">
+                    Për platformën
+                  </Link>
+                </li>
+                <li>
                   <Link
                     to="/regjistrohu?role=company"
                     className="text-sm hover:text-white transition-colors"

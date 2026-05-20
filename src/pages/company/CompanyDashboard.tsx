@@ -155,7 +155,7 @@ export default function CompanyDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <Link to="/kompania/pagesat" className="block cursor-pointer">
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:scale-[1.01] transition-all h-full">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 transition-colors h-full">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
               <DollarSign className="w-6 h-6 text-white" />
             </div>
@@ -165,7 +165,7 @@ export default function CompanyDashboard() {
           </div>
         </Link>
         <Link to="/kompania/pagesat" className="block cursor-pointer">
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:scale-[1.01] transition-all h-full">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 transition-colors h-full">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
               <Clock className="w-6 h-6 text-white" />
             </div>

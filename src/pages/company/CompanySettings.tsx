@@ -406,13 +406,13 @@ export default function CompanySettings() {
               {saving ? t('companyDash.common.saving') : t('companyDash.settings.saveChanges')}
             </button>
             {feedback && feedback.type === 'success' && (
-              <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium animate-fade-in">
+              <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium">
                 <CheckCircle2 className="w-4 h-4" />
                 {feedback.message}
               </span>
             )}
             {feedback && feedback.type === 'error' && (
-              <span className="flex items-center gap-1.5 text-sm text-red-600 font-medium animate-fade-in">
+              <span className="flex items-center gap-1.5 text-sm text-red-600 font-medium">
                 <AlertCircle className="w-4 h-4" />
                 {feedback.message}
               </span>

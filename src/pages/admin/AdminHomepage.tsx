@@ -212,7 +212,7 @@ export default function AdminHomepage() {
             <button
               onClick={saveTab}
               disabled={saving}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all text-sm shadow-sm shadow-primary-600/20"
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all text-sm"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
               {saving ? 'Duke ruajtur...' : saved ? 'U ruajt!' : 'Ruaj ndryshimet'}
