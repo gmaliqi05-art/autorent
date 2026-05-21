@@ -77,7 +77,7 @@ export default function CompanyBookings() {
   }, [user]);
 
   async function handleReleaseHold(b: BookingWithRelations) {
-    if (!confirm(`Lironi garancin ${b.cash_hold_amount || 100} EUR? Klienti pagoi kesh.`)) return;
+    if (!confirm(t('companyDash.bookings.cashHoldReleaseConfirm', { amount: b.cash_hold_amount || 100 }))) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     setHoldActionLoading(b.id);
@@ -86,7 +86,7 @@ export default function CompanyBookings() {
     if ('error' in result) {
       setHoldMessage({ type: 'error', text: result.error });
     } else {
-      setHoldMessage({ type: 'success', text: `Garancia ${b.cash_hold_amount} EUR u lirua. Klienti nuk paguan asgje me kart.` });
+      setHoldMessage({ type: 'success', text: t('companyDash.bookings.cashHoldReleasedMsg', { amount: b.cash_hold_amount }) });
       loadData();
     }
     setTimeout(() => setHoldMessage(null), 6000);
@@ -107,7 +107,7 @@ export default function CompanyBookings() {
     if ('error' in result) {
       setHoldMessage({ type: 'error', text: result.error });
     } else {
-      setHoldMessage({ type: 'success', text: `Penaliteti ${result.capturedAmount} EUR u tërhoq nga karta e klientit.` });
+      setHoldMessage({ type: 'success', text: t('companyDash.bookings.cashHoldCapturedMsg', { amount: result.capturedAmount }) });
       loadData();
     }
     setTimeout(() => setHoldMessage(null), 6000);
@@ -456,7 +456,7 @@ export default function CompanyBookings() {
               className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
             >
               <HelpCircle className="w-3.5 h-3.5" />
-              Si funksionon Cash Hold?
+              {t('companyDash.bookings.cashHoldHelpButton')}
             </button>
           )}
         </div>
@@ -626,32 +626,32 @@ export default function CompanyBookings() {
                             onClick={() => handleReleaseHold(b)}
                             disabled={holdActionLoading === b.id}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-green-50 text-green-700 text-xs font-semibold rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50"
-                            title="Lësho garancin (klienti pagoi kesh)"
+                            title={t('companyDash.bookings.cashHoldReleaseTitle')}
                           >
                             {holdActionLoading === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Unlock className="w-3.5 h-3.5" />}
-                            Lësho {b.cash_hold_amount}EUR
+                            {t('companyDash.bookings.cashHoldReleaseButton', { amount: b.cash_hold_amount })}
                           </button>
                           <button
                             onClick={() => { setCaptureModal(b); setCaptureReason(''); }}
                             disabled={holdActionLoading === b.id}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-50 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
-                            title="Kape penalitetin (klienti nuk u shfaq)"
+                            title={t('companyDash.bookings.cashHoldCaptureTitle')}
                           >
                             <AlertTriangle className="w-3.5 h-3.5" />
-                            Kape
+                            {t('companyDash.bookings.cashHoldCaptureShort')}
                           </button>
                         </>
                       )}
                       {b.payment_method === 'cash' && b.cash_hold_status === 'released' && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-[10px] font-semibold">
                           <Check className="w-3 h-3" />
-                          Hold u lirua
+                          {t('companyDash.bookings.cashHoldReleasedBadge')}
                         </span>
                       )}
                       {b.payment_method === 'cash' && b.cash_hold_status === 'captured' && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-700 rounded-full text-[10px] font-semibold">
                           <AlertTriangle className="w-3 h-3" />
-                          Penalitet i kapur
+                          {t('companyDash.bookings.cashHoldCapturedBadge')}
                         </span>
                       )}
                     </div>
@@ -768,29 +768,34 @@ export default function CompanyBookings() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-600" />
-                <h3 className="text-lg font-bold text-dark-900">Kap penalitetin</h3>
+                <h3 className="text-lg font-bold text-dark-900">{t('companyDash.bookings.capturePenaltyTitle')}</h3>
               </div>
               <button
                 onClick={() => { setCaptureModal(null); setHelpOpen(true); }}
                 className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-                title="Si funksionon?"
+                title={t('companyDash.bookings.captureHelpTooltip')}
               >
                 <HelpCircle className="w-3.5 h-3.5" />
-                Ndihmë
+                {t('companyDash.bookings.captureHelpLink')}
               </button>
             </div>
-            <p className="text-sm text-dark-500 mb-4">
-              Do tërhiqet <strong>{captureModal.cash_hold_amount} EUR</strong> nga karta e
-              <strong> {captureModal.client_name}</strong>. Kjo bëhet kur klienti nuk shfaqet ose nuk paguan.
-            </p>
+            <p
+              className="text-sm text-dark-500 mb-4"
+              dangerouslySetInnerHTML={{
+                __html: t('companyDash.bookings.captureBodyHtml', {
+                  amount: captureModal.cash_hold_amount,
+                  name: captureModal.client_name,
+                }),
+              }}
+            />
             <label className="block text-xs font-semibold text-dark-600 uppercase tracking-wide mb-1.5">
-              Arsyeja (opsionale)
+              {t('companyDash.bookings.captureReasonLabel')}
             </label>
             <textarea
               value={captureReason}
               onChange={(e) => setCaptureReason(e.target.value)}
               rows={3}
-              placeholder="P.sh. Klienti nuk u shfaq dhe nuk u përgjigj në thirrje..."
+              placeholder={t('companyDash.bookings.captureReasonPlaceholder')}
               className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20"
             />
             <div className="mt-5 flex justify-end gap-2">
@@ -798,7 +803,7 @@ export default function CompanyBookings() {
                 onClick={() => setCaptureModal(null)}
                 className="px-4 py-2 text-sm font-semibold text-dark-600 hover:bg-gray-50 rounded-lg"
               >
-                Anulo
+                {t('companyDash.common.cancel')}
               </button>
               <button
                 onClick={handleCaptureHold}
@@ -806,7 +811,7 @@ export default function CompanyBookings() {
                 className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
               >
                 {holdActionLoading === captureModal.id && <Loader2 className="w-4 h-4 animate-spin" />}
-                Kape {captureModal.cash_hold_amount} EUR
+                {t('companyDash.bookings.captureConfirmButton', { amount: captureModal.cash_hold_amount })}
               </button>
             </div>
           </div>

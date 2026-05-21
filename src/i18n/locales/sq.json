@@ -746,7 +746,11 @@
       "cannotCancelActive": "Nuk mund te anuloni nje rezervim aktiv ose te perfunduar.",
       "cancellationFeeTitle": "Tarife anulimi",
       "cancellationFeeWarning": "Anulimi tani ka tarife prej {{fee}} EUR (pasi data e marrjes eshte me pak se 48 ore larg ose ka kaluar). Doni te vazhdoni?",
-      "freeCancellation": "Anulimi eshte falas (me shume se 48 ore para marrjes)."
+      "freeCancellation": "Anulimi eshte falas (me shume se 48 ore para marrjes).",
+      "paypalCapturing": "Duke perfunduar pagesen me PayPal...",
+      "paypalSuccess": "Pagesa juaj me PayPal u perfundua me sukses!",
+      "paypalFailed": "Pagesa PayPal deshtoi: {{err}}",
+      "paypalCancelled": "Pagesa PayPal u anulua."
     },
     "payments": {
       "title": "Raporti i Pagesave",
@@ -1032,7 +1036,20 @@
       "noResultsDesc": "Provo te ndryshosh filtrat ose shto nje automjet te ri",
       "unpublish": "Cpubliko",
       "publish": "Publiko",
-      "clone": "Klono"
+      "clone": "Klono",
+      "feature_ac": "Klima",
+      "feature_bluetooth": "Bluetooth",
+      "feature_gps": "GPS",
+      "feature_usb": "USB",
+      "feature_cruise_control": "Cruise control",
+      "feature_parking_sensors": "Sensore parkimi",
+      "feature_rearview_camera": "Kamera prapavajtjeje",
+      "feature_sunroof": "Tavan diellor",
+      "feature_leather_seats": "Vendet me lekure",
+      "feature_heated_seats": "Vendet e ngrohura",
+      "feature_4wd": "4x4",
+      "feature_apple_carplay": "Apple CarPlay",
+      "feature_android_auto": "Android Auto"
     },
     "bookings": {
       "title": "Rezervimet",
@@ -1086,7 +1103,28 @@
       "rejectReasonLabel": "Arsyeja e refuzimit (opsionale)",
       "internalNotesTitle": "Shenime te brendshme per kete rezervim",
       "internalNotesHint": "Vetem ekipi yt i sheh keto",
-      "internalNotesPlaceholder": "Shtoni shenime per kete rezervim..."
+      "internalNotesPlaceholder": "Shtoni shenime per kete rezervim...",
+      "rejectReason_maintenance": "Automjeti ne mirembajtje",
+      "rejectReason_overloaded": "I mbingarkuar me rezervime",
+      "rejectReason_missing_docs": "Dokumente te paplota te klientit",
+      "rejectReason_other": "Tjeter",
+      "cashHoldHelpButton": "Si funksionon Cash Hold?",
+      "cashHoldReleaseConfirm": "Lironi garancin {{amount}} EUR? Klienti pagoi kesh.",
+      "cashHoldReleasedMsg": "Garancia {{amount}} EUR u lirua. Klienti nuk paguan asgje me kart.",
+      "cashHoldCapturedMsg": "Penaliteti {{amount}} EUR u tërhoq nga karta e klientit.",
+      "cashHoldReleaseTitle": "Lësho garancin (klienti pagoi kesh)",
+      "cashHoldReleaseButton": "Lësho {{amount}} EUR",
+      "cashHoldCaptureTitle": "Kape penalitetin (klienti nuk u shfaq)",
+      "cashHoldCaptureShort": "Kape",
+      "cashHoldReleasedBadge": "Hold u lirua",
+      "cashHoldCapturedBadge": "Penalitet i kapur",
+      "capturePenaltyTitle": "Kap penalitetin",
+      "captureHelpLink": "Ndihmë",
+      "captureHelpTooltip": "Si funksionon?",
+      "captureBodyHtml": "Do tërhiqet <strong>{{amount}} EUR</strong> nga karta e <strong>{{name}}</strong>. Kjo bëhet kur klienti nuk shfaqet ose nuk paguan.",
+      "captureReasonLabel": "Arsyeja (opsionale)",
+      "captureReasonPlaceholder": "P.sh. Klienti nuk u shfaq dhe nuk u përgjigj në thirrje...",
+      "captureConfirmButton": "Kape {{amount}} EUR"
     },
     "payments": {
       "title": "Pagesat",
@@ -1213,7 +1251,18 @@
       "sectionHours": "Orari i punes",
       "hoursHint": "Caktoni orarin per cdo dite te javes",
       "closed": "I mbyllur",
-      "open": "I hapur"
+      "open": "I hapur",
+      "uploadLogo": "Ngarko logo",
+      "uploadCover": "Ngarko foto kopertinë",
+      "days": {
+        "monday": "E hënë",
+        "tuesday": "E martë",
+        "wednesday": "E mërkurë",
+        "thursday": "E enjte",
+        "friday": "E premte",
+        "saturday": "E shtunë",
+        "sunday": "E diel"
+      }
     }
   },
   "cookies": {

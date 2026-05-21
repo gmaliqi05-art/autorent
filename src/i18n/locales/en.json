@@ -746,7 +746,11 @@
       "cannotCancelActive": "You cannot cancel an active or completed booking.",
       "cancellationFeeTitle": "Cancellation fee",
       "cancellationFeeWarning": "Cancelling now incurs a fee of {{fee}} EUR (pickup is less than 48 hours away or has passed). Continue?",
-      "freeCancellation": "Cancellation is free (more than 48 hours before pickup)."
+      "freeCancellation": "Cancellation is free (more than 48 hours before pickup).",
+      "paypalCapturing": "Completing PayPal payment...",
+      "paypalSuccess": "Your PayPal payment was completed successfully!",
+      "paypalFailed": "PayPal payment failed: {{err}}",
+      "paypalCancelled": "PayPal payment was cancelled."
     },
     "payments": {
       "title": "Payment Report",
@@ -1032,7 +1036,20 @@
       "noResultsDesc": "Try changing filters or add a new vehicle",
       "unpublish": "Unpublish",
       "publish": "Publish",
-      "clone": "Clone"
+      "clone": "Clone",
+      "feature_ac": "Air conditioning",
+      "feature_bluetooth": "Bluetooth",
+      "feature_gps": "GPS",
+      "feature_usb": "USB",
+      "feature_cruise_control": "Cruise control",
+      "feature_parking_sensors": "Parking sensors",
+      "feature_rearview_camera": "Rear-view camera",
+      "feature_sunroof": "Sunroof",
+      "feature_leather_seats": "Leather seats",
+      "feature_heated_seats": "Heated seats",
+      "feature_4wd": "4-wheel drive",
+      "feature_apple_carplay": "Apple CarPlay",
+      "feature_android_auto": "Android Auto"
     },
     "bookings": {
       "title": "Bookings",
@@ -1086,7 +1103,28 @@
       "rejectReasonLabel": "Rejection reason (optional)",
       "internalNotesTitle": "Internal notes for this booking",
       "internalNotesHint": "Only your team sees these",
-      "internalNotesPlaceholder": "Add notes for this booking..."
+      "internalNotesPlaceholder": "Add notes for this booking...",
+      "rejectReason_maintenance": "Vehicle under maintenance",
+      "rejectReason_overloaded": "Overloaded with bookings",
+      "rejectReason_missing_docs": "Incomplete client documents",
+      "rejectReason_other": "Other",
+      "cashHoldHelpButton": "How does Cash Hold work?",
+      "cashHoldReleaseConfirm": "Release the {{amount}} EUR hold? The client paid in cash.",
+      "cashHoldReleasedMsg": "The {{amount}} EUR hold was released. The client will not be charged on the card.",
+      "cashHoldCapturedMsg": "The {{amount}} EUR penalty was charged to the client's card.",
+      "cashHoldReleaseTitle": "Release hold (client paid in cash)",
+      "cashHoldReleaseButton": "Release {{amount}} EUR",
+      "cashHoldCaptureTitle": "Charge penalty (client did not show up)",
+      "cashHoldCaptureShort": "Charge",
+      "cashHoldReleasedBadge": "Hold released",
+      "cashHoldCapturedBadge": "Penalty charged",
+      "capturePenaltyTitle": "Charge the penalty",
+      "captureHelpLink": "Help",
+      "captureHelpTooltip": "How does it work?",
+      "captureBodyHtml": "<strong>{{amount}} EUR</strong> will be charged to <strong>{{name}}</strong>'s card. This is used when the client does not show up or refuses to pay.",
+      "captureReasonLabel": "Reason (optional)",
+      "captureReasonPlaceholder": "E.g. The client did not show up and did not answer the phone...",
+      "captureConfirmButton": "Charge {{amount}} EUR"
     },
     "payments": {
       "title": "Payments",
@@ -1213,7 +1251,18 @@
       "sectionHours": "Working hours",
       "hoursHint": "Set hours for each day of the week",
       "closed": "Closed",
-      "open": "Open"
+      "open": "Open",
+      "uploadLogo": "Upload logo",
+      "uploadCover": "Upload cover image",
+      "days": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+      }
     }
   },
   "cookies": {

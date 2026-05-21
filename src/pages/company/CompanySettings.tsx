@@ -250,7 +250,7 @@ export default function CompanySettings() {
                     pathPrefix={company?.id || ''}
                     aspectRatio="aspect-square"
                     maxSizeMB={2}
-                    emptyText="Ngarko logo"
+                    emptyText={t('companyDash.settings.uploadLogo')}
                   />
                 </div>
                 <div className="flex-1 flex items-center text-xs text-dark-400">
@@ -268,7 +268,7 @@ export default function CompanySettings() {
                 pathPrefix={company?.id || ''}
                 aspectRatio="aspect-[3/1]"
                 maxSizeMB={5}
-                emptyText="Ngarko cover image"
+                emptyText={t('companyDash.settings.uploadCover')}
               />
               <p className="mt-1.5 text-xs text-dark-400">{t('companyDash.settings.coverHint')}</p>
             </div>

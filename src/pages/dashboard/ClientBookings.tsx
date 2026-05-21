@@ -80,9 +80,9 @@ export default function ClientBookings() {
       capturePaypalOrder(token).then((res) => {
         setPaypalCapturing(false);
         if (res.error) {
-          setPaypalMessage({ type: 'error', text: `Pagesa PayPal deshtoi: ${res.error}` });
+          setPaypalMessage({ type: 'error', text: t('clientDash.bookings.paypalFailed', { err: res.error }) });
         } else {
-          setPaypalMessage({ type: 'success', text: 'Pagesa juaj me PayPal u perfundua me sukses!' });
+          setPaypalMessage({ type: 'success', text: t('clientDash.bookings.paypalSuccess') });
           loadBookings();
         }
         // Pastro params nga URL
@@ -90,7 +90,7 @@ export default function ClientBookings() {
         setTimeout(() => setPaypalMessage(null), 6000);
       });
     } else if (paypal === 'cancelled') {
-      setPaypalMessage({ type: 'error', text: 'Pagesa PayPal u anulua.' });
+      setPaypalMessage({ type: 'error', text: t('clientDash.bookings.paypalCancelled') });
       setSearchParams({}, { replace: true });
       setTimeout(() => setPaypalMessage(null), 5000);
     }
@@ -228,7 +228,7 @@ export default function ClientBookings() {
       {paypalCapturing && (
         <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3">
           <Loader2 className="w-5 h-5 text-blue-600 animate-spin shrink-0" />
-          <p className="text-sm text-blue-700 font-medium">Duke perfunduar pagesen me PayPal...</p>
+          <p className="text-sm text-blue-700 font-medium">{t('clientDash.bookings.paypalCapturing')}</p>
         </div>
       )}
 

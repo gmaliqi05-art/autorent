@@ -746,7 +746,11 @@
       "cannotCancelActive": "Sie können keine aktive oder abgeschlossene Buchung stornieren.",
       "cancellationFeeTitle": "Stornierungsgebühr",
       "cancellationFeeWarning": "Eine Stornierung kostet jetzt {{fee}} EUR (Abholung liegt weniger als 48 Stunden in der Zukunft oder ist bereits vorbei). Fortfahren?",
-      "freeCancellation": "Stornierung ist kostenlos (mehr als 48 Stunden vor Abholung)."
+      "freeCancellation": "Stornierung ist kostenlos (mehr als 48 Stunden vor Abholung).",
+      "paypalCapturing": "PayPal-Zahlung wird abgeschlossen...",
+      "paypalSuccess": "Ihre PayPal-Zahlung wurde erfolgreich abgeschlossen!",
+      "paypalFailed": "PayPal-Zahlung fehlgeschlagen: {{err}}",
+      "paypalCancelled": "PayPal-Zahlung wurde abgebrochen."
     },
     "payments": {
       "title": "Zahlungsbericht",
@@ -1032,7 +1036,20 @@
       "noResultsDesc": "Filter aendern oder neues Fahrzeug hinzufuegen",
       "unpublish": "Veroeffentlichung aufheben",
       "publish": "Veroeffentlichen",
-      "clone": "Klonen"
+      "clone": "Klonen",
+      "feature_ac": "Klimaanlage",
+      "feature_bluetooth": "Bluetooth",
+      "feature_gps": "GPS",
+      "feature_usb": "USB",
+      "feature_cruise_control": "Tempomat",
+      "feature_parking_sensors": "Einparksensoren",
+      "feature_rearview_camera": "Rückfahrkamera",
+      "feature_sunroof": "Schiebedach",
+      "feature_leather_seats": "Ledersitze",
+      "feature_heated_seats": "Sitzheizung",
+      "feature_4wd": "Allradantrieb",
+      "feature_apple_carplay": "Apple CarPlay",
+      "feature_android_auto": "Android Auto"
     },
     "bookings": {
       "title": "Buchungen",
@@ -1086,7 +1103,28 @@
       "rejectReasonLabel": "Ablehnungsgrund (optional)",
       "internalNotesTitle": "Interne Notizen fuer diese Buchung",
       "internalNotesHint": "Nur Ihr Team sieht diese",
-      "internalNotesPlaceholder": "Notizen fuer diese Buchung hinzufuegen..."
+      "internalNotesPlaceholder": "Notizen fuer diese Buchung hinzufuegen...",
+      "rejectReason_maintenance": "Fahrzeug in Wartung",
+      "rejectReason_overloaded": "Mit Buchungen ausgelastet",
+      "rejectReason_missing_docs": "Unvollständige Kundendokumente",
+      "rejectReason_other": "Sonstiges",
+      "cashHoldHelpButton": "Wie funktioniert Cash Hold?",
+      "cashHoldReleaseConfirm": "Garantie über {{amount}} EUR freigeben? Der Kunde hat bar bezahlt.",
+      "cashHoldReleasedMsg": "Die Garantie von {{amount}} EUR wurde freigegeben. Dem Kunden wird nichts von der Karte abgebucht.",
+      "cashHoldCapturedMsg": "Die Strafe von {{amount}} EUR wurde von der Karte des Kunden abgebucht.",
+      "cashHoldReleaseTitle": "Garantie freigeben (Kunde hat bar bezahlt)",
+      "cashHoldReleaseButton": "{{amount}} EUR freigeben",
+      "cashHoldCaptureTitle": "Strafe einziehen (Kunde ist nicht erschienen)",
+      "cashHoldCaptureShort": "Einziehen",
+      "cashHoldReleasedBadge": "Hold freigegeben",
+      "cashHoldCapturedBadge": "Strafe eingezogen",
+      "capturePenaltyTitle": "Strafe einziehen",
+      "captureHelpLink": "Hilfe",
+      "captureHelpTooltip": "Wie funktioniert es?",
+      "captureBodyHtml": "Es werden <strong>{{amount}} EUR</strong> von der Karte von <strong>{{name}}</strong> abgebucht. Dies erfolgt, wenn der Kunde nicht erscheint oder nicht zahlt.",
+      "captureReasonLabel": "Grund (optional)",
+      "captureReasonPlaceholder": "Z. B. Der Kunde ist nicht erschienen und hat den Anruf nicht entgegengenommen...",
+      "captureConfirmButton": "{{amount}} EUR einziehen"
     },
     "payments": {
       "title": "Zahlungen",
@@ -1213,7 +1251,18 @@
       "sectionHours": "Oeffnungszeiten",
       "hoursHint": "Stunden fuer jeden Wochentag festlegen",
       "closed": "Geschlossen",
-      "open": "Geoeffnet"
+      "open": "Geoeffnet",
+      "uploadLogo": "Logo hochladen",
+      "uploadCover": "Titelbild hochladen",
+      "days": {
+        "monday": "Montag",
+        "tuesday": "Dienstag",
+        "wednesday": "Mittwoch",
+        "thursday": "Donnerstag",
+        "friday": "Freitag",
+        "saturday": "Samstag",
+        "sunday": "Sonntag"
+      }
     }
   },
   "cookies": {
