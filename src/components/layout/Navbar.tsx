@@ -65,7 +65,7 @@ export default function Navbar() {
                   : 'text-dark-600 hover:text-dark-950 hover:bg-gray-50'
               }`}
             >
-              Për platformën
+              {t('nav.about')}
             </Link>
 
             <LanguageSwitcher variant={isTransparent ? 'navbar-dark' : 'navbar'} />

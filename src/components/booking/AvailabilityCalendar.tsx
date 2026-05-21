@@ -7,6 +7,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 
 interface AvailabilityCalendarProps {
@@ -22,11 +23,16 @@ interface BlockedRange {
   reason: string;
 }
 
-const WEEKDAYS = ['Hë', 'Ma', 'Më', 'En', 'Pr', 'Sh', 'Di'];
-const MONTHS = [
-  'Janar', 'Shkurt', 'Mars', 'Prill', 'Maj', 'Qershor',
-  'Korrik', 'Gusht', 'Shtator', 'Tetor', 'Nentor', 'Dhjetor',
-];
+const WEEKDAYS_BY_LANG: Record<string, string[]> = {
+  sq: ['Hë', 'Ma', 'Më', 'En', 'Pr', 'Sh', 'Di'],
+  en: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
+  de: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
+};
+const MONTHS_BY_LANG: Record<string, string[]> = {
+  sq: ['Janar', 'Shkurt', 'Mars', 'Prill', 'Maj', 'Qershor', 'Korrik', 'Gusht', 'Shtator', 'Tetor', 'Nentor', 'Dhjetor'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  de: ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
+};
 
 function toDateStr(d: Date): string {
   const y = d.getFullYear();
@@ -65,6 +71,10 @@ export default function AvailabilityCalendar({
   const [loading, setLoading] = useState(false);
   const [hoverDate, setHoverDate] = useState<string | null>(null);
   const [picking, setPicking] = useState<'pickup' | 'return'>('pickup');
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.language?.split('-')[0] || 'sq') as 'sq' | 'en' | 'de';
+  const WEEKDAYS = WEEKDAYS_BY_LANG[lang] || WEEKDAYS_BY_LANG.sq;
+  const MONTHS = MONTHS_BY_LANG[lang] || MONTHS_BY_LANG.sq;
 
   const today = useMemo(() => toDateStr(new Date()), []);
 
@@ -177,7 +187,7 @@ export default function AvailabilityCalendar({
                 onMouseEnter={() => setHoverDate(dateStr)}
                 onMouseLeave={() => setHoverDate(null)}
                 className={classes}
-                title={block ? 'I zene' : past ? 'Date kaluar' : ''}
+                title={block ? t('calendar.booked') : past ? t('calendar.pastDate') : ''}
               >
                 {day}
               </button>
@@ -206,11 +216,11 @@ export default function AvailabilityCalendar({
         <div className="flex items-center gap-2 text-xs">
           <span className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-sm bg-primary-600" />
-            <span className="text-dark-600">Të zgjedhura</span>
+            <span className="text-dark-600">{t('calendar.selected')}</span>
           </span>
           <span className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-sm bg-red-100 border border-red-200" />
-            <span className="text-dark-600">Të zëna</span>
+            <span className="text-dark-600">{t('calendar.booked')}</span>
           </span>
           {loading && <Loader2 className="w-3 h-3 animate-spin text-dark-400 ml-1" />}
         </div>
@@ -235,8 +245,8 @@ export default function AvailabilityCalendar({
       <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-xs">
         <p className="text-dark-500">
           {picking === 'pickup'
-            ? 'Klikoni ditën e marrjes'
-            : 'Klikoni ditën e kthimit'}
+            ? t('calendar.selectPickup')
+            : t('calendar.selectReturn')}
         </p>
         {(pickupDate || returnDate) && (
           <button
@@ -247,7 +257,7 @@ export default function AvailabilityCalendar({
             }}
             className="text-primary-600 hover:text-primary-700 font-medium"
           >
-            Pastro
+            {t('calendar.clear')}
           </button>
         )}
       </div>

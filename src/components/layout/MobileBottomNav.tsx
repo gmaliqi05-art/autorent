@@ -13,6 +13,7 @@
  */
 import { NavLink, useLocation } from 'react-router-dom';
 import { Home, Car, CalendarDays, Building2, Settings, LayoutDashboard } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 
 type TabItem = {
@@ -23,44 +24,45 @@ type TabItem = {
   prefix?: boolean;
 };
 
-function getTabs(role: string | undefined, isLoggedIn: boolean): TabItem[] {
+function getTabs(role: string | undefined, isLoggedIn: boolean, t: (k: string) => string): TabItem[] {
   if (role === 'super_admin') {
     return [
-      { to: '/admin', label: 'Paneli', icon: <LayoutDashboard className="w-5 h-5" /> },
-      { to: '/admin/kompanite', label: 'Kompani', icon: <Building2 className="w-5 h-5" />, prefix: true },
-      { to: '/admin/cilesimet', label: 'Cilësimet', icon: <Settings className="w-5 h-5" />, prefix: true },
+      { to: '/admin', label: t('nav.dashboard'), icon: <LayoutDashboard className="w-5 h-5" /> },
+      { to: '/admin/kompanite', label: t('nav.companies'), icon: <Building2 className="w-5 h-5" />, prefix: true },
+      { to: '/admin/cilesimet', label: t('nav.settings'), icon: <Settings className="w-5 h-5" />, prefix: true },
     ];
   }
 
   if (role === 'company_admin') {
     return [
-      { to: '/kompania', label: 'Paneli', icon: <LayoutDashboard className="w-5 h-5" /> },
-      { to: '/kompania/automjetet', label: 'Veturat', icon: <Car className="w-5 h-5" />, prefix: true },
-      { to: '/kompania/rezervimet', label: 'Rezervime', icon: <CalendarDays className="w-5 h-5" />, prefix: true },
+      { to: '/kompania', label: t('nav.dashboard'), icon: <LayoutDashboard className="w-5 h-5" /> },
+      { to: '/kompania/automjetet', label: t('nav.vehicles'), icon: <Car className="w-5 h-5" />, prefix: true },
+      { to: '/kompania/rezervimet', label: t('nav.bookings'), icon: <CalendarDays className="w-5 h-5" />, prefix: true },
     ];
   }
 
   // Klient i kycur: tre tabs te thelluara me nje sherbim primar
   if (isLoggedIn) {
     return [
-      { to: '/', label: 'Ballina', icon: <Home className="w-5 h-5" /> },
-      { to: '/automjetet', label: 'Veturat', icon: <Car className="w-5 h-5" />, prefix: true },
-      { to: '/dashboard/rezervimet', label: 'Rezervime', icon: <CalendarDays className="w-5 h-5" />, prefix: true },
+      { to: '/', label: t('nav.home'), icon: <Home className="w-5 h-5" /> },
+      { to: '/automjetet', label: t('nav.vehicles'), icon: <Car className="w-5 h-5" />, prefix: true },
+      { to: '/dashboard/rezervimet', label: t('nav.bookings'), icon: <CalendarDays className="w-5 h-5" />, prefix: true },
     ];
   }
 
   // Visitor (i pa-kyqur): pa link te login/profile, vetem navigim publik
   return [
-    { to: '/', label: 'Ballina', icon: <Home className="w-5 h-5" /> },
-    { to: '/automjetet', label: 'Veturat', icon: <Car className="w-5 h-5" />, prefix: true },
-    { to: '/per-platformen', label: 'Rreth', icon: <Building2 className="w-5 h-5" /> },
+    { to: '/', label: t('nav.home'), icon: <Home className="w-5 h-5" /> },
+    { to: '/automjetet', label: t('nav.vehicles'), icon: <Car className="w-5 h-5" />, prefix: true },
+    { to: '/per-platformen', label: t('nav.about'), icon: <Building2 className="w-5 h-5" /> },
   ];
 }
 
 export default function MobileBottomNav() {
   const { user, profile } = useAuth();
   const location = useLocation();
-  const tabs = getTabs(profile?.role, !!user);
+  const { t } = useTranslation();
+  const tabs = getTabs(profile?.role, !!user, t);
 
   function isActive(tab: TabItem): boolean {
     if (tab.prefix) {
@@ -74,7 +76,7 @@ export default function MobileBottomNav() {
       className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 grid safe-area-bottom ${
         tabs.length === 3 ? 'grid-cols-3' : 'grid-cols-4'
       }`}
-      aria-label="Mobile navigation"
+      aria-label={t('nav.home')}
     >
       {tabs.map((tab) => {
         const active = isActive(tab);

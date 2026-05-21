@@ -13,6 +13,7 @@
  */
 import { useRef, useState } from 'react';
 import { Upload, X, Loader2, ImagePlus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 
 interface ImageUploaderProps {
@@ -48,11 +49,13 @@ export default function ImageUploader({
   maxSizeMB = 5,
   accept = 'image/jpeg,image/png,image/webp',
   allowRemove = true,
-  emptyText = 'Kliko per te ngarkuar nje imazh',
+  emptyText,
 }: ImageUploaderProps) {
+  const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const placeholderText = emptyText ?? t('uploader.emptyText');
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -62,14 +65,14 @@ export default function ImageUploader({
 
     // Validim madhesia
     if (file.size > maxSizeMB * 1024 * 1024) {
-      setError(`Imazhi tejkalon ${maxSizeMB} MB`);
+      setError(t('uploader.sizeTooLarge', { size: maxSizeMB }));
       e.target.value = '';
       return;
     }
 
     // Validim lloji
-    if (!accept.split(',').some((t) => file.type === t.trim())) {
-      setError('Lloj i palejuar (vetem JPG/PNG/WebP)');
+    if (!accept.split(',').some((typ) => file.type === typ.trim())) {
+      setError(t('uploader.invalidType'));
       e.target.value = '';
       return;
     }
@@ -137,7 +140,7 @@ export default function ImageUploader({
               className="flex items-center gap-1.5 px-3 py-2 bg-white text-dark-900 text-xs font-semibold rounded-lg hover:bg-gray-50 disabled:opacity-50 shadow-lg"
             >
               {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-              {uploading ? 'Duke ngarkuar...' : 'Ndrysho'}
+              {uploading ? t('common.uploading') : t('uploader.change')}
             </button>
             {allowRemove && (
               <button
@@ -147,7 +150,7 @@ export default function ImageUploader({
                 className="flex items-center gap-1.5 px-3 py-2 bg-red-500 text-white text-xs font-semibold rounded-lg hover:bg-red-600 disabled:opacity-50 shadow-lg"
               >
                 <X className="w-3.5 h-3.5" />
-                Hiq
+                {t('common.remove')}
               </button>
             )}
           </div>
@@ -162,13 +165,13 @@ export default function ImageUploader({
           {uploading ? (
             <>
               <Loader2 className="w-6 h-6 animate-spin" />
-              <span className="text-xs font-medium">Duke ngarkuar...</span>
+              <span className="text-xs font-medium">{t('common.uploading')}</span>
             </>
           ) : (
             <>
               <ImagePlus className="w-7 h-7" />
-              <span className="text-xs font-medium">{emptyText}</span>
-              <span className="text-[10px] text-dark-400">JPG / PNG / WebP, max {maxSizeMB} MB</span>
+              <span className="text-xs font-medium">{placeholderText}</span>
+              <span className="text-[10px] text-dark-400">{t('uploader.sizeNote', { size: maxSizeMB })}</span>
             </>
           )}
         </button>

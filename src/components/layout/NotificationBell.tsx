@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, Check, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Notification } from '../../lib/types';
@@ -18,17 +19,19 @@ interface NotificationBellProps {
 
 const MAX_DISPLAY = 8;
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: (k: string, opts?: Record<string, unknown>) => string, locale: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (diff < 60) return 'tani';
-  if (diff < 3600) return `${Math.floor(diff / 60)} min`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} orë`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)} ditë`;
-  return new Date(iso).toLocaleDateString('sq-AL');
+  if (diff < 60) return t('time.justNow');
+  if (diff < 3600) return t('time.minutesAgo', { count: Math.floor(diff / 60) });
+  if (diff < 86400) return t('time.hoursAgo', { count: Math.floor(diff / 3600) });
+  if (diff < 604800) return t('time.daysAgo', { count: Math.floor(diff / 86400) });
+  const localeMap: Record<string, string> = { sq: 'sq-AL', en: 'en-US', de: 'de-DE' };
+  return new Date(iso).toLocaleDateString(localeMap[locale] || 'sq-AL');
 }
 
 export default function NotificationBell({ isTransparent = false }: NotificationBellProps) {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -127,7 +130,7 @@ export default function NotificationBell({ isTransparent = false }: Notification
         className={`relative p-2 rounded-lg transition-colors ${
           isTransparent ? 'hover:bg-white/10 text-white/90' : 'hover:bg-gray-100 text-dark-700'
         }`}
-        aria-label="Njoftime"
+        aria-label={t('notifications.title')}
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
@@ -142,7 +145,7 @@ export default function NotificationBell({ isTransparent = false }: Notification
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl shadow-dark-950/10 border border-gray-100 z-50 overflow-hidden animate-slide-down">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-              <h3 className="font-semibold text-dark-900 text-sm">Njoftime</h3>
+              <h3 className="font-semibold text-dark-900 text-sm">{t('notifications.title')}</h3>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
@@ -150,7 +153,7 @@ export default function NotificationBell({ isTransparent = false }: Notification
                   className="text-xs font-medium text-primary-600 hover:text-primary-700 disabled:opacity-50 flex items-center gap-1"
                 >
                   {marking && <Loader2 className="w-3 h-3 animate-spin" />}
-                  Shëno të gjitha si lexuara
+                  {t('notifications.markAllRead')}
                 </button>
               )}
             </div>
@@ -163,7 +166,7 @@ export default function NotificationBell({ isTransparent = false }: Notification
               ) : notifications.length === 0 ? (
                 <div className="px-4 py-10 text-center">
                   <Bell className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-dark-500">S'ka njoftime</p>
+                  <p className="text-sm text-dark-500">{t('notifications.empty')}</p>
                 </div>
               ) : (
                 notifications.map((n) => (
@@ -185,7 +188,7 @@ export default function NotificationBell({ isTransparent = false }: Notification
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-dark-900 leading-tight">{n.title}</p>
                       <p className="text-xs text-dark-500 mt-0.5 line-clamp-2">{n.message}</p>
-                      <p className="text-[10px] text-dark-400 mt-1">{timeAgo(n.created_at)}</p>
+                      <p className="text-[10px] text-dark-400 mt-1">{timeAgo(n.created_at, t, i18n.language)}</p>
                     </div>
                     {!n.is_read && (
                       <button
@@ -194,7 +197,7 @@ export default function NotificationBell({ isTransparent = false }: Notification
                           markOneAsRead(n.id);
                         }}
                         className="opacity-0 group-hover:opacity-100 hover:bg-gray-200 p-1 rounded transition-all"
-                        title="Shëno si lexuar"
+                        title={t('notifications.markRead')}
                       >
                         <Check className="w-3.5 h-3.5 text-dark-500" />
                       </button>
@@ -210,7 +213,7 @@ export default function NotificationBell({ isTransparent = false }: Notification
                 onClick={() => setOpen(false)}
                 className="block text-xs text-center text-primary-600 hover:text-primary-700 font-medium"
               >
-                Shko te dashboardi
+                {t('notifications.goDashboard')}
               </Link>
             </div>
           </div>

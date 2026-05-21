@@ -25,22 +25,17 @@ export default function AboutPlatformPage() {
   return (
     <div>
       <Helmet>
-        <title>Për Platformën — RentaKar</title>
-        <meta name="description" content="Mëso si funksionon RentaKar — platforma kryesore e qirasë së automjeteve në Kosovë, Shqipëri dhe Maqedoni. Çmime, abonime për kompani, dhe çfarë thonë klientët." />
+        <title>{t('aboutPage.metaTitle')}</title>
+        <meta name="description" content={t('aboutPage.metaDescription') as string} />
         <link rel="canonical" href="https://rentcars.life/per-platformen" />
       </Helmet>
 
       {/* Page header — minimal, klasik */}
       <section className="bg-gray-50 border-b border-gray-200 pt-32 pb-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-sm font-semibold text-primary-600 uppercase tracking-wide mb-2">Për platformën</p>
-          <h1 className="text-3xl sm:text-4xl font-bold text-dark-950 mb-3">
-            Si funksionon RentaKar
-          </h1>
-          <p className="text-dark-600 max-w-2xl mx-auto">
-            Platforma që lidh klientët me kompanitë më të mira të qirasë së automjeteve në Kosovë, Shqipëri dhe Maqedoni.
-            Mëso si funksionon, sa kushton dhe çfarë thonë klientët.
-          </p>
+          <p className="text-sm font-semibold text-primary-600 uppercase tracking-wide mb-2">{t('aboutPage.badge')}</p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-dark-950 mb-3">{t('aboutPage.title')}</h1>
+          <p className="text-dark-600 max-w-2xl mx-auto">{t('aboutPage.desc')}</p>
           <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
             <Link
               to="/automjetet"
@@ -54,7 +49,7 @@ export default function AboutPlatformPage() {
               className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-white text-dark-900 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <Building2 className="w-4 h-4" />
-              Regjistro kompaninë
+              {t('aboutPage.registerCompany')}
             </Link>
           </div>
         </div>
