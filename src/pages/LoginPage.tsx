@@ -138,26 +138,34 @@ export default function LoginPage() {
             <Link to="/regjistrohu" className="text-primary-600 font-semibold hover:text-primary-700 transition-colors">{t('auth.registerButton')}</Link>
           </p>
 
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <p className="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-3 text-center">{t('auth.demoAccounts')}</p>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { label: t('auth.admin'), email: 'admin@rentacar.com', password: 'Admin123!', icon: Shield, color: 'text-red-600', bg: 'bg-red-50 hover:bg-red-100 border-red-100' },
-                { label: t('auth.company'), email: 'company@rentacar.com', password: 'Company123!', icon: Building2, color: 'text-amber-600', bg: 'bg-amber-50 hover:bg-amber-100 border-amber-100' },
-                { label: t('auth.client'), email: 'client@rentacar.com', password: 'Client123!', icon: User, color: 'text-primary-600', bg: 'bg-primary-50 hover:bg-primary-100 border-primary-100' },
-              ].map((acc) => (
-                <button
-                  key={acc.email}
-                  type="button"
-                  onClick={() => { setEmail(acc.email); setPassword(acc.password); }}
-                  className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all active:scale-[0.97] cursor-pointer ${acc.bg}`}
-                >
-                  <acc.icon className={`w-5 h-5 ${acc.color}`} />
-                  <span className={`text-xs font-semibold ${acc.color}`}>{acc.label}</span>
-                </button>
-              ))}
+          {/*
+            🔒 DEMO ACCOUNTS — fshihen automatikisht ne production build.
+            Per t'i shfaqur edhe ne production, vendos VITE_SHOW_DEMO_ACCOUNTS=true ne .env.
+            Para lansimit publik, fshini krejt kete bllok ose mbani te fshehur me default.
+          */}
+          {(import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_ACCOUNTS === 'true') && (
+            <div className="mt-8 pt-8 border-t border-gray-200">
+              <p className="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-1 text-center">{t('auth.demoAccounts')}</p>
+              <p className="text-[10px] text-center text-dark-300 mb-3">(vetëm dev mode — fshihet automatikisht në production)</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: t('auth.admin'), email: 'admin@rentacar.com', password: 'Admin123!', icon: Shield, color: 'text-red-600', bg: 'bg-red-50 hover:bg-red-100 border-red-100' },
+                  { label: t('auth.company'), email: 'company@rentacar.com', password: 'Company123!', icon: Building2, color: 'text-amber-600', bg: 'bg-amber-50 hover:bg-amber-100 border-amber-100' },
+                  { label: t('auth.client'), email: 'client@rentacar.com', password: 'Client123!', icon: User, color: 'text-primary-600', bg: 'bg-primary-50 hover:bg-primary-100 border-primary-100' },
+                ].map((acc) => (
+                  <button
+                    key={acc.email}
+                    type="button"
+                    onClick={() => { setEmail(acc.email); setPassword(acc.password); }}
+                    className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all cursor-pointer ${acc.bg}`}
+                  >
+                    <acc.icon className={`w-5 h-5 ${acc.color}`} />
+                    <span className={`text-xs font-semibold ${acc.color}`}>{acc.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

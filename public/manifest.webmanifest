@@ -46,10 +46,17 @@
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Rezervimet e mia",
-      "short_name": "Rezervimet",
-      "description": "Shih rezervimet e tua",
-      "url": "/dashboard/rezervimet",
+      "name": "Per platformen",
+      "short_name": "Rreth",
+      "description": "Si funksionon RentaKar",
+      "url": "/per-platformen",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Regjistro kompani",
+      "short_name": "Kompani",
+      "description": "Bashkohu si kompani qe ofron qira",
+      "url": "/regjistrohu?role=company",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
