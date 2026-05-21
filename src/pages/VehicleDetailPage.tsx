@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, Star, MapPin, Calendar, Fuel, Cog, Users, DoorOpen, Gauge, Shield, CheckCircle2, Loader2, Car, Building2, Phone, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Vehicle, Company, Review } from '../lib/types';
@@ -19,9 +20,12 @@ import CashHoldForm from '../components/booking/CashHoldForm';
 type BookingStep = 'dates' | 'invoice' | 'payment' | 'cash_hold' | 'success';
 
 export default function VehicleDetailPage() {
+  const { t, i18n } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const localeMap: Record<string, string> = { sq: 'sq-AL', en: 'en-US', de: 'de-DE' };
+  const dateLocale = localeMap[i18n.language?.split('-')[0]] || 'sq-AL';
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -81,8 +85,8 @@ export default function VehicleDetailPage() {
       return;
     }
     const days = getTotalDays();
-    if (!pickupDate || !returnDate) { setBookingError('Zgjidhni datat e marrjes dhe kthimit.'); return; }
-    if (days === 0) { setBookingError('Data e kthimit duhet te jete pas dates se marrjes.'); return; }
+    if (!pickupDate || !returnDate) { setBookingError(t('vehicleDetail.pickReturnDates')); return; }
+    if (days === 0) { setBookingError(t('vehicleDetail.returnAfterPickup')); return; }
     setBookingError('');
     setAvailabilityError('');
     setCheckingAvailability(true);
@@ -95,7 +99,7 @@ export default function VehicleDetailPage() {
 
     if (!docs || !docs.verified || (!docs.license_front_url && !docs.id_document_url)) {
       setCheckingAvailability(false);
-      setBookingError('Duhet te ngarkoni patenten dhe ta verifikoni para se te rezervoni. Shkoni te profili juaj per te ngarkuar dokumentet.');
+      setBookingError(t('vehicleDetail.docsRequired'));
       return;
     }
 
@@ -110,7 +114,7 @@ export default function VehicleDetailPage() {
     setCheckingAvailability(false);
 
     if (conflictingBookings && conflictingBookings.length > 0) {
-      setAvailabilityError('Automjeti eshte i rezervuar per keto data. Ju lutem zgjidhni data te tjera.');
+      setAvailabilityError(t('vehicleDetail.vehicleUnavailable'));
       return;
     }
 
@@ -150,15 +154,15 @@ export default function VehicleDetailPage() {
     }).select().single();
 
     if (error || !bookingData) {
-      setBookingError('Dicka shkoi keq. Provoni perseri.');
+      setBookingError(t('vehicleDetail.bookingError'));
       setBooking(false);
       return;
     }
 
     const paymentMethodLabel =
-      paymentMethod === 'stripe' ? 'Karte krediti/debiti' :
-      paymentMethod === 'paypal' ? 'PayPal' :
-      paymentMethod === 'bank_transfer' ? 'Transfer bankar' : 'Kesh / Ne lokal';
+      paymentMethod === 'stripe' ? t('paymentLabel.stripe') :
+      paymentMethod === 'paypal' ? t('paymentLabel.paypal') :
+      paymentMethod === 'bank_transfer' ? t('paymentLabel.bank') : t('paymentLabel.cash');
 
     await sendBookingConfirmationToClient(
       profile.email || '',
@@ -167,14 +171,14 @@ export default function VehicleDetailPage() {
         bookingId: bookingData.id,
         vehicleName: `${vehicle.brand} ${vehicle.model}`,
         companyName: company.name,
-        pickupDate: new Date(pickupDate).toLocaleDateString('sq-AL'),
-        returnDate: new Date(returnDate).toLocaleDateString('sq-AL'),
+        pickupDate: new Date(pickupDate).toLocaleDateString(dateLocale),
+        returnDate: new Date(returnDate).toLocaleDateString(dateLocale),
         totalDays: days,
         pricePerDay: Number(vehicle.price_per_day),
         deposit: Number(vehicle.deposit_amount),
         paymentMethod: paymentMethodLabel,
         totalPrice: days * Number(vehicle.price_per_day),
-        status: 'Në pritje të aprovimit',
+        status: t('vehicleDetail.pendingApproval'),
       }
     );
 
@@ -187,8 +191,8 @@ export default function VehicleDetailPage() {
         clientName: profile.full_name || '',
         clientEmail: profile.email || '',
         clientPhone: profile.phone || '',
-        pickupDate: new Date(pickupDate).toLocaleDateString('sq-AL'),
-        returnDate: new Date(returnDate).toLocaleDateString('sq-AL'),
+        pickupDate: new Date(pickupDate).toLocaleDateString(dateLocale),
+        returnDate: new Date(returnDate).toLocaleDateString(dateLocale),
         totalDays: days,
         totalPrice: days * Number(vehicle.price_per_day),
         paymentMethod: paymentMethodLabel,
@@ -218,8 +222,8 @@ export default function VehicleDetailPage() {
 
     await createNotification({
       userId: user.id,
-      title: 'Rezervimi u krye',
-      message: `Rezervimi juaj per ${vehicle.brand} ${vehicle.model} u krye me sukses. Kompania do ta shqyrtoje brenda 24 oreve.`,
+      title: t('vehicleDetail.notifBookingCreatedTitle'),
+      message: t('vehicleDetail.notifBookingCreatedClient', { vehicle: `${vehicle.brand} ${vehicle.model}` }),
       type: 'booking_created',
       referenceId: bookingData.id,
       referenceType: 'booking',
@@ -227,8 +231,8 @@ export default function VehicleDetailPage() {
 
     await createNotification({
       userId: company.owner_id,
-      title: 'Rezervim i ri',
-      message: `${profile.full_name} ka bere nje rezervim te ri per ${vehicle.brand} ${vehicle.model}. Shqyrtojeni ne dashboard.`,
+      title: t('vehicleDetail.notifBookingCreatedCompany'),
+      message: t('vehicleDetail.notifBookingCreatedCompanyMsg', { name: profile.full_name, vehicle: `${vehicle.brand} ${vehicle.model}` }),
       type: 'booking_created',
       referenceId: bookingData.id,
       referenceType: 'booking',
@@ -239,7 +243,7 @@ export default function VehicleDetailPage() {
     if (paymentMethod === 'stripe') {
       const { error: stripeError } = await startStripeCheckout(bookingData.id);
       if (stripeError) {
-        setBookingError(`Rezervimi u krijua, por pagesa deshtoi: ${stripeError}. Mund ta provoni perseri nga dashboardi.`);
+        setBookingError(t('vehicleDetail.stripeFailed', { err: stripeError }));
         setBooking(false);
         return;
       }
@@ -250,7 +254,7 @@ export default function VehicleDetailPage() {
     if (paymentMethod === 'paypal') {
       const { error: paypalError } = await startPaypalCheckout(bookingData.id);
       if (paypalError) {
-        setBookingError(`Rezervimi u krijua, por pagesa PayPal deshtoi: ${paypalError}. Mund ta provoni perseri nga dashboardi.`);
+        setBookingError(t('vehicleDetail.paypalFailed', { err: paypalError }));
         setBooking(false);
         return;
       }
@@ -288,8 +292,8 @@ export default function VehicleDetailPage() {
     return (
       <div className="min-h-screen pt-[68px] flex flex-col items-center justify-center bg-gray-50 gap-4">
         <Car className="w-12 h-12 text-gray-300" />
-        <p className="text-dark-600 font-medium">Automjeti nuk u gjet</p>
-        <Link to="/automjetet" className="text-primary-600 text-sm font-semibold hover:text-primary-700">Kthehu te automjetet</Link>
+        <p className="text-dark-600 font-medium">{t('vehicleDetail.notFound')}</p>
+        <Link to="/automjetet" className="text-primary-600 text-sm font-semibold hover:text-primary-700">{t('vehicleDetail.backToVehicles')}</Link>
       </div>
     );
   }
@@ -305,7 +309,7 @@ export default function VehicleDetailPage() {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <button onClick={goBack} className="inline-flex items-center gap-1.5 text-sm text-dark-500 hover:text-dark-900 transition-colors">
               <ArrowLeft className="w-4 h-4" />
-              Kthehu te automjeti
+              {t('vehicleDetail.backToVehicle')}
             </button>
           </div>
         </div>
@@ -325,13 +329,13 @@ export default function VehicleDetailPage() {
 
           <div className="mt-6 flex items-center justify-between">
             <button onClick={goBack} className="px-5 py-2.5 text-sm font-medium text-dark-600 hover:text-dark-900 transition-colors">
-              Kthehu
+              {t('vehicleDetail.back')}
             </button>
             <button
               onClick={handleProceedToPayment}
               className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-all shadow-sm shadow-primary-600/20 active:scale-[0.98]"
             >
-              Vazhdo me pagesen
+              {t('vehicleDetail.continueToPayment')}
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -347,7 +351,7 @@ export default function VehicleDetailPage() {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <button onClick={goBack} className="inline-flex items-center gap-1.5 text-sm text-dark-500 hover:text-dark-900 transition-colors">
               <ArrowLeft className="w-4 h-4" />
-              Kthehu te fatura
+              {t('vehicleDetail.backToInvoice')}
             </button>
           </div>
         </div>
@@ -367,7 +371,7 @@ export default function VehicleDetailPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-dark-900 text-sm">{vehicle.brand} {vehicle.model}</p>
-                  <p className="text-xs text-dark-400">{totalDays} dite | {new Date(pickupDate).toLocaleDateString('sq-AL')} - {new Date(returnDate).toLocaleDateString('sq-AL')}</p>
+                  <p className="text-xs text-dark-400">{t('vehicleDetail.daysCount', { count: totalDays })} | {new Date(pickupDate).toLocaleDateString(dateLocale)} - {new Date(returnDate).toLocaleDateString(dateLocale)}</p>
                 </div>
               </div>
               <p className="text-lg font-bold text-primary-600">{totalPrice} EUR</p>
@@ -387,7 +391,7 @@ export default function VehicleDetailPage() {
 
           <div className="flex items-center justify-between">
             <button onClick={goBack} className="px-5 py-2.5 text-sm font-medium text-dark-600 hover:text-dark-900 transition-colors">
-              Kthehu
+              {t('vehicleDetail.back')}
             </button>
             <button
               onClick={handleConfirmBooking}
@@ -395,7 +399,7 @@ export default function VehicleDetailPage() {
               className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all shadow-sm shadow-primary-600/20 active:scale-[0.98]"
             >
               {booking && <Loader2 className="w-4 h-4 animate-spin" />}
-              {booking ? 'Duke perfunduar...' : 'Konfirmo rezervimin'}
+              {booking ? t('vehicleDetail.confirming') : t('vehicleDetail.confirmBooking')}
             </button>
           </div>
         </div>
@@ -408,11 +412,8 @@ export default function VehicleDetailPage() {
       <div className="min-h-screen bg-gray-50/80 pt-[68px]">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="text-xl font-bold text-dark-950 mb-2">Garanci për pagesën me kesh</h2>
-            <p className="text-sm text-dark-500 mb-6">
-              Per te konfirmuar rezervimin me pagese ne lokal, na duhet nje karte si garanci.
-              Asnje shume nuk do t'ju merret realisht — kompania e liron pas pages kesh.
-            </p>
+            <h2 className="text-xl font-bold text-dark-950 mb-2">{t('vehicleDetail.cashHoldTitle')}</h2>
+            <p className="text-sm text-dark-500 mb-6">{t('vehicleDetail.cashHoldDesc')}</p>
             <CashHoldForm
               bookingId={cashBookingId}
               onSuccess={() => setStep('success')}
@@ -435,48 +436,40 @@ export default function VehicleDetailPage() {
             <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
               <CheckCircle2 className="w-8 h-8 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-dark-950 mb-2">Rezervimi u krye me sukses!</h2>
-            <p className="text-dark-500 mb-2">
-              Faleminderit per rezervimin tuaj. Kompania do t'ju konfirmoje brenda 24 oreve.
-            </p>
+            <h2 className="text-2xl font-bold text-dark-950 mb-2">{t('vehicleDetail.successTitle')}</h2>
+            <p className="text-dark-500 mb-2">{t('vehicleDetail.successDesc')}</p>
             {paymentMethod === 'cash' && (
-              <p className="text-sm text-amber-600 font-medium mb-4">
-                Pagesa do te kryhet ne momentin e marrjes se automjetit.
-              </p>
+              <p className="text-sm text-amber-600 font-medium mb-4">{t('vehicleDetail.successCash')}</p>
             )}
             {paymentMethod === 'bank_transfer' && (
-              <p className="text-sm text-emerald-600 font-medium mb-4">
-                Ju lutem kryeni transferin bankar sipas detajeve te dhena. Rezervimi konfirmohet pas verifikimit.
-              </p>
+              <p className="text-sm text-emerald-600 font-medium mb-4">{t('vehicleDetail.successBank')}</p>
             )}
             {(paymentMethod === 'stripe' || paymentMethod === 'paypal') && (
-              <p className="text-sm text-blue-600 font-medium mb-4">
-                Pagesa juaj u regjistrua. Do te njoftoheni kur te procesohet.
-              </p>
+              <p className="text-sm text-blue-600 font-medium mb-4">{t('vehicleDetail.successOnline')}</p>
             )}
 
             <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left">
-              <h4 className="text-xs font-semibold text-dark-500 uppercase tracking-wider mb-3">Permbledhje</h4>
+              <h4 className="text-xs font-semibold text-dark-500 uppercase tracking-wider mb-3">{t('vehicleDetail.summary')}</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-dark-500">Automjeti</span>
+                  <span className="text-dark-500">{t('vehicleDetail.vehicle')}</span>
                   <span className="font-medium text-dark-900">{vehicle.brand} {vehicle.model}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-dark-500">Periudha</span>
-                  <span className="font-medium text-dark-900">{totalDays} dite</span>
+                  <span className="text-dark-500">{t('vehicleDetail.period')}</span>
+                  <span className="font-medium text-dark-900">{t('vehicleDetail.daysCount', { count: totalDays })}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-dark-500">Metoda e pageses</span>
+                  <span className="text-dark-500">{t('vehicleDetail.paymentMethod')}</span>
                   <span className="font-medium text-dark-900">
-                    {paymentMethod === 'stripe' && 'Karte krediti/debiti'}
-                    {paymentMethod === 'paypal' && 'PayPal'}
-                    {paymentMethod === 'bank_transfer' && 'Transfer bankar'}
-                    {paymentMethod === 'cash' && 'Kesh / Ne lokal'}
+                    {paymentMethod === 'stripe' && t('paymentLabel.stripe')}
+                    {paymentMethod === 'paypal' && t('paymentLabel.paypal')}
+                    {paymentMethod === 'bank_transfer' && t('paymentLabel.bank')}
+                    {paymentMethod === 'cash' && t('paymentLabel.cash')}
                   </span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-gray-200">
-                  <span className="font-bold text-dark-900">Totali</span>
+                  <span className="font-bold text-dark-900">{t('vehicleDetail.total')}</span>
                   <span className="font-bold text-primary-600">{totalPrice} EUR</span>
                 </div>
               </div>
@@ -484,10 +477,10 @@ export default function VehicleDetailPage() {
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link to="/dashboard/rezervimet" className="px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors">
-                Shiko rezervimet e mia
+                {t('vehicleDetail.myBookings')}
               </Link>
               <Link to="/automjetet" className="px-5 py-2.5 bg-gray-100 text-dark-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors">
-                Shfleto automjete te tjera
+                {t('vehicleDetail.browseOthers')}
               </Link>
             </div>
           </div>
@@ -543,7 +536,7 @@ export default function VehicleDetailPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link to="/automjetet" className="inline-flex items-center gap-1.5 text-sm text-dark-500 hover:text-dark-900 transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            Te gjitha automjetet
+            {t('vehicleDetail.backToVehicles')}
           </Link>
         </div>
       </div>
@@ -576,15 +569,15 @@ export default function VehicleDetailPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-3xl font-bold text-primary-600">{vehicle.price_per_day}EUR</p>
-                  <p className="text-xs text-dark-400">per dite</p>
+                  <p className="text-xs text-dark-400">{t('vehicleDetail.perDay')}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                <Spec icon={<Cog className="w-4 h-4" />} label="Transmisioni" value={vehicle.transmission === 'automatike' ? 'Automatike' : 'Manuale'} />
-                <Spec icon={<Fuel className="w-4 h-4" />} label="Karburanti" value={vehicle.fuel_type} />
-                <Spec icon={<Users className="w-4 h-4" />} label="Vendet" value={`${vehicle.seats} vende`} />
-                <Spec icon={<DoorOpen className="w-4 h-4" />} label="Dyert" value={`${vehicle.doors} dyer`} />
+                <Spec icon={<Cog className="w-4 h-4" />} label={t('vehicleDetail.transmission')} value={vehicle.transmission === 'automatike' ? t('vehicleDetail.transmissionAutomatic') : t('vehicleDetail.transmissionManual')} />
+                <Spec icon={<Fuel className="w-4 h-4" />} label={t('vehicleDetail.fuel')} value={vehicle.fuel_type} />
+                <Spec icon={<Users className="w-4 h-4" />} label={t('vehicleDetail.seats')} value={t('vehicleDetail.seatsCount', { count: vehicle.seats })} />
+                <Spec icon={<DoorOpen className="w-4 h-4" />} label={t('vehicleDetail.doors')} value={t('vehicleDetail.doorsCount', { count: vehicle.doors })} />
               </div>
 
               {vehicle.mileage > 0 && (
@@ -596,7 +589,7 @@ export default function VehicleDetailPage() {
 
               {features.length > 0 && (
                 <div>
-                  <h3 className="font-semibold text-dark-950 mb-3">Pajisjet</h3>
+                  <h3 className="font-semibold text-dark-950 mb-3">{t('vehicleDetail.features')}</h3>
                   <div className="flex flex-wrap gap-2">
                     {(features as string[]).map((f, i) => (
                       <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg text-xs text-dark-600 font-medium">
@@ -613,7 +606,7 @@ export default function VehicleDetailPage() {
               <div className="bg-white rounded-2xl border border-gray-100 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-dark-950">
-                    Vleresimet e klienteve ({company?.total_reviews || reviews.length})
+                    {t('vehicleDetail.reviewsTitle')} ({company?.total_reviews || reviews.length})
                   </h3>
                   {company?.rating && company.rating > 0 && (
                     <div className="flex items-center gap-1.5">
@@ -637,7 +630,7 @@ export default function VehicleDetailPage() {
                           />
                         ))}
                         <span className="text-xs text-dark-400 ml-2">
-                          {new Date(r.created_at).toLocaleDateString('sq-AL')}
+                          {new Date(r.created_at).toLocaleDateString(dateLocale)}
                         </span>
                       </div>
                       {r.comment && (
@@ -651,7 +644,7 @@ export default function VehicleDetailPage() {
 
             {company && (
               <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                <h3 className="font-semibold text-dark-950 mb-4">Kompania</h3>
+                <h3 className="font-semibold text-dark-950 mb-4">{t('vehicleDetail.companyTitle')}</h3>
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
                     {company.logo_url ? (
@@ -689,7 +682,7 @@ export default function VehicleDetailPage() {
           <div className="lg:col-span-1">
             <div className="sticky top-24">
               <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                <h3 className="font-semibold text-dark-950 mb-5">Rezervo tani</h3>
+                <h3 className="font-semibold text-dark-950 mb-5">{t('vehicleDetail.bookNow')}</h3>
 
                 <AvailabilityCalendar
                   vehicleId={vehicle.id}
@@ -705,19 +698,19 @@ export default function VehicleDetailPage() {
                   <div className="bg-gray-50 rounded-lg p-2.5">
                     <p className="text-[10px] uppercase font-medium text-dark-400">
                       <Calendar className="w-3 h-3 inline mr-1" />
-                      Marrja
+                      {t('vehicleDetail.pickup')}
                     </p>
                     <p className="font-semibold text-dark-900 mt-0.5">
-                      {pickupDate ? new Date(pickupDate).toLocaleDateString('sq-AL') : '—'}
+                      {pickupDate ? new Date(pickupDate).toLocaleDateString(dateLocale) : '—'}
                     </p>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-2.5">
                     <p className="text-[10px] uppercase font-medium text-dark-400">
                       <Calendar className="w-3 h-3 inline mr-1" />
-                      Kthimi
+                      {t('vehicleDetail.return')}
                     </p>
                     <p className="font-semibold text-dark-900 mt-0.5">
-                      {returnDate ? new Date(returnDate).toLocaleDateString('sq-AL') : '—'}
+                      {returnDate ? new Date(returnDate).toLocaleDateString(dateLocale) : '—'}
                     </p>
                   </div>
                 </div>
@@ -725,17 +718,17 @@ export default function VehicleDetailPage() {
                 {totalDays > 0 && (
                   <div className="mt-5 pt-5 border-t border-gray-100 space-y-2.5">
                     <div className="flex justify-between text-sm">
-                      <span className="text-dark-500">{vehicle.price_per_day}EUR x {totalDays} dite</span>
+                      <span className="text-dark-500">{vehicle.price_per_day}EUR x {t('vehicleDetail.daysCount', { count: totalDays })}</span>
                       <span className="font-medium text-dark-900">{totalPrice}EUR</span>
                     </div>
                     {Number(vehicle.deposit_amount) > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-dark-500">Depozita</span>
+                        <span className="text-dark-500">{t('vehicleDetail.deposit')}</span>
                         <span className="font-medium text-dark-900">{vehicle.deposit_amount}EUR</span>
                       </div>
                     )}
                     <div className="flex justify-between text-base font-bold pt-2.5 border-t border-gray-100">
-                      <span className="text-dark-950">Totali</span>
+                      <span className="text-dark-950">{t('vehicleDetail.total')}</span>
                       <span className="text-primary-600">{totalPrice}EUR</span>
                     </div>
                   </div>
@@ -751,12 +744,12 @@ export default function VehicleDetailPage() {
                   className="w-full mt-5 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-sm shadow-primary-600/20 active:scale-[0.98]"
                 >
                   {checkingAvailability && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {!user ? 'Kycu per te rezervuar' : checkingAvailability ? 'Duke kontrolluar...' : 'Rezervo'}
+                  {!user ? t('vehicleDetail.loginToBook') : checkingAvailability ? t('vehicleDetail.checkingAvailability') : t('vehicleDetail.book')}
                 </button>
 
                 <div className="mt-4 flex items-center gap-2 text-xs text-dark-400">
                   <Shield className="w-3.5 h-3.5 text-green-500" />
-                  Anulim falas deri ne 48 ore para marrjes
+                  {t('vehicleDetail.freeCancellation')}
                 </div>
               </div>
             </div>
@@ -777,10 +770,11 @@ function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; va
 }
 
 function StepIndicator({ current }: { current: number }) {
+  const { t } = useTranslation();
   const steps = [
-    { num: 0, label: 'Datat' },
-    { num: 1, label: 'Fatura' },
-    { num: 2, label: 'Pagesa' },
+    { num: 0, label: t('steps.dates') },
+    { num: 1, label: t('steps.invoice') },
+    { num: 2, label: t('steps.payment') },
   ];
 
   return (
