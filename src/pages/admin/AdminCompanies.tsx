@@ -1,32 +1,47 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Building2, Check, X, Ban, RotateCcw, Loader2, Search, Car, CalendarDays,
   DollarSign, ChevronLeft, ChevronRight, Download, Eye, Star, MapPin,
   Phone, Mail, Hash, TrendingUp, CheckCircle, AlertTriangle,
   CreditCard, ArrowUpDown, Shield,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import { supabase } from '../../lib/supabase';
 import type { Company, Booking, Vehicle, SubscriptionPlan } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
 import { sendCompanyApprovedEmail, sendCompanyRejectedEmail, sendCompanySuspendedEmail } from '../../lib/emailService';
 import { exportToCSV } from '../../lib/csvExport';
+import { localeFromI18n } from '../../lib/clientDashHelpers';
 
 const ITEMS_PER_PAGE = 15;
 
-const STATUS_META: Record<string, { label: string; color: string; dot: string; bg: string }> = {
-  pending:   { label: 'Ne pritje',  color: 'text-amber-700',  dot: 'bg-amber-500',  bg: 'bg-amber-50 border-amber-200' },
-  approved:  { label: 'Aprovuar',   color: 'text-green-700',  dot: 'bg-green-500',  bg: 'bg-green-50 border-green-200' },
-  rejected:  { label: 'Refuzuar',   color: 'text-red-700',    dot: 'bg-red-500',    bg: 'bg-red-50 border-red-200' },
-  suspended: { label: 'Pezulluar',  color: 'text-gray-600',   dot: 'bg-gray-400',   bg: 'bg-gray-100 border-gray-200' },
+const STATUS_STYLES: Record<string, { color: string; dot: string; bg: string }> = {
+  pending:   { color: 'text-amber-700',  dot: 'bg-amber-500',  bg: 'bg-amber-50 border-amber-200' },
+  approved:  { color: 'text-green-700',  dot: 'bg-green-500',  bg: 'bg-green-50 border-green-200' },
+  rejected:  { color: 'text-red-700',    dot: 'bg-red-500',    bg: 'bg-red-50 border-red-200' },
+  suspended: { color: 'text-gray-600',   dot: 'bg-gray-400',   bg: 'bg-gray-100 border-gray-200' },
 };
 
-const SUB_META: Record<string, { label: string; color: string }> = {
-  active:   { label: 'Aktiv',   color: 'bg-green-100 text-green-700' },
-  inactive: { label: 'Joaktiv', color: 'bg-gray-100 text-gray-600' },
-  expired:  { label: 'Skaduar', color: 'bg-red-100 text-red-700' },
-  trial:    { label: 'Prove',   color: 'bg-blue-100 text-blue-700' },
+const SUB_STYLES: Record<string, string> = {
+  active:   'bg-green-100 text-green-700',
+  inactive: 'bg-gray-100 text-gray-600',
+  expired:  'bg-red-100 text-red-700',
+  trial:    'bg-blue-100 text-blue-700',
 };
+
+function statusLabel(t: TFunction, status: string): string {
+  const key = `adminDash.statusCompany.${status}`;
+  const v = t(key);
+  return v === key ? status : v;
+}
+
+function subLabel(t: TFunction, sub: string): string {
+  const key = `adminDash.subscription.${sub}`;
+  const v = t(key);
+  return v === key ? sub : v;
+}
 
 interface CompanyReport extends Company {
   bookingsCount: number;
@@ -44,6 +59,7 @@ interface CompanyReport extends Company {
 interface CompanyVehicle extends Vehicle { bookingCount?: number; }
 
 export default function AdminCompanies() {
+  const { t, i18n } = useTranslation();
   const [companies, setCompanies] = useState<CompanyReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
@@ -127,10 +143,10 @@ export default function AdminCompanies() {
     setActionLoading(id);
     await supabase.from('companies').update({ status }).eq('id', id);
     if (status === 'approved') await sendCompanyApprovedEmail(company.email || '', company.name, company.id);
-    else if (status === 'rejected') await sendCompanyRejectedEmail(company.email || '', company.name, company.id, reason || 'Informacioni i dhene nuk eshte i plote.');
-    else if (status === 'suspended') await sendCompanySuspendedEmail(company.email || '', company.name, company.id, reason || 'Shkelje e kushteve.');
+    else if (status === 'rejected') await sendCompanyRejectedEmail(company.email || '', company.name, company.id, reason || t('adminDash.companies.defaultRejectReason'));
+    else if (status === 'suspended') await sendCompanySuspendedEmail(company.email || '', company.name, company.id, reason || t('adminDash.companies.defaultSuspendReason'));
     setActionLoading(null);
-    setActionFeedback({ id, msg: 'Statusi u ndryshua me sukses!', type: 'ok' });
+    setActionFeedback({ id, msg: t('adminDash.companies.statusUpdateSuccess'), type: 'ok' });
     setTimeout(() => setActionFeedback(null), 3000);
     await loadAll();
   }
@@ -145,21 +161,30 @@ export default function AdminCompanies() {
     setAssigning(false);
     setAssignPlanModal(null);
     setAssignPlanId('');
-    setActionFeedback({ id: assignPlanModal.id, msg: `Plani "${plan?.name}" u caktua me sukses!`, type: 'ok' });
+    setActionFeedback({ id: assignPlanModal.id, msg: t('adminDash.companies.planAssignSuccess', { name: plan?.name || '' }), type: 'ok' });
     setTimeout(() => setActionFeedback(null), 4000);
     await loadAll();
   }
 
   function handleExport() {
     const data = filtered.map(c => ({
-      Emri: c.name, Qyteti: c.city, Vendi: c.country, Email: c.email, Telefoni: c.phone,
-      Statusi: STATUS_META[c.status]?.label || c.status, Plani: c.planName,
-      Abonimi: SUB_META[c.subscription_status]?.label || c.subscription_status,
-      Automjete: c.vehiclesCount, 'Pub.': c.publishedVehicles, Rezervime: c.bookingsCount,
-      Aktive: c.activeBookings, 'Te ardhura EUR': c.revenue.toFixed(0),
-      Vleresimi: c.rating?.toFixed(1) || '0.0', Regjistruar: new Date(c.created_at).toLocaleDateString('sq-AL'),
+      [t('adminDash.companies.csvName')]: c.name,
+      [t('adminDash.companies.csvCity')]: c.city,
+      [t('adminDash.companies.csvCountry')]: c.country,
+      [t('adminDash.companies.csvEmail')]: c.email,
+      [t('adminDash.companies.csvPhone')]: c.phone,
+      [t('adminDash.companies.csvStatus')]: statusLabel(t, c.status),
+      [t('adminDash.companies.csvPlan')]: c.planName,
+      [t('adminDash.companies.csvSubscription')]: subLabel(t, c.subscription_status),
+      [t('adminDash.companies.csvVehicles')]: c.vehiclesCount,
+      [t('adminDash.companies.csvPublished')]: c.publishedVehicles,
+      [t('adminDash.companies.csvBookings')]: c.bookingsCount,
+      [t('adminDash.companies.csvActive')]: c.activeBookings,
+      [t('adminDash.companies.csvRevenue')]: c.revenue.toFixed(0),
+      [t('adminDash.companies.csvRating')]: c.rating?.toFixed(1) || '0.0',
+      [t('adminDash.companies.csvRegistered')]: new Date(c.created_at).toLocaleDateString(localeFromI18n(i18n.language)),
     }));
-    exportToCSV(data, 'kompanite-raport');
+    exportToCSV(data, t('adminDash.companies.csvFilename'));
   }
 
   function toggleSort(field: 'name' | 'revenue' | 'created_at' | 'bookings') {
@@ -194,14 +219,14 @@ export default function AdminCompanies() {
   const totalActiveBookings = companies.reduce((s, c) => s + c.activeBookings, 0);
 
   return (
-    <DashboardLayout title="Kompanite" navItems={adminNavItems} navGroups={adminNavGroups}>
+    <DashboardLayout title={t('admin.companies')} navItems={adminNavItems} navGroups={adminNavGroups}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-dark-950">Menaxhimi i kompanive</h1>
-          <p className="text-dark-500 mt-1 text-[15px]">Shikoni, aprovoni dhe menaxhoni te gjitha kompanite e platformes</p>
+          <h1 className="text-2xl font-bold text-dark-950">{t('adminDash.companies.title')}</h1>
+          <p className="text-dark-500 mt-1 text-[15px]">{t('adminDash.companies.subtitle')}</p>
         </div>
         <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-primary-50 text-primary-700 text-sm font-semibold rounded-xl hover:bg-primary-100 transition-colors shrink-0">
-          <Download className="w-4 h-4" />Exporto CSV
+          <Download className="w-4 h-4" />{t('adminDash.common.exportCsv')}
         </button>
       </div>
 
@@ -213,10 +238,10 @@ export default function AdminCompanies() {
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard icon={<Building2 className="w-5 h-5 text-dark-600" />} label="Gjithsej kompani" value={companies.length} sub={`${approvedCount} aprovuara`} bg="bg-white" iconBg="bg-gray-100" />
-        <StatCard icon={<AlertTriangle className="w-5 h-5 text-amber-600" />} label="Ne pritje aprovimi" value={pendingCount} sub="Kerkojne veprim" bg="bg-amber-50" iconBg="bg-amber-100" highlight={pendingCount > 0} />
-        <StatCard icon={<DollarSign className="w-5 h-5 text-green-600" />} label="Te ardhura totale" value={`${totalRevenue.toFixed(0)} EUR`} sub="Rezervime te perfunduara" bg="bg-green-50" iconBg="bg-green-100" />
-        <StatCard icon={<CalendarDays className="w-5 h-5 text-primary-600" />} label="Rezervime aktive" value={totalActiveBookings} sub="Ne progres tani" bg="bg-primary-50" iconBg="bg-primary-100" />
+        <StatCard icon={<Building2 className="w-5 h-5 text-dark-600" />} label={t('adminDash.companies.statTotal')} value={companies.length} sub={t('adminDash.companies.statTotalSub', { count: approvedCount })} bg="bg-white" iconBg="bg-gray-100" />
+        <StatCard icon={<AlertTriangle className="w-5 h-5 text-amber-600" />} label={t('adminDash.companies.statPending')} value={pendingCount} sub={t('adminDash.companies.statPendingSub')} bg="bg-amber-50" iconBg="bg-amber-100" highlight={pendingCount > 0} />
+        <StatCard icon={<DollarSign className="w-5 h-5 text-green-600" />} label={t('adminDash.companies.statRevenue')} value={`${totalRevenue.toFixed(0)} EUR`} sub={t('adminDash.companies.statRevenueSub')} bg="bg-green-50" iconBg="bg-green-100" />
+        <StatCard icon={<CalendarDays className="w-5 h-5 text-primary-600" />} label={t('adminDash.companies.statActiveBookings')} value={totalActiveBookings} sub={t('adminDash.companies.statActiveBookingsSub')} bg="bg-primary-50" iconBg="bg-primary-100" />
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
@@ -224,15 +249,15 @@ export default function AdminCompanies() {
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Kerko emrin, email, qytetin, nr. licence..." className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('adminDash.companies.searchPlaceholder')} className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" />
             </div>
             <select value={subFilter} onChange={e => setSubFilter(e.target.value)} className="px-3 py-2 text-xs font-medium bg-gray-50 border border-gray-200 rounded-xl text-dark-700 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500">
-              <option value="">Cdo abonim</option>
-              {Object.entries(SUB_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
+              <option value="">{t('adminDash.companies.anySubscription')}</option>
+              {Object.keys(SUB_STYLES).map(v => <option key={v} value={v}>{subLabel(t, v)}</option>)}
             </select>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {[['', 'Te gjitha', companies.length], ['pending', 'Ne pritje', pendingCount], ['approved', 'Aprovuara', approvedCount], ['rejected', 'Refuzuara', companies.filter(c => c.status === 'rejected').length], ['suspended', 'Pezulluara', companies.filter(c => c.status === 'suspended').length]].map(([v, l, count]) => (
+            {[['', t('adminDash.companies.filterAll'), companies.length], ['pending', t('adminDash.companies.filterPending'), pendingCount], ['approved', t('adminDash.companies.filterApproved'), approvedCount], ['rejected', t('adminDash.companies.filterRejected'), companies.filter(c => c.status === 'rejected').length], ['suspended', t('adminDash.companies.filterSuspended'), companies.filter(c => c.status === 'suspended').length]].map(([v, l, count]) => (
               <button key={String(v)} onClick={() => setStatusFilter(String(v))} className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${statusFilter === v ? 'bg-primary-600 text-white' : 'bg-gray-100 text-dark-600 hover:bg-gray-200'}`}>
                 {l}
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${statusFilter === v ? 'bg-white/20 text-white' : 'bg-white text-dark-500'}`}>{count}</span>
@@ -246,7 +271,7 @@ export default function AdminCompanies() {
         ) : filtered.length === 0 ? (
           <div className="p-16 text-center">
             <Building2 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-dark-600 font-medium">Nuk u gjet asnje kompani</p>
+            <p className="text-dark-600 font-medium">{t('adminDash.companies.emptyState')}</p>
           </div>
         ) : (
           <>
@@ -254,19 +279,19 @@ export default function AdminCompanies() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/60">
-                    <th className="text-left px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Kompania</th>
-                    <th className="text-left px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Statusi</th>
-                    <th className="text-left px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Abonimi</th>
-                    <SortTh label="Automjete" field="name" current={sortBy} dir={sortDir} onSort={toggleSort} />
-                    <SortTh label="Rezervime" field="bookings" current={sortBy} dir={sortDir} onSort={toggleSort} />
-                    <SortTh label="Te ardhura" field="revenue" current={sortBy} dir={sortDir} onSort={toggleSort} />
-                    <th className="text-right px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Veprime</th>
+                    <th className="text-left px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.companies.thCompany')}</th>
+                    <th className="text-left px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.companies.thStatus')}</th>
+                    <th className="text-left px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.companies.thSubscription')}</th>
+                    <SortTh label={t('adminDash.companies.thVehicles')} field="name" current={sortBy} dir={sortDir} onSort={toggleSort} />
+                    <SortTh label={t('adminDash.companies.thBookings')} field="bookings" current={sortBy} dir={sortDir} onSort={toggleSort} />
+                    <SortTh label={t('adminDash.companies.thRevenue')} field="revenue" current={sortBy} dir={sortDir} onSort={toggleSort} />
+                    <th className="text-right px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.companies.thActions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {paginated.map(c => {
-                    const s = STATUS_META[c.status] || STATUS_META.pending;
-                    const sub = SUB_META[c.subscription_status] || SUB_META.inactive;
+                    const s = STATUS_STYLES[c.status] || STATUS_STYLES.pending;
+                    const subColor = SUB_STYLES[c.subscription_status] || SUB_STYLES.inactive;
                     const isAct = actionLoading === c.id;
                     const daysLeft = c.subscription_expires_at ? Math.ceil((new Date(c.subscription_expires_at).getTime() - Date.now()) / 86400000) : null;
                     return (
@@ -288,40 +313,40 @@ export default function AdminCompanies() {
                         </td>
                         <td className="px-5 py-3.5">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${s.bg} ${s.color}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{s.label}
+                            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{statusLabel(t, c.status)}
                           </span>
                         </td>
                         <td className="px-5 py-3.5">
                           <p className="text-xs font-semibold text-dark-800">{c.planName}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-semibold ${sub.color}`}>{sub.label}</span>
-                            {daysLeft !== null && daysLeft <= 7 && daysLeft >= 0 && <span className="text-[10px] text-red-600 font-medium">{daysLeft}d left</span>}
+                            <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-semibold ${subColor}`}>{subLabel(t, c.subscription_status)}</span>
+                            {daysLeft !== null && daysLeft <= 7 && daysLeft >= 0 && <span className="text-[10px] text-red-600 font-medium">{t('adminDash.companies.daysLeft', { days: daysLeft })}</span>}
                           </div>
                         </td>
                         <td className="px-5 py-3.5 text-right">
                           <span className="text-sm font-bold text-dark-900">{c.vehiclesCount}</span>
-                          <br /><span className="text-[11px] text-green-600 font-medium">{c.publishedVehicles} pub.</span>
+                          <br /><span className="text-[11px] text-green-600 font-medium">{t('adminDash.companies.published', { count: c.publishedVehicles })}</span>
                         </td>
                         <td className="px-5 py-3.5 text-right">
                           <span className="text-sm font-bold text-dark-900">{c.bookingsCount}</span>
-                          <br /><span className="text-[11px] text-primary-600 font-medium">{c.activeBookings} aktive</span>
+                          <br /><span className="text-[11px] text-primary-600 font-medium">{t('adminDash.companies.activeShort', { count: c.activeBookings })}</span>
                         </td>
                         <td className="px-5 py-3.5 text-right">
                           <span className="text-sm font-bold text-green-600">{c.revenue.toFixed(0)} EUR</span>
-                          {c.pendingRevenue > 0 && <><br /><span className="text-[11px] text-amber-600 font-medium">{c.pendingRevenue.toFixed(0)} pritje</span></>}
+                          {c.pendingRevenue > 0 && <><br /><span className="text-[11px] text-amber-600 font-medium">{t('adminDash.companies.pendingShort', { amount: c.pendingRevenue.toFixed(0) })}</span></>}
                         </td>
                         <td className="px-5 py-3.5">
                           <div className="flex items-center justify-end gap-1.5">
-                            <button onClick={() => openDetail(c)} className="p-1.5 bg-gray-50 text-dark-500 rounded-lg hover:bg-primary-50 hover:text-primary-600 transition-colors" title="Detajet"><Eye className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => { setAssignPlanModal(c); setAssignPlanId(c.subscription_plan_id || ''); }} className="p-1.5 bg-gray-50 text-dark-500 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Cakto plan"><CreditCard className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => openDetail(c)} className="p-1.5 bg-gray-50 text-dark-500 rounded-lg hover:bg-primary-50 hover:text-primary-600 transition-colors" title={t('adminDash.companies.detailsTitle')}><Eye className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => { setAssignPlanModal(c); setAssignPlanId(c.subscription_plan_id || ''); }} className="p-1.5 bg-gray-50 text-dark-500 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors" title={t('adminDash.companies.assignPlanTooltip')}><CreditCard className="w-3.5 h-3.5" /></button>
                             {isAct ? <Loader2 className="w-4 h-4 text-primary-600 animate-spin" /> : (
                               <>
                                 {c.status === 'pending' && <>
-                                  <button onClick={() => updateStatus(c.id, 'approved')} className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors" title="Aprovo"><Check className="w-3.5 h-3.5" /></button>
-                                  <button onClick={() => { setRejectModal(c); setRejectReason(''); }} className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors" title="Refuzo"><X className="w-3.5 h-3.5" /></button>
+                                  <button onClick={() => updateStatus(c.id, 'approved')} className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors" title={t('adminDash.companies.approveTooltip')}><Check className="w-3.5 h-3.5" /></button>
+                                  <button onClick={() => { setRejectModal(c); setRejectReason(''); }} className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors" title={t('adminDash.companies.rejectTooltip')}><X className="w-3.5 h-3.5" /></button>
                                 </>}
-                                {c.status === 'approved' && <button onClick={() => updateStatus(c.id, 'suspended')} className="p-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors" title="Pezullo"><Ban className="w-3.5 h-3.5" /></button>}
-                                {(c.status === 'suspended' || c.status === 'rejected') && <button onClick={() => updateStatus(c.id, 'approved')} className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors" title="Riaktivizo"><RotateCcw className="w-3.5 h-3.5" /></button>}
+                                {c.status === 'approved' && <button onClick={() => updateStatus(c.id, 'suspended')} className="p-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors" title={t('adminDash.companies.suspendTooltip')}><Ban className="w-3.5 h-3.5" /></button>}
+                                {(c.status === 'suspended' || c.status === 'rejected') && <button onClick={() => updateStatus(c.id, 'approved')} className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors" title={t('adminDash.companies.reactivateTooltip')}><RotateCcw className="w-3.5 h-3.5" /></button>}
                               </>
                             )}
                           </div>
@@ -335,7 +360,7 @@ export default function AdminCompanies() {
 
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100">
-                <p className="text-sm text-dark-500">{(safePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safePage * ITEMS_PER_PAGE, filtered.length)} nga {filtered.length}</p>
+                <p className="text-sm text-dark-500">{t('adminDash.companies.pageRange', { from: (safePage - 1) * ITEMS_PER_PAGE + 1, to: Math.min(safePage * ITEMS_PER_PAGE, filtered.length), total: filtered.length })}</p>
                 <div className="flex items-center gap-1.5">
                   <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage <= 1} className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-all"><ChevronLeft className="w-4 h-4 text-dark-600" /></button>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1).reduce<(number | string)[]>((acc, p, idx, arr) => { if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...'); acc.push(p); return acc; }, []).map((item, idx) =>
@@ -362,15 +387,15 @@ export default function AdminCompanies() {
                   <h2 className="font-bold text-dark-950 text-lg leading-tight">{detailCompany.name}</h2>
                   <p className="text-sm text-dark-500">{detailCompany.city}, {detailCompany.country}</p>
                 </div>
-                <span className={`ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${STATUS_META[detailCompany.status]?.bg} ${STATUS_META[detailCompany.status]?.color}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${STATUS_META[detailCompany.status]?.dot}`} />{STATUS_META[detailCompany.status]?.label}
+                <span className={`ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${STATUS_STYLES[detailCompany.status]?.bg} ${STATUS_STYLES[detailCompany.status]?.color}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${STATUS_STYLES[detailCompany.status]?.dot}`} />{statusLabel(t, detailCompany.status)}
                 </span>
               </div>
               <button onClick={() => setDetailCompany(null)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors"><X className="w-4 h-4 text-dark-500" /></button>
             </div>
 
             <div className="flex border-b border-gray-100 shrink-0 bg-gray-50/50 overflow-x-auto">
-              {([['overview', 'Permbledhje'], ['vehicles', `Automjete (${companyVehicles.length})`], ['bookings', `Rezervime (${companyBookings.length})`], ['subscription', 'Abonimi']] as const).map(([tab, label]) => (
+              {([['overview', t('adminDash.companies.tabOverview')], ['vehicles', t('adminDash.companies.tabVehicles', { count: companyVehicles.length })], ['bookings', t('adminDash.companies.tabBookings', { count: companyBookings.length })], ['subscription', t('adminDash.companies.tabSubscription')]] as const).map(([tab, label]) => (
                 <button key={tab} onClick={() => setDetailTab(tab)} className={`px-5 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${detailTab === tab ? 'border-primary-600 text-primary-600 bg-white' : 'border-transparent text-dark-500 hover:text-dark-700'}`}>{label}</button>
               ))}
             </div>
@@ -378,22 +403,22 @@ export default function AdminCompanies() {
             <div className="flex-1 overflow-y-auto p-6">
               {loadingDetail ? (
                 <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-primary-600 animate-spin" /></div>
-              ) : detailTab === 'overview' ? <DetailOverview c={detailCompany} />
-                : detailTab === 'vehicles' ? <DetailVehicles vehicles={companyVehicles} />
-                : detailTab === 'bookings' ? <DetailBookings bookings={companyBookings} />
-                : <DetailSubscription c={detailCompany} plans={plans} onAssign={() => { setDetailCompany(null); setAssignPlanModal(detailCompany); setAssignPlanId(detailCompany.subscription_plan_id || ''); }} />}
+              ) : detailTab === 'overview' ? <DetailOverview c={detailCompany} t={t} lang={i18n.language} />
+                : detailTab === 'vehicles' ? <DetailVehicles vehicles={companyVehicles} t={t} />
+                : detailTab === 'bookings' ? <DetailBookings bookings={companyBookings} t={t} lang={i18n.language} />
+                : <DetailSubscription c={detailCompany} plans={plans} t={t} lang={i18n.language} onAssign={() => { setDetailCompany(null); setAssignPlanModal(detailCompany); setAssignPlanId(detailCompany.subscription_plan_id || ''); }} />}
             </div>
 
             <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between shrink-0 bg-gray-50/50">
               <div className="flex gap-2">
                 {detailCompany.status === 'pending' && <>
-                  <button onClick={() => { updateStatus(detailCompany.id, 'approved'); setDetailCompany(null); }} className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors"><Check className="w-3.5 h-3.5" />Aprovo</button>
-                  <button onClick={() => { setDetailCompany(null); setRejectModal(detailCompany); setRejectReason(''); }} className="flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 text-sm font-semibold rounded-xl hover:bg-red-100 transition-colors"><X className="w-3.5 h-3.5" />Refuzo</button>
+                  <button onClick={() => { updateStatus(detailCompany.id, 'approved'); setDetailCompany(null); }} className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors"><Check className="w-3.5 h-3.5" />{t('adminDash.companies.approve')}</button>
+                  <button onClick={() => { setDetailCompany(null); setRejectModal(detailCompany); setRejectReason(''); }} className="flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 text-sm font-semibold rounded-xl hover:bg-red-100 transition-colors"><X className="w-3.5 h-3.5" />{t('adminDash.companies.reject')}</button>
                 </>}
-                {detailCompany.status === 'approved' && <button onClick={() => { updateStatus(detailCompany.id, 'suspended'); setDetailCompany(null); }} className="flex items-center gap-1.5 px-4 py-2 bg-amber-50 text-amber-700 text-sm font-semibold rounded-xl hover:bg-amber-100 transition-colors"><Ban className="w-3.5 h-3.5" />Pezullo</button>}
-                {(detailCompany.status === 'suspended' || detailCompany.status === 'rejected') && <button onClick={() => { updateStatus(detailCompany.id, 'approved'); setDetailCompany(null); }} className="flex items-center gap-1.5 px-4 py-2 bg-green-50 text-green-700 text-sm font-semibold rounded-xl hover:bg-green-100 transition-colors"><RotateCcw className="w-3.5 h-3.5" />Riaktivizo</button>}
+                {detailCompany.status === 'approved' && <button onClick={() => { updateStatus(detailCompany.id, 'suspended'); setDetailCompany(null); }} className="flex items-center gap-1.5 px-4 py-2 bg-amber-50 text-amber-700 text-sm font-semibold rounded-xl hover:bg-amber-100 transition-colors"><Ban className="w-3.5 h-3.5" />{t('adminDash.companies.suspend')}</button>}
+                {(detailCompany.status === 'suspended' || detailCompany.status === 'rejected') && <button onClick={() => { updateStatus(detailCompany.id, 'approved'); setDetailCompany(null); }} className="flex items-center gap-1.5 px-4 py-2 bg-green-50 text-green-700 text-sm font-semibold rounded-xl hover:bg-green-100 transition-colors"><RotateCcw className="w-3.5 h-3.5" />{t('adminDash.companies.reactivate')}</button>}
               </div>
-              <button onClick={() => setDetailCompany(null)} className="px-4 py-2 bg-gray-100 text-dark-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors">Mbyll</button>
+              <button onClick={() => setDetailCompany(null)} className="px-4 py-2 bg-gray-100 text-dark-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors">{t('adminDash.companies.close')}</button>
             </div>
           </div>
         </div>
@@ -403,20 +428,20 @@ export default function AdminCompanies() {
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-bold text-dark-950">Cakto plan abonimi</h3>
+              <h3 className="font-bold text-dark-950">{t('adminDash.companies.assignPlanTitle')}</h3>
               <button onClick={() => setAssignPlanModal(null)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-sm text-dark-600">Kompania: <span className="font-semibold text-dark-900">{assignPlanModal.name}</span></p>
+              <p className="text-sm text-dark-600">{t('adminDash.companies.companyLabel')} <span className="font-semibold text-dark-900">{assignPlanModal.name}</span></p>
               <div>
-                <label className="block text-xs font-semibold text-dark-600 mb-2">Zgjidh planin</label>
+                <label className="block text-xs font-semibold text-dark-600 mb-2">{t('adminDash.companies.choosePlan')}</label>
                 <div className="grid gap-2">
                   {plans.map(p => (
                     <label key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${assignPlanId === p.id ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
                       <input type="radio" name="plan" value={p.id} checked={assignPlanId === p.id} onChange={() => setAssignPlanId(p.id)} className="sr-only" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-dark-900">{p.name}</p>
-                        <p className="text-xs text-dark-400">{p.price_monthly} EUR/mujore · max {p.max_vehicles === -1 ? '∞' : p.max_vehicles} vetura</p>
+                        <p className="text-xs text-dark-400">{t('adminDash.companies.planDetails', { price: p.price_monthly, max: p.max_vehicles === -1 ? t('adminDash.companies.unlimited') : p.max_vehicles })}</p>
                       </div>
                       {assignPlanId === p.id && <Check className="w-4 h-4 text-primary-600 shrink-0" />}
                     </label>
@@ -424,18 +449,18 @@ export default function AdminCompanies() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-dark-600 mb-2">Cikli i faturimit</label>
+                <label className="block text-xs font-semibold text-dark-600 mb-2">{t('adminDash.companies.billingCycle')}</label>
                 <div className="flex gap-2">
-                  {([['monthly', 'Mujore'], ['yearly', 'Vjetore (-20%)']] as const).map(([v, l]) => (
+                  {([['monthly', t('adminDash.companies.billingMonthly')], ['yearly', t('adminDash.companies.billingYearly')]] as const).map(([v, l]) => (
                     <button key={v} onClick={() => setAssignBilling(v)} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${assignBilling === v ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-dark-600 hover:border-gray-300'}`}>{l}</button>
                   ))}
                 </div>
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end">
-              <button onClick={() => setAssignPlanModal(null)} className="px-4 py-2 bg-gray-100 text-dark-600 text-sm font-semibold rounded-xl hover:bg-gray-200">Anulo</button>
+              <button onClick={() => setAssignPlanModal(null)} className="px-4 py-2 bg-gray-100 text-dark-600 text-sm font-semibold rounded-xl hover:bg-gray-200">{t('adminDash.common.cancel')}</button>
               <button onClick={assignPlan} disabled={!assignPlanId || assigning} className="flex items-center gap-2 px-5 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-colors">
-                {assigning && <Loader2 className="w-4 h-4 animate-spin" />}Cakto planin
+                {assigning && <Loader2 className="w-4 h-4 animate-spin" />}{t('adminDash.companies.assignBtn')}
               </button>
             </div>
           </div>
@@ -446,20 +471,20 @@ export default function AdminCompanies() {
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-bold text-dark-950">Refuzo kompanine</h3>
+              <h3 className="font-bold text-dark-950">{t('adminDash.companies.rejectModalTitle')}</h3>
               <button onClick={() => setRejectModal(null)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-sm text-dark-600">Kompania: <span className="font-semibold text-dark-900">{rejectModal.name}</span></p>
+              <p className="text-sm text-dark-600">{t('adminDash.companies.companyLabel')} <span className="font-semibold text-dark-900">{rejectModal.name}</span></p>
               <div>
-                <label className="block text-xs font-semibold text-dark-600 mb-2">Arsyeja e refuzimit</label>
-                <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} rows={3} placeholder="Shkruani arsyen qe do i dergohet kompanise me email..." className="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 resize-none transition-all" />
+                <label className="block text-xs font-semibold text-dark-600 mb-2">{t('adminDash.companies.rejectReasonLabel')}</label>
+                <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} rows={3} placeholder={t('adminDash.companies.rejectReasonPlaceholder')} className="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 resize-none transition-all" />
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end">
-              <button onClick={() => setRejectModal(null)} className="px-4 py-2 bg-gray-100 text-dark-600 text-sm font-semibold rounded-xl hover:bg-gray-200">Anulo</button>
+              <button onClick={() => setRejectModal(null)} className="px-4 py-2 bg-gray-100 text-dark-600 text-sm font-semibold rounded-xl hover:bg-gray-200">{t('adminDash.common.cancel')}</button>
               <button onClick={() => { updateStatus(rejectModal.id, 'rejected', rejectReason); setRejectModal(null); }} disabled={actionLoading === rejectModal.id} className="flex items-center gap-2 px-5 py-2 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 disabled:opacity-50 transition-colors">
-                {actionLoading === rejectModal.id && <Loader2 className="w-4 h-4 animate-spin" />}Refuzo kompanine
+                {actionLoading === rejectModal.id && <Loader2 className="w-4 h-4 animate-spin" />}{t('adminDash.companies.rejectCompanyBtn')}
               </button>
             </div>
           </div>
@@ -473,7 +498,7 @@ function SortTh({ label, field, current, dir, onSort }: { label: string; field: 
   return (
     <th className="text-right px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">
       <button onClick={() => onSort(field as 'name' | 'revenue' | 'created_at' | 'bookings')} className="flex items-center gap-1 ml-auto hover:text-dark-700 transition-colors">
-        {label}<ArrowUpDown className={`w-3 h-3 ${current === field ? 'text-primary-600' : 'text-dark-300'}`} />
+        {label}<ArrowUpDown className={`w-3 h-3 ${current === field ? 'text-primary-600' : 'text-dark-300'} ${dir === 'asc' ? 'rotate-180' : ''}`} />
       </button>
     </th>
   );
@@ -494,30 +519,30 @@ function StatCard({ icon, label, value, sub, bg, iconBg, highlight }: { icon: Re
   );
 }
 
-function DetailOverview({ c }: { c: CompanyReport }) {
+function DetailOverview({ c, t, lang }: { c: CompanyReport; t: TFunction; lang: string }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-3 gap-3">
-        <MiniStat label="Automjete" value={c.vehiclesCount} sub={`${c.publishedVehicles} pub.`} color="text-blue-600" />
-        <MiniStat label="Rezervime" value={c.bookingsCount} sub={`${c.activeBookings} aktive`} color="text-primary-600" />
-        <MiniStat label="Te ardhura" value={`${c.revenue.toFixed(0)} €`} sub={`${c.pendingRevenue.toFixed(0)} € pritje`} color="text-green-600" />
+        <MiniStat label={t('adminDash.companies.detailVehicles')} value={c.vehiclesCount} sub={t('adminDash.companies.detailVehiclesSub', { count: c.publishedVehicles })} color="text-blue-600" />
+        <MiniStat label={t('adminDash.companies.detailBookings')} value={c.bookingsCount} sub={t('adminDash.companies.detailBookingsSub', { count: c.activeBookings })} color="text-primary-600" />
+        <MiniStat label={t('adminDash.companies.detailRevenue')} value={`${c.revenue.toFixed(0)} €`} sub={t('adminDash.companies.detailRevenueSub', { amount: c.pendingRevenue.toFixed(0) })} color="text-green-600" />
       </div>
       <div>
-        <h4 className="text-sm font-bold text-dark-900 mb-3">Informacioni i kompanise</h4>
+        <h4 className="text-sm font-bold text-dark-900 mb-3">{t('adminDash.companies.detailInfoTitle')}</h4>
         <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-          <InfoField icon={<Mail className="w-3.5 h-3.5" />} label="Email" value={c.email || '—'} />
-          <InfoField icon={<Phone className="w-3.5 h-3.5" />} label="Telefoni" value={c.phone || '—'} />
-          <InfoField icon={<MapPin className="w-3.5 h-3.5" />} label="Adresa" value={`${c.address || '—'}, ${c.city}`} />
-          <InfoField icon={<Hash className="w-3.5 h-3.5" />} label="Nr. licences" value={c.license_number || '—'} />
-          <InfoField icon={<Star className="w-3.5 h-3.5" />} label="Vleresimi" value={`${c.rating?.toFixed(1) || '0.0'} / 5 (${c.total_reviews || 0})`} />
-          <InfoField icon={<CalendarDays className="w-3.5 h-3.5" />} label="Regjistruar" value={new Date(c.created_at).toLocaleDateString('sq-AL', { year: 'numeric', month: 'long', day: 'numeric' })} />
-          <InfoField icon={<MapPin className="w-3.5 h-3.5" />} label="GPS" value={c.latitude != null ? `${c.latitude.toFixed(5)}, ${c.longitude?.toFixed(5)}` : 'Pa lokacion'} />
-          <InfoField icon={<TrendingUp className="w-3.5 h-3.5" />} label="Anulime" value={String(c.cancelledBookings)} />
+          <InfoField icon={<Mail className="w-3.5 h-3.5" />} label={t('adminDash.companies.detailEmail')} value={c.email || '—'} />
+          <InfoField icon={<Phone className="w-3.5 h-3.5" />} label={t('adminDash.companies.detailPhone')} value={c.phone || '—'} />
+          <InfoField icon={<MapPin className="w-3.5 h-3.5" />} label={t('adminDash.companies.detailAddress')} value={`${c.address || '—'}, ${c.city}`} />
+          <InfoField icon={<Hash className="w-3.5 h-3.5" />} label={t('adminDash.companies.detailLicense')} value={c.license_number || '—'} />
+          <InfoField icon={<Star className="w-3.5 h-3.5" />} label={t('adminDash.companies.detailRating')} value={t('adminDash.companies.detailRatingValue', { rating: c.rating?.toFixed(1) || '0.0', count: c.total_reviews || 0 })} />
+          <InfoField icon={<CalendarDays className="w-3.5 h-3.5" />} label={t('adminDash.companies.detailRegistered')} value={new Date(c.created_at).toLocaleDateString(localeFromI18n(lang), { year: 'numeric', month: 'long', day: 'numeric' })} />
+          <InfoField icon={<MapPin className="w-3.5 h-3.5" />} label={t('adminDash.companies.detailGps')} value={c.latitude != null ? `${c.latitude.toFixed(5)}, ${c.longitude?.toFixed(5)}` : t('adminDash.companies.detailGpsNone')} />
+          <InfoField icon={<TrendingUp className="w-3.5 h-3.5" />} label={t('adminDash.companies.detailCancellations')} value={String(c.cancelledBookings)} />
         </div>
       </div>
       {c.description && (
         <div>
-          <h4 className="text-sm font-bold text-dark-900 mb-2">Pershkrimi</h4>
+          <h4 className="text-sm font-bold text-dark-900 mb-2">{t('adminDash.companies.detailDescription')}</h4>
           <p className="text-sm text-dark-600 bg-gray-50 rounded-xl p-3 leading-relaxed">{c.description}</p>
         </div>
       )}
@@ -525,8 +550,8 @@ function DetailOverview({ c }: { c: CompanyReport }) {
   );
 }
 
-function DetailVehicles({ vehicles }: { vehicles: CompanyVehicle[] }) {
-  if (vehicles.length === 0) return <div className="text-center py-12 text-dark-400 text-sm">Nuk ka automjete te regjistruara.</div>;
+function DetailVehicles({ vehicles, t }: { vehicles: CompanyVehicle[]; t: TFunction }) {
+  if (vehicles.length === 0) return <div className="text-center py-12 text-dark-400 text-sm">{t('adminDash.companies.vehiclesEmpty')}</div>;
   return (
     <div className="space-y-2">
       {vehicles.map(v => (
@@ -539,10 +564,10 @@ function DetailVehicles({ vehicles }: { vehicles: CompanyVehicle[] }) {
             <p className="text-[11px] text-dark-400">{v.category} · {v.transmission} · {v.fuel_type}</p>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-sm font-bold text-dark-900">{v.price_per_day} EUR/dite</p>
+            <p className="text-sm font-bold text-dark-900">{t('adminDash.companies.vehiclePerDay', { price: v.price_per_day })}</p>
             <div className="flex items-center justify-end gap-1.5 mt-0.5">
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${v.is_published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{v.is_published ? 'Publikuar' : 'Draft'}</span>
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${v.is_available ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>{v.is_available ? 'Disponibel' : 'I zene'}</span>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${v.is_published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{v.is_published ? t('adminDash.companies.vehiclePublished') : t('adminDash.companies.vehicleDraft')}</span>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${v.is_available ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>{v.is_available ? t('adminDash.companies.vehicleAvailable') : t('adminDash.companies.vehicleBusy')}</span>
             </div>
           </div>
         </div>
@@ -551,20 +576,19 @@ function DetailVehicles({ vehicles }: { vehicles: CompanyVehicle[] }) {
   );
 }
 
-function DetailBookings({ bookings }: { bookings: Booking[] }) {
+function DetailBookings({ bookings, t, lang }: { bookings: Booking[]; t: TFunction; lang: string }) {
   const SC: Record<string, string> = { pending: 'bg-amber-100 text-amber-700', confirmed: 'bg-blue-100 text-blue-700', active: 'bg-green-100 text-green-700', completed: 'bg-gray-100 text-gray-600', cancelled: 'bg-red-100 text-red-700' };
-  const SN: Record<string, string> = { pending: 'Ne pritje', confirmed: 'Konfirmuar', active: 'Aktiv', completed: 'Perfunduar', cancelled: 'Anuluar' };
-  if (bookings.length === 0) return <div className="text-center py-12 text-dark-400 text-sm">Nuk ka rezervime.</div>;
+  if (bookings.length === 0) return <div className="text-center py-12 text-dark-400 text-sm">{t('adminDash.companies.bookingsEmpty')}</div>;
   return (
     <div className="space-y-2">
       {bookings.map(b => (
         <div key={b.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-dark-900">{b.client_name}</p>
-            <p className="text-[11px] text-dark-400">{new Date(b.pickup_date).toLocaleDateString('sq-AL')} → {new Date(b.return_date).toLocaleDateString('sq-AL')} ({b.total_days}d)</p>
+            <p className="text-[11px] text-dark-400">{t('adminDash.companies.bookingsRange', { from: new Date(b.pickup_date).toLocaleDateString(localeFromI18n(lang)), to: new Date(b.return_date).toLocaleDateString(localeFromI18n(lang)), days: b.total_days })}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${SC[b.status] || 'bg-gray-100 text-gray-600'}`}>{SN[b.status] || b.status}</span>
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${SC[b.status] || 'bg-gray-100 text-gray-600'}`}>{(() => { const k = `adminDash.statusBooking.${b.status}`; const v = t(k); return v === k ? b.status : v; })()}</span>
             <span className="text-sm font-bold text-dark-900">{b.total_price} EUR</span>
           </div>
         </div>
@@ -573,9 +597,9 @@ function DetailBookings({ bookings }: { bookings: Booking[] }) {
   );
 }
 
-function DetailSubscription({ c, plans, onAssign }: { c: CompanyReport; plans: SubscriptionPlan[]; onAssign: () => void }) {
+function DetailSubscription({ c, plans, t, lang, onAssign }: { c: CompanyReport; plans: SubscriptionPlan[]; t: TFunction; lang: string; onAssign: () => void }) {
   const plan = c.plan;
-  const sub = SUB_META[c.subscription_status] || SUB_META.inactive;
+  const subColor = SUB_STYLES[c.subscription_status] || SUB_STYLES.inactive;
   const daysLeft = c.subscription_expires_at ? Math.ceil((new Date(c.subscription_expires_at).getTime() - Date.now()) / 86400000) : null;
   return (
     <div className="space-y-5">
@@ -583,30 +607,30 @@ function DetailSubscription({ c, plans, onAssign }: { c: CompanyReport; plans: S
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-lg font-bold text-dark-950">{c.planName}</p>
-            <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-semibold ${sub.color}`}>{sub.label}</span>
+            <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-semibold ${subColor}`}>{subLabel(t, c.subscription_status)}</span>
           </div>
           <Shield className={`w-8 h-8 ${plan ? 'text-primary-500' : 'text-gray-300'}`} />
         </div>
         {plan && (
           <div className="grid grid-cols-2 gap-2 text-sm mt-3">
-            <div className="bg-white/60 rounded-lg px-3 py-2"><p className="text-xs text-dark-400">Vetura max</p><p className="font-bold text-dark-900">{plan.max_vehicles === -1 ? 'Unlimited' : plan.max_vehicles}</p></div>
-            <div className="bg-white/60 rounded-lg px-3 py-2"><p className="text-xs text-dark-400">Rezervime/muj</p><p className="font-bold text-dark-900">{plan.max_bookings_monthly === -1 ? 'Unlimited' : plan.max_bookings_monthly}</p></div>
-            <div className="bg-white/60 rounded-lg px-3 py-2"><p className="text-xs text-dark-400">Cmimi mujor</p><p className="font-bold text-dark-900">{plan.price_monthly} EUR</p></div>
-            <div className="bg-white/60 rounded-lg px-3 py-2"><p className="text-xs text-dark-400">Skadon</p><p className={`font-bold ${daysLeft !== null && daysLeft <= 7 ? 'text-red-600' : 'text-dark-900'}`}>{c.subscription_expires_at ? new Date(c.subscription_expires_at).toLocaleDateString('sq-AL') : '—'}{daysLeft !== null && daysLeft >= 0 && <span className="ml-1 text-xs font-normal">({daysLeft}d)</span>}</p></div>
+            <div className="bg-white/60 rounded-lg px-3 py-2"><p className="text-xs text-dark-400">{t('adminDash.companies.subMaxVehicles')}</p><p className="font-bold text-dark-900">{plan.max_vehicles === -1 ? t('adminDash.companies.subUnlimited') : plan.max_vehicles}</p></div>
+            <div className="bg-white/60 rounded-lg px-3 py-2"><p className="text-xs text-dark-400">{t('adminDash.companies.subMaxBookings')}</p><p className="font-bold text-dark-900">{plan.max_bookings_monthly === -1 ? t('adminDash.companies.subUnlimited') : plan.max_bookings_monthly}</p></div>
+            <div className="bg-white/60 rounded-lg px-3 py-2"><p className="text-xs text-dark-400">{t('adminDash.companies.subMonthlyPrice')}</p><p className="font-bold text-dark-900">{plan.price_monthly} EUR</p></div>
+            <div className="bg-white/60 rounded-lg px-3 py-2"><p className="text-xs text-dark-400">{t('adminDash.companies.subExpires')}</p><p className={`font-bold ${daysLeft !== null && daysLeft <= 7 ? 'text-red-600' : 'text-dark-900'}`}>{c.subscription_expires_at ? new Date(c.subscription_expires_at).toLocaleDateString(localeFromI18n(lang)) : '—'}{daysLeft !== null && daysLeft >= 0 && <span className="ml-1 text-xs font-normal">{t('adminDash.companies.subExpiresDays', { days: daysLeft })}</span>}</p></div>
           </div>
         )}
       </div>
       <button onClick={onAssign} className="w-full py-3 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
-        <CreditCard className="w-4 h-4" />Ndrysho / Cakto plan
+        <CreditCard className="w-4 h-4" />{t('adminDash.companies.subChangeOrAssign')}
       </button>
       <div>
-        <h4 className="text-sm font-bold text-dark-900 mb-3">Planet disponibel</h4>
+        <h4 className="text-sm font-bold text-dark-900 mb-3">{t('adminDash.companies.subAvailablePlans')}</h4>
         <div className="space-y-2">
           {plans.map(p => (
             <div key={p.id} className={`p-3 rounded-xl border ${c.subscription_plan_id === p.id ? 'border-primary-300 bg-primary-50' : 'border-gray-100 bg-gray-50'}`}>
               <div className="flex items-center justify-between">
-                <div><p className="text-sm font-semibold text-dark-900">{p.name}</p><p className="text-xs text-dark-400">{p.price_monthly} EUR/muj · {p.max_vehicles === -1 ? '∞' : p.max_vehicles} vetura</p></div>
-                {c.subscription_plan_id === p.id && <span className="text-[10px] font-bold px-2 py-1 bg-primary-600 text-white rounded-lg">Aktiv</span>}
+                <div><p className="text-sm font-semibold text-dark-900">{p.name}</p><p className="text-xs text-dark-400">{t('adminDash.companies.subPlanDetails', { price: p.price_monthly, max: p.max_vehicles === -1 ? t('adminDash.companies.unlimited') : p.max_vehicles })}</p></div>
+                {c.subscription_plan_id === p.id && <span className="text-[10px] font-bold px-2 py-1 bg-primary-600 text-white rounded-lg">{t('adminDash.companies.subActiveLabel')}</span>}
               </div>
             </div>
           ))}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Mail, Plus, CreditCard as Edit2, Trash2, Eye, EyeOff, Search, Loader2, CheckCircle2, X, Save, AlertTriangle, ToggleLeft, ToggleRight, Code } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
@@ -16,26 +17,26 @@ interface EmailTemplate {
   updated_at: string;
 }
 
-const templateKeyLabels: Record<string, string> = {
-  booking_confirmation_client: 'Konfirmim rezervimi (Klient)',
-  booking_confirmation_company: 'Njoftim rezervimi (Kompani)',
-  booking_approved: 'Rezervim aprovuar',
-  booking_rejected: 'Rezervim refuzuar',
-  booking_completed: 'Rezervim perfunduar',
-  booking_cancelled: 'Rezervim anuluar',
-  pickup_reminder: 'Kujtese marrje',
-  review_request: 'Kerkese vleresim',
-  company_approved: 'Kompani aprovuar',
-  company_rejected: 'Kompani refuzuar',
-  company_suspended: 'Kompani pezulluar',
-  welcome_client: 'Mireseardhje klient',
-  welcome_company: 'Mireseardhje kompani',
-  booking_invoice: 'Fature rezervimi',
-  special_offer: 'Oferte speciale',
-  inactive_client_reminder: 'Kujtese klient joaktiv',
-  payment_received: 'Pagese e konfirmuar',
-  subscription_expiring: 'Aboniment duke skaduar',
-  subscription_expired: 'Aboniment i skaduar',
+const templateKeyTranslationKeys: Record<string, string> = {
+  booking_confirmation_client: 'tkBookingConfirmationClient',
+  booking_confirmation_company: 'tkBookingConfirmationCompany',
+  booking_approved: 'tkBookingApproved',
+  booking_rejected: 'tkBookingRejected',
+  booking_completed: 'tkBookingCompleted',
+  booking_cancelled: 'tkBookingCancelled',
+  pickup_reminder: 'tkPickupReminder',
+  review_request: 'tkReviewRequest',
+  company_approved: 'tkCompanyApproved',
+  company_rejected: 'tkCompanyRejected',
+  company_suspended: 'tkCompanySuspended',
+  welcome_client: 'tkWelcomeClient',
+  welcome_company: 'tkWelcomeCompany',
+  booking_invoice: 'tkBookingInvoice',
+  special_offer: 'tkSpecialOffer',
+  inactive_client_reminder: 'tkInactiveClientReminder',
+  payment_received: 'tkPaymentReceived',
+  subscription_expiring: 'tkSubscriptionExpiring',
+  subscription_expired: 'tkSubscriptionExpired',
 };
 
 const templateCategoryColors: Record<string, string> = {
@@ -72,6 +73,11 @@ const emptyTemplate: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at'> = {
 type ModalMode = 'edit' | 'preview' | 'create';
 
 export default function AdminEmailTemplates() {
+  const { t } = useTranslation();
+  const templateKeyLabel = (key: string) => {
+    const tk = templateKeyTranslationKeys[key];
+    return tk ? t(`adminDash.emailTemplates.${tk}`) : key;
+  };
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -100,9 +106,9 @@ export default function AdminEmailTemplates() {
 
   async function handleSave() {
     if (!modal) return;
-    const t = modal.template;
-    if (!t.template_key || !t.subject_template || !t.html_template) {
-      setFeedback({ type: 'error', message: 'Plotesoni te gjithe fushat e detyrueshme.' });
+    const tpl = modal.template;
+    if (!tpl.template_key || !tpl.subject_template || !tpl.html_template) {
+      setFeedback({ type: 'error', message: t('adminDash.emailTemplates.errorRequiredFields') });
       return;
     }
 
@@ -111,18 +117,18 @@ export default function AdminEmailTemplates() {
 
     if (modal.mode === 'create') {
       const { error } = await supabase.from('email_templates').insert({
-        template_key: t.template_key,
-        subject_template: t.subject_template,
-        html_template: t.html_template,
-        text_template: t.text_template || '',
-        description: t.description || '',
-        is_active: t.is_active ?? true,
+        template_key: tpl.template_key,
+        subject_template: tpl.subject_template,
+        html_template: tpl.html_template,
+        text_template: tpl.text_template || '',
+        description: tpl.description || '',
+        is_active: tpl.is_active ?? true,
         updated_at: new Date().toISOString(),
       });
       if (error) {
-        setFeedback({ type: 'error', message: 'Gabim gjate ruajtjes. Çelesi i template-it mund te jete duplikat.' });
+        setFeedback({ type: 'error', message: t('adminDash.emailTemplates.errorDuplicateKey') });
       } else {
-        setFeedback({ type: 'success', message: 'Template-i u krijua me sukses!' });
+        setFeedback({ type: 'success', message: t('adminDash.emailTemplates.successCreated') });
         setModal(null);
         loadTemplates();
       }
@@ -130,18 +136,18 @@ export default function AdminEmailTemplates() {
       const { error } = await supabase
         .from('email_templates')
         .update({
-          subject_template: t.subject_template,
-          html_template: t.html_template,
-          text_template: t.text_template || '',
-          description: t.description || '',
-          is_active: t.is_active,
+          subject_template: tpl.subject_template,
+          html_template: tpl.html_template,
+          text_template: tpl.text_template || '',
+          description: tpl.description || '',
+          is_active: tpl.is_active,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', t.id!);
+        .eq('id', tpl.id!);
       if (error) {
-        setFeedback({ type: 'error', message: 'Gabim gjate ruajtjes.' });
+        setFeedback({ type: 'error', message: t('adminDash.emailTemplates.errorSaving') });
       } else {
-        setFeedback({ type: 'success', message: 'Template-i u perditesua!' });
+        setFeedback({ type: 'success', message: t('adminDash.emailTemplates.successUpdated') });
         setModal(null);
         loadTemplates();
       }
@@ -157,7 +163,7 @@ export default function AdminEmailTemplates() {
       .eq('id', template.id);
     if (!error) {
       setTemplates(prev =>
-        prev.map(t => t.id === template.id ? { ...t, is_active: !template.is_active } : t)
+        prev.map(tpl => tpl.id === template.id ? { ...tpl, is_active: !template.is_active } : tpl)
       );
     }
     setToggling(null);
@@ -168,7 +174,7 @@ export default function AdminEmailTemplates() {
     setDeleting(true);
     const { error } = await supabase.from('email_templates').delete().eq('id', deleteId);
     if (!error) {
-      setTemplates(prev => prev.filter(t => t.id !== deleteId));
+      setTemplates(prev => prev.filter(tpl => tpl.id !== deleteId));
     }
     setDeleting(false);
     setDeleteId(null);
@@ -193,22 +199,22 @@ export default function AdminEmailTemplates() {
     setModal(prev => prev ? { ...prev, template: { ...prev.template, [field]: value } } : prev);
   }
 
-  const filtered = templates.filter(t => {
-    const label = templateKeyLabels[t.template_key] || t.template_key;
+  const filtered = templates.filter(tpl => {
+    const label = templateKeyLabel(tpl.template_key);
     const matchSearch = !search ||
       label.toLowerCase().includes(search.toLowerCase()) ||
-      t.template_key.toLowerCase().includes(search.toLowerCase()) ||
-      t.description.toLowerCase().includes(search.toLowerCase());
+      tpl.template_key.toLowerCase().includes(search.toLowerCase()) ||
+      tpl.description.toLowerCase().includes(search.toLowerCase());
     const matchActive = !activeFilter ||
-      (activeFilter === 'active' && t.is_active) ||
-      (activeFilter === 'inactive' && !t.is_active);
+      (activeFilter === 'active' && tpl.is_active) ||
+      (activeFilter === 'inactive' && !tpl.is_active);
     return matchSearch && matchActive;
   });
 
   const stats = {
     total: templates.length,
-    active: templates.filter(t => t.is_active).length,
-    inactive: templates.filter(t => !t.is_active).length,
+    active: templates.filter(tpl => tpl.is_active).length,
+    inactive: templates.filter(tpl => !tpl.is_active).length,
   };
 
   const inputClass = 'w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 placeholder:text-dark-400 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all';
@@ -218,22 +224,22 @@ export default function AdminEmailTemplates() {
     <DashboardLayout title="Admin" navItems={adminNavItems} navGroups={adminNavGroups}>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-dark-950">Template-t e Emaileve</h1>
-          <p className="text-dark-500 mt-1 text-[15px]">Menaxho, edito dhe aktivizo template-t e emaileve te platformes</p>
+          <h1 className="text-2xl font-bold text-dark-950">{t('adminDash.emailTemplates.title')}</h1>
+          <p className="text-dark-500 mt-1 text-[15px]">{t('adminDash.emailTemplates.subtitle')}</p>
         </div>
         <button
           onClick={openCreate}
           className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Template i ri
+          {t('adminDash.emailTemplates.newTemplate')}
         </button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-dark-500 font-medium mb-1">Totali</p>
+            <p className="text-xs text-dark-500 font-medium mb-1">{t('adminDash.emailTemplates.statTotal')}</p>
             <p className="text-2xl font-bold text-dark-900">{stats.total}</p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
@@ -242,7 +248,7 @@ export default function AdminEmailTemplates() {
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-dark-500 font-medium mb-1">Aktive</p>
+            <p className="text-xs text-dark-500 font-medium mb-1">{t('adminDash.emailTemplates.statActive')}</p>
             <p className="text-2xl font-bold text-green-600">{stats.active}</p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
@@ -251,7 +257,7 @@ export default function AdminEmailTemplates() {
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-dark-500 font-medium mb-1">Joaktive</p>
+            <p className="text-xs text-dark-500 font-medium mb-1">{t('adminDash.emailTemplates.statInactive')}</p>
             <p className="text-2xl font-bold text-dark-400">{stats.inactive}</p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
@@ -265,7 +271,7 @@ export default function AdminEmailTemplates() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
           <input
             type="text"
-            placeholder="Kerko template..."
+            placeholder={t('adminDash.emailTemplates.searchPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-dark-900 placeholder:text-dark-400 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
@@ -276,9 +282,9 @@ export default function AdminEmailTemplates() {
           onChange={e => setActiveFilter(e.target.value as '' | 'active' | 'inactive')}
           className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
         >
-          <option value="">Te gjitha</option>
-          <option value="active">Aktive</option>
-          <option value="inactive">Joaktive</option>
+          <option value="">{t('adminDash.emailTemplates.filterAll')}</option>
+          <option value="active">{t('adminDash.emailTemplates.filterActive')}</option>
+          <option value="inactive">{t('adminDash.emailTemplates.filterInactive')}</option>
         </select>
       </div>
 
@@ -298,23 +304,23 @@ export default function AdminEmailTemplates() {
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-16 text-center">
           <Mail className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-dark-600 font-medium">Nuk u gjet asnje template</p>
+          <p className="text-dark-600 font-medium">{t('adminDash.emailTemplates.emptyState')}</p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-dark-600">Template</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-dark-600 hidden md:table-cell">Subjekti</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-dark-600 hidden lg:table-cell">Pershkrimi</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-dark-600">Statusi</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-dark-600">Veprimet</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-dark-600">{t('adminDash.emailTemplates.colTemplate')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-dark-600 hidden md:table-cell">{t('adminDash.emailTemplates.colSubject')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-dark-600 hidden lg:table-cell">{t('adminDash.emailTemplates.colDescription')}</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-dark-600">{t('adminDash.emailTemplates.colStatus')}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-dark-600">{t('adminDash.emailTemplates.colActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.map(template => {
-                const label = templateKeyLabels[template.template_key] || template.template_key;
+                const label = templateKeyLabel(template.template_key);
                 const colorClass = templateCategoryColors[template.template_key] || 'bg-gray-100 text-gray-700';
                 return (
                   <tr key={template.id} className="hover:bg-gray-50/50 transition-colors">
@@ -337,7 +343,7 @@ export default function AdminEmailTemplates() {
                         onClick={() => handleToggle(template)}
                         disabled={toggling === template.id}
                         className="inline-flex items-center justify-center"
-                        title={template.is_active ? 'Deaktivizo' : 'Aktivizo'}
+                        title={template.is_active ? t('adminDash.emailTemplates.titleDeactivate') : t('adminDash.emailTemplates.titleActivate')}
                       >
                         {toggling === template.id ? (
                           <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
@@ -353,21 +359,21 @@ export default function AdminEmailTemplates() {
                         <button
                           onClick={() => openPreview(template)}
                           className="p-1.5 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                          title="Shiko preview"
+                          title={t('adminDash.emailTemplates.titlePreview')}
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => openEdit(template)}
                           className="p-1.5 text-dark-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Edito"
+                          title={t('adminDash.emailTemplates.titleEdit')}
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setDeleteId(template.id)}
                           className="p-1.5 text-dark-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Fshi"
+                          title={t('adminDash.emailTemplates.titleDelete')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -388,7 +394,7 @@ export default function AdminEmailTemplates() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-dark-950">
-                  {modal.mode === 'create' ? 'Krijo template te ri' : 'Edito template-in'}
+                  {modal.mode === 'create' ? t('adminDash.emailTemplates.modalCreate') : t('adminDash.emailTemplates.modalEdit')}
                 </h2>
                 {modal.mode === 'edit' && (
                   <p className="text-xs text-dark-400 font-mono mt-0.5">{modal.template.template_key}</p>
@@ -412,33 +418,33 @@ export default function AdminEmailTemplates() {
               {modal.mode === 'create' && (
                 <div>
                   <label className="block text-xs font-semibold text-dark-600 uppercase tracking-wide mb-1.5">
-                    Çelesi i template-it <span className="text-red-500">*</span>
+                    {t('adminDash.emailTemplates.labelTemplateKey')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     value={modal.template.template_key || ''}
                     onChange={e => updateField('template_key', e.target.value.toLowerCase().replace(/\s+/g, '_'))}
-                    placeholder="p.sh. special_offer"
+                    placeholder={t('adminDash.emailTemplates.placeholderTemplateKey')}
                     className={inputClass}
                   />
-                  <p className="text-[11px] text-dark-400 mt-1">Vetem shkronja te vogla dhe nënviza. P.sh: booking_confirmation, welcome_client</p>
+                  <p className="text-[11px] text-dark-400 mt-1">{t('adminDash.emailTemplates.helpTemplateKey')}</p>
                 </div>
               )}
 
               <div>
                 <label className="block text-xs font-semibold text-dark-600 uppercase tracking-wide mb-1.5">
-                  Pershkrimi
+                  {t('adminDash.emailTemplates.labelDescription')}
                 </label>
                 <input
                   value={modal.template.description || ''}
                   onChange={e => updateField('description', e.target.value)}
-                  placeholder="Pershkruani qellimin e ketij template-i..."
+                  placeholder={t('adminDash.emailTemplates.placeholderDescription')}
                   className={inputClass}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-dark-600 uppercase tracking-wide mb-1.5">
-                  Subjekti <span className="text-red-500">*</span>
+                  {t('adminDash.emailTemplates.labelSubject')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   value={modal.template.subject_template || ''}
@@ -446,13 +452,17 @@ export default function AdminEmailTemplates() {
                   placeholder="Rezervimi juaj per {{vehicleName}} u konfirmua!"
                   className={inputClass}
                 />
-                <p className="text-[11px] text-dark-400 mt-1">Perdorni <code className="bg-gray-100 px-1 rounded">{'{{variabla}}'}</code> per te inseruar vlera dinamike</p>
+                <p className="text-[11px] text-dark-400 mt-1">
+                  {t('adminDash.emailTemplates.helpSubjectPre')}
+                  <code className="bg-gray-100 px-1 rounded">{'{{variabla}}'}</code>
+                  {t('adminDash.emailTemplates.helpSubjectPost')}
+                </p>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-semibold text-dark-600 uppercase tracking-wide">
-                    HTML Template <span className="text-red-500">*</span>
+                    {t('adminDash.emailTemplates.labelHtml')} <span className="text-red-500">*</span>
                   </label>
                   <span className="flex items-center gap-1 text-[11px] text-dark-400">
                     <Code className="w-3 h-3" />
@@ -470,13 +480,13 @@ export default function AdminEmailTemplates() {
 
               <div>
                 <label className="block text-xs font-semibold text-dark-600 uppercase tracking-wide mb-1.5">
-                  Text Template (opsional)
+                  {t('adminDash.emailTemplates.labelText')}
                 </label>
                 <textarea
                   value={modal.template.text_template || ''}
                   onChange={e => updateField('text_template', e.target.value)}
                   rows={4}
-                  placeholder="Version tekst i emailit per klientet pa HTML..."
+                  placeholder={t('adminDash.emailTemplates.placeholderText')}
                   className={textareaClass}
                 />
               </div>
@@ -494,10 +504,10 @@ export default function AdminEmailTemplates() {
                 </button>
                 <div>
                   <p className="text-sm font-medium text-dark-900">
-                    {modal.template.is_active ? 'Aktiv' : 'Joaktiv'}
+                    {modal.template.is_active ? t('adminDash.emailTemplates.toggleActive') : t('adminDash.emailTemplates.toggleInactive')}
                   </p>
                   <p className="text-xs text-dark-400">
-                    {modal.template.is_active ? 'Emailet do te dergohen me kete template' : 'Template-i nuk do te perdoret'}
+                    {modal.template.is_active ? t('adminDash.emailTemplates.toggleActiveDesc') : t('adminDash.emailTemplates.toggleInactiveDesc')}
                   </p>
                 </div>
               </div>
@@ -509,7 +519,7 @@ export default function AdminEmailTemplates() {
                 disabled={saving}
                 className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-dark-600 hover:bg-gray-50 transition-colors"
               >
-                Anulo
+                {t('adminDash.emailTemplates.cancel')}
               </button>
               <button
                 onClick={handleSave}
@@ -517,7 +527,7 @@ export default function AdminEmailTemplates() {
                 className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-colors"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {saving ? 'Duke ruajtur...' : 'Ruaj ndryshimet'}
+                {saving ? t('adminDash.emailTemplates.saving') : t('adminDash.emailTemplates.saveChanges')}
               </button>
             </div>
           </div>
@@ -530,7 +540,7 @@ export default function AdminEmailTemplates() {
           <div className="relative bg-white rounded-lg border border-gray-200 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
               <div>
-                <h2 className="text-lg font-bold text-dark-950">Preview Template</h2>
+                <h2 className="text-lg font-bold text-dark-950">{t('adminDash.emailTemplates.previewTitle')}</h2>
                 <p className="text-xs text-dark-400 font-mono mt-0.5">{modal.template.template_key}</p>
               </div>
               <div className="flex items-center gap-3">
@@ -560,14 +570,14 @@ export default function AdminEmailTemplates() {
 
             <div className="px-6 py-3 border-b border-gray-100 bg-gray-50 shrink-0">
               <p className="text-xs text-dark-500">
-                <span className="font-semibold text-dark-700">Subjekti:</span> {modal.template.subject_template}
+                <span className="font-semibold text-dark-700">{t('adminDash.emailTemplates.previewSubject')}</span> {modal.template.subject_template}
               </p>
             </div>
 
             <div className="flex-1 overflow-hidden">
               {previewMode === 'html' ? (
                 <iframe
-                  srcDoc={modal.template.html_template || '<p>Pa HTML</p>'}
+                  srcDoc={modal.template.html_template || `<p>${t('adminDash.emailTemplates.previewNoHtml')}</p>`}
                   title="Email preview"
                   className="w-full h-full"
                   style={{ minHeight: '500px' }}
@@ -576,7 +586,7 @@ export default function AdminEmailTemplates() {
               ) : (
                 <div className="p-6 h-full overflow-y-auto">
                   <pre className="text-xs text-dark-700 whitespace-pre-wrap font-mono bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    {modal.template.text_template || 'Nuk ka version tekst.'}
+                    {modal.template.text_template || t('adminDash.emailTemplates.previewNoText')}
                   </pre>
                 </div>
               )}
@@ -584,14 +594,14 @@ export default function AdminEmailTemplates() {
 
             <div className="px-6 py-4 border-t border-gray-100 flex justify-between shrink-0">
               <button onClick={() => setModal(null)} className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-dark-600 hover:bg-gray-50 transition-colors">
-                Mbyll
+                {t('adminDash.emailTemplates.close')}
               </button>
               <button
                 onClick={() => setModal({ mode: 'edit', template: modal.template })}
                 className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors"
               >
                 <Edit2 className="w-4 h-4" />
-                Edito template-in
+                {t('adminDash.emailTemplates.editTemplate')}
               </button>
             </div>
           </div>
@@ -605,9 +615,9 @@ export default function AdminEmailTemplates() {
             <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-6 h-6 text-red-600" />
             </div>
-            <h3 className="text-lg font-bold text-dark-950 text-center mb-2">Fshi template-in?</h3>
+            <h3 className="text-lg font-bold text-dark-950 text-center mb-2">{t('adminDash.emailTemplates.deleteTitle')}</h3>
             <p className="text-sm text-dark-500 text-center mb-6">
-              Ky veprim eshte i pakthyeshem. Template-i do te fshihet pergjithmone.
+              {t('adminDash.emailTemplates.deleteDesc')}
             </p>
             <div className="flex gap-3">
               <button
@@ -615,7 +625,7 @@ export default function AdminEmailTemplates() {
                 disabled={deleting}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-dark-600 hover:bg-gray-50 transition-colors"
               >
-                Anulo
+                {t('adminDash.emailTemplates.cancel')}
               </button>
               <button
                 onClick={handleDelete}
@@ -623,7 +633,7 @@ export default function AdminEmailTemplates() {
                 className="flex-1 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                Fshi
+                {t('adminDash.emailTemplates.delete')}
               </button>
             </div>
           </div>

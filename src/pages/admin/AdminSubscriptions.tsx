@@ -5,6 +5,7 @@ import {
   ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Pencil,
   TrendingUp, Calendar, ArrowUpRight,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import type { SubscriptionPlan, Company } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
@@ -34,12 +35,20 @@ const PLAN_META: Record<string, { icon: React.ReactNode; gradient: string; badge
   },
 };
 
-const subStatusLabels: Record<string, { label: string; color: string }> = {
-  active: { label: 'Aktiv', color: 'bg-green-100 text-green-700' },
-  trial: { label: 'Prove', color: 'bg-blue-100 text-blue-700' },
-  expired: { label: 'Skaduar', color: 'bg-red-100 text-red-700' },
-  cancelled: { label: 'Anuluar', color: 'bg-gray-100 text-gray-600' },
-  pending: { label: 'Ne pritje', color: 'bg-yellow-100 text-yellow-700' },
+const subStatusColors: Record<string, string> = {
+  active: 'bg-green-100 text-green-700',
+  trial: 'bg-blue-100 text-blue-700',
+  expired: 'bg-red-100 text-red-700',
+  cancelled: 'bg-gray-100 text-gray-600',
+  pending: 'bg-yellow-100 text-yellow-700',
+};
+
+const subStatusKeys: Record<string, string> = {
+  active: 'statusActive',
+  trial: 'statusTrial',
+  expired: 'statusExpired',
+  cancelled: 'statusCancelled',
+  pending: 'statusPending',
 };
 
 const emptyPlan = {
@@ -59,6 +68,9 @@ const emptyPlan = {
 type TabView = 'plans' | 'subscribers';
 
 export default function AdminSubscriptions() {
+  const { t, i18n } = useTranslation();
+  const localeForDate = i18n.language === 'en' ? 'en-US' : i18n.language === 'de' ? 'de-DE' : 'sq-AL';
+  const subStatusLabel = (s: string) => t(`adminDash.subscriptions.${subStatusKeys[s] || 'statusPending'}`);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,7 +167,7 @@ export default function AdminSubscriptions() {
   }
 
   async function deletePlan(id: string) {
-    if (!confirm('Jeni te sigurt qe deshironi te fshini kete plan?')) return;
+    if (!confirm(t('adminDash.subscriptions.confirmDelete'))) return;
     await supabase.from('subscription_plans').delete().eq('id', id);
     loadData();
   }
@@ -190,9 +202,9 @@ export default function AdminSubscriptions() {
         Email: c.email,
         Plani: plan?.name || '-',
         Cmimi_Mujor: plan ? `${plan.price_monthly} EUR` : '-',
-        Statusi: subStatusLabels[c.subscription_status]?.label || c.subscription_status,
-        Skadon: c.subscription_expires_at ? new Date(c.subscription_expires_at).toLocaleDateString('sq-AL') : '-',
-        Regjistruar: new Date(c.created_at).toLocaleDateString('sq-AL'),
+        Statusi: subStatusLabel(c.subscription_status),
+        Skadon: c.subscription_expires_at ? new Date(c.subscription_expires_at).toLocaleDateString(localeForDate) : '-',
+        Regjistruar: new Date(c.created_at).toLocaleDateString(localeForDate),
       };
     });
     exportToCSV(data, 'abonimet');
@@ -225,20 +237,20 @@ export default function AdminSubscriptions() {
     <DashboardLayout title="Admin" navItems={adminNavItems} navGroups={adminNavGroups}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-dark-950">Planet e Abonimit</h1>
-          <p className="text-dark-500 mt-1 text-[15px]">Menaxhoni planet, cmimet dhe abonuesit e platformes</p>
+          <h1 className="text-2xl font-bold text-dark-950">{t('adminDash.subscriptions.title')}</h1>
+          <p className="text-dark-500 mt-1 text-[15px]">{t('adminDash.subscriptions.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           {tabView === 'subscribers' && (
             <button onClick={handleExportSubscribers} className="flex items-center gap-2 px-4 py-2.5 bg-primary-50 text-primary-700 text-sm font-semibold rounded-xl hover:bg-primary-100 transition-colors">
               <Download className="w-4 h-4" />
-              Exporto CSV
+              {t('adminDash.subscriptions.exportCsv')}
             </button>
           )}
           {tabView === 'plans' && !creating && !editing && (
             <button onClick={startCreate} className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-all shadow-sm">
               <Plus className="w-4 h-4" />
-              Plan i ri
+              {t('adminDash.subscriptions.newPlan')}
             </button>
           )}
         </div>
@@ -252,7 +264,7 @@ export default function AdminSubscriptions() {
             </div>
             <div>
               <p className="text-xl font-bold text-dark-950">{totalMonthlyRevenue.toFixed(0)} EUR</p>
-              <p className="text-xs text-dark-500">Te ardhura mujore</p>
+              <p className="text-xs text-dark-500">{t('adminDash.subscriptions.monthlyRevenue')}</p>
             </div>
           </div>
         </div>
@@ -263,7 +275,7 @@ export default function AdminSubscriptions() {
             </div>
             <div>
               <p className="text-xl font-bold text-dark-950">{(totalMonthlyRevenue * 12).toFixed(0)} EUR</p>
-              <p className="text-xs text-dark-500">Projeksion vjetor</p>
+              <p className="text-xs text-dark-500">{t('adminDash.subscriptions.yearlyProjection')}</p>
             </div>
           </div>
         </div>
@@ -274,7 +286,7 @@ export default function AdminSubscriptions() {
             </div>
             <div>
               <p className="text-2xl font-bold text-dark-950">{activeSubscribers.length}</p>
-              <p className="text-xs text-dark-500">Abonues aktive</p>
+              <p className="text-xs text-dark-500">{t('adminDash.subscriptions.activeSubscribers')}</p>
             </div>
           </div>
         </div>
@@ -285,7 +297,7 @@ export default function AdminSubscriptions() {
             </div>
             <div>
               <p className="text-2xl font-bold text-dark-950">{expiringSoon.length}</p>
-              <p className="text-xs text-dark-500">Skadojne 30 dite</p>
+              <p className="text-xs text-dark-500">{t('adminDash.subscriptions.expiringIn30')}</p>
             </div>
           </div>
         </div>
@@ -296,13 +308,13 @@ export default function AdminSubscriptions() {
           onClick={() => setTabView('plans')}
           className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${tabView === 'plans' ? 'bg-white text-dark-900 shadow-sm' : 'text-dark-400 hover:text-dark-600'}`}
         >
-          Planet ({plans.length})
+          {t('adminDash.subscriptions.tabPlans', { count: plans.length })}
         </button>
         <button
           onClick={() => setTabView('subscribers')}
           className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${tabView === 'subscribers' ? 'bg-white text-dark-900 shadow-sm' : 'text-dark-400 hover:text-dark-600'}`}
         >
-          Abonuesit ({activeSubscribers.length})
+          {t('adminDash.subscriptions.tabSubscribers', { count: activeSubscribers.length })}
         </button>
       </div>
 
@@ -310,59 +322,59 @@ export default function AdminSubscriptions() {
         <>
           {(creating || editing) && (
             <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-              <h2 className="text-lg font-semibold text-dark-950 mb-5">{creating ? 'Plan i ri' : 'Ndrysho planin'}</h2>
+              <h2 className="text-lg font-semibold text-dark-950 mb-5">{creating ? t('adminDash.subscriptions.formTitleNew') : t('adminDash.subscriptions.formTitleEdit')}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-xs font-medium text-dark-600 mb-1.5">Emri i planit</label>
-                  <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={inputClass} placeholder="p.sh. Premium" />
+                  <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.subscriptions.labelName')}</label>
+                  <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={inputClass} placeholder={t('adminDash.subscriptions.placeholderName')} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-dark-600 mb-1.5">Pershkrimi</label>
-                  <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={inputClass} placeholder="Pershkrim i shkurter" />
+                  <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.subscriptions.labelDescription')}</label>
+                  <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={inputClass} placeholder={t('adminDash.subscriptions.placeholderDescription')} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-dark-600 mb-1.5">Cmimi mujor (EUR)</label>
+                  <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.subscriptions.labelPriceMonthly')}</label>
                   <input type="number" step="0.01" value={form.price_monthly} onChange={e => setForm(f => ({ ...f, price_monthly: +e.target.value }))} className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-dark-600 mb-1.5">Cmimi vjetor (EUR)</label>
+                  <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.subscriptions.labelPriceYearly')}</label>
                   <input type="number" step="0.01" value={form.price_yearly} onChange={e => setForm(f => ({ ...f, price_yearly: +e.target.value }))} className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-dark-600 mb-1.5">Zbritja vjetore (%)</label>
+                  <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.subscriptions.labelYearlyDiscount')}</label>
                   <input type="number" min={0} max={100} value={form.yearly_discount_percent} onChange={e => setForm(f => ({ ...f, yearly_discount_percent: +e.target.value }))} className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-dark-600 mb-1.5">Max automjete (-1 = pa limit)</label>
+                  <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.subscriptions.labelMaxVehicles')}</label>
                   <input type="number" value={form.max_vehicles} onChange={e => setForm(f => ({ ...f, max_vehicles: +e.target.value }))} className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-dark-600 mb-1.5">Max rezervime/muaj (-1 = pa limit)</label>
+                  <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.subscriptions.labelMaxBookings')}</label>
                   <input type="number" value={form.max_bookings_monthly} onChange={e => setForm(f => ({ ...f, max_bookings_monthly: +e.target.value }))} className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-dark-600 mb-1.5">Renditja</label>
+                  <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.subscriptions.labelSortOrder')}</label>
                   <input type="number" value={form.sort_order} onChange={e => setForm(f => ({ ...f, sort_order: +e.target.value }))} className={inputClass} />
                 </div>
                 <div className="flex items-center gap-6 pt-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} className="sr-only peer" />
                     <div className="w-10 h-5 bg-gray-200 peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600 relative" />
-                    <span className="text-sm text-dark-700">Aktiv</span>
+                    <span className="text-sm text-dark-700">{t('adminDash.subscriptions.toggleActive')}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={form.is_popular} onChange={e => setForm(f => ({ ...f, is_popular: e.target.checked }))} className="sr-only peer" />
                     <div className="w-10 h-5 bg-gray-200 peer-focus:ring-2 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500 relative" />
-                    <span className="text-sm text-dark-700">I Popullarizuar</span>
+                    <span className="text-sm text-dark-700">{t('adminDash.subscriptions.togglePopular')}</span>
                   </label>
                 </div>
               </div>
 
               <div className="mb-5">
-                <label className="block text-xs font-medium text-dark-600 mb-1.5">Vecorite e planit</label>
+                <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.subscriptions.labelFeatures')}</label>
                 <div className="flex gap-2 mb-2">
-                  <input value={featureInput} onChange={e => setFeatureInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addFeature())} className={`${inputClass} flex-1`} placeholder="Shto nje vecori..." />
-                  <button onClick={addFeature} className="px-4 py-2 bg-gray-100 text-dark-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap">Shto</button>
+                  <input value={featureInput} onChange={e => setFeatureInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addFeature())} className={`${inputClass} flex-1`} placeholder={t('adminDash.subscriptions.placeholderAddFeature')} />
+                  <button onClick={addFeature} className="px-4 py-2 bg-gray-100 text-dark-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap">{t('adminDash.subscriptions.addFeature')}</button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {form.features.map((ft, i) => (
@@ -377,9 +389,9 @@ export default function AdminSubscriptions() {
               <div className="flex gap-3">
                 <button onClick={savePlan} disabled={saving || !form.name} className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  {saving ? 'Duke ruajtur...' : 'Ruaj'}
+                  {saving ? t('adminDash.subscriptions.saving') : t('adminDash.subscriptions.save')}
                 </button>
-                <button onClick={cancelEdit} className="px-5 py-2.5 bg-gray-100 text-dark-700 text-sm font-medium rounded-xl hover:bg-gray-200 transition-colors">Anulo</button>
+                <button onClick={cancelEdit} className="px-5 py-2.5 bg-gray-100 text-dark-700 text-sm font-medium rounded-xl hover:bg-gray-200 transition-colors">{t('adminDash.subscriptions.cancel')}</button>
               </div>
             </div>
           )}
@@ -394,12 +406,12 @@ export default function AdminSubscriptions() {
                 <div key={plan.id} className={`bg-white rounded-2xl border-2 overflow-hidden ${plan.is_popular ? 'border-amber-400 shadow-lg shadow-amber-100' : 'border-gray-100'} ${!plan.is_active ? 'opacity-60' : ''} group relative`}>
                   {plan.is_popular && (
                     <div className="bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider text-center py-1.5">
-                      Plani me i Popullar
+                      {t('adminDash.subscriptions.mostPopular')}
                     </div>
                   )}
                   {!plan.is_active && (
                     <div className="bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider text-center py-1.5">
-                      Joaktiv
+                      {t('adminDash.subscriptions.inactive')}
                     </div>
                   )}
 
@@ -414,11 +426,11 @@ export default function AdminSubscriptions() {
                     </div>
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-extrabold text-white">{plan.price_monthly}</span>
-                      <span className="text-white/70 text-sm">EUR/muaj</span>
+                      <span className="text-white/70 text-sm">{t('adminDash.subscriptions.pricePerMonth')}</span>
                     </div>
                     {plan.price_yearly > 0 && (
                       <p className="text-white/60 text-xs mt-1">
-                        {plan.price_yearly} EUR/vit
+                        {plan.price_yearly} {t('adminDash.subscriptions.pricePerYear')}
                         {plan.yearly_discount_percent > 0 && ` (-${plan.yearly_discount_percent}%)`}
                       </p>
                     )}
@@ -430,28 +442,28 @@ export default function AdminSubscriptions() {
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl mb-4">
                       <div className="text-center">
                         <p className="text-lg font-bold text-dark-950">{subscriberCount}</p>
-                        <p className="text-[10px] text-dark-400">Abonues</p>
+                        <p className="text-[10px] text-dark-400">{t('adminDash.subscriptions.subscribersLabel')}</p>
                       </div>
                       <div className="w-px h-8 bg-gray-200" />
                       <div className="text-center">
                         <p className="text-lg font-bold text-green-600">{planRevenue} EUR</p>
-                        <p className="text-[10px] text-dark-400">Te ardhura/muaj</p>
+                        <p className="text-[10px] text-dark-400">{t('adminDash.subscriptions.revenuePerMonthShort')}</p>
                       </div>
                       <div className="w-px h-8 bg-gray-200" />
                       <div className="text-center">
                         <p className="text-sm font-bold text-dark-950">{plan.max_vehicles === -1 ? '∞' : plan.max_vehicles}</p>
-                        <p className="text-[10px] text-dark-400">Automjete</p>
+                        <p className="text-[10px] text-dark-400">{t('adminDash.subscriptions.vehiclesLabel')}</p>
                       </div>
                     </div>
 
                     <div className="space-y-1.5 mb-5 max-h-40 overflow-y-auto">
                       <div className="flex items-center gap-2 text-xs text-dark-600">
                         <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                        {plan.max_vehicles === -1 ? 'Automjete pa limit' : `Deri ne ${plan.max_vehicles} automjete`}
+                        {plan.max_vehicles === -1 ? t('adminDash.subscriptions.unlimitedVehicles') : t('adminDash.subscriptions.upToVehicles', { count: plan.max_vehicles })}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-dark-600">
                         <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                        {plan.max_bookings_monthly === -1 ? 'Rezervime pa limit' : `${plan.max_bookings_monthly} rezervime/muaj`}
+                        {plan.max_bookings_monthly === -1 ? t('adminDash.subscriptions.unlimitedBookings') : t('adminDash.subscriptions.bookingsPerMonth', { count: plan.max_bookings_monthly })}
                       </div>
                       {(plan.features || []).map((ft, i) => (
                         <div key={i} className="flex items-start gap-2 text-xs text-dark-600">
@@ -464,7 +476,7 @@ export default function AdminSubscriptions() {
                     <div className="flex gap-2">
                       <button onClick={() => startEdit(plan)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-50 text-dark-700 text-xs font-medium rounded-lg hover:bg-gray-100 transition-colors">
                         <Pencil className="w-3.5 h-3.5" />
-                        Ndrysho
+                        {t('adminDash.subscriptions.edit')}
                       </button>
                       <button onClick={() => togglePlanActive(plan)} className={`flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${plan.is_active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}>
                         {plan.is_active ? <ToggleLeft className="w-3.5 h-3.5" /> : <ToggleRight className="w-3.5 h-3.5" />}
@@ -480,8 +492,8 @@ export default function AdminSubscriptions() {
           </div>
 
           <div className="mt-10 bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-base font-bold text-dark-950 mb-1">Pamja paraprake e planeve ne Homepage</h3>
-            <p className="text-xs text-dark-400 mb-6">Kjo eshte saktesisht si shfaqen planet ne faqen kryesore per vizitoret e ri.</p>
+            <h3 className="text-base font-bold text-dark-950 mb-1">{t('adminDash.subscriptions.previewTitle')}</h3>
+            <p className="text-xs text-dark-400 mb-6">{t('adminDash.subscriptions.previewSubtitle')}</p>
             <HomepagePricingPreview plans={plans.filter(p => p.is_active)} />
           </div>
         </>
@@ -493,12 +505,12 @@ export default function AdminSubscriptions() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Kompania</th>
-                  <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Plani</th>
-                  <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Cmimi</th>
-                  <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Statusi</th>
-                  <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Skadon</th>
-                  <th className="text-center px-5 py-3.5 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Veprimet</th>
+                  <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.subscriptions.colCompany')}</th>
+                  <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.subscriptions.colPlan')}</th>
+                  <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.subscriptions.colPrice')}</th>
+                  <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.subscriptions.colStatus')}</th>
+                  <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.subscriptions.colExpires')}</th>
+                  <th className="text-center px-5 py-3.5 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.subscriptions.colActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -506,7 +518,7 @@ export default function AdminSubscriptions() {
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center">
                       <Building2 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm text-dark-400">Nuk ka kompani te regjistruara</p>
+                      <p className="text-sm text-dark-400">{t('adminDash.subscriptions.emptyCompanies')}</p>
                     </td>
                   </tr>
                 ) : (
@@ -518,7 +530,8 @@ export default function AdminSubscriptions() {
                     })
                     .map(company => {
                       const plan = plans.find(p => p.id === company.subscription_plan_id);
-                      const statusInfo = subStatusLabels[company.subscription_status] || subStatusLabels.pending;
+                      const statusColor = subStatusColors[company.subscription_status] || subStatusColors.pending;
+                      const statusLabel = subStatusLabel(company.subscription_status);
                       const isExpiringSoon = company.subscription_expires_at &&
                         company.subscription_status === 'active' &&
                         (new Date(company.subscription_expires_at).getTime() - Date.now()) / 86400000 <= 30;
@@ -542,23 +555,23 @@ export default function AdminSubscriptions() {
                                 {plan.name}
                               </span>
                             ) : (
-                              <span className="text-xs text-dark-400 italic">Pa plan</span>
+                              <span className="text-xs text-dark-400 italic">{t('adminDash.subscriptions.noPlan')}</span>
                             )}
                           </td>
                           <td className="px-5 py-3.5">
-                            <span className="text-sm font-bold text-dark-900">{plan ? `${plan.price_monthly} EUR/muaj` : '0 EUR'}</span>
+                            <span className="text-sm font-bold text-dark-900">{plan ? `${plan.price_monthly} ${t('adminDash.subscriptions.pricePerMonth')}` : '0 EUR'}</span>
                           </td>
                           <td className="px-5 py-3.5">
-                            <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-semibold ${statusInfo.color}`}>
-                              {statusInfo.label}
+                            <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-semibold ${statusColor}`}>
+                              {statusLabel}
                             </span>
                           </td>
                           <td className="px-5 py-3.5">
                             <div>
                               <p className={`text-sm ${isExpiringSoon ? 'text-red-600 font-semibold' : 'text-dark-500'}`}>
-                                {company.subscription_expires_at ? new Date(company.subscription_expires_at).toLocaleDateString('sq-AL') : '-'}
+                                {company.subscription_expires_at ? new Date(company.subscription_expires_at).toLocaleDateString(localeForDate) : '-'}
                               </p>
-                              {isExpiringSoon && <p className="text-[10px] text-red-500 font-medium">Skadon se shpejti</p>}
+                              {isExpiringSoon && <p className="text-[10px] text-red-500 font-medium">{t('adminDash.subscriptions.expiringSoon')}</p>}
                             </div>
                           </td>
                           <td className="px-5 py-3.5">
@@ -605,48 +618,49 @@ export default function AdminSubscriptions() {
             <div className="p-6">
               {(() => {
                 const plan = plans.find(p => p.id === selectedCompany.subscription_plan_id);
-                const statusInfo = subStatusLabels[selectedCompany.subscription_status] || subStatusLabels.pending;
+                const statusColor = subStatusColors[selectedCompany.subscription_status] || subStatusColors.pending;
+                const statusLabel = subStatusLabel(selectedCompany.subscription_status);
                 return (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-gray-50 rounded-xl p-4">
-                        <p className="text-xs text-dark-400 mb-1">Plani aktual</p>
-                        <p className="text-lg font-bold text-dark-950">{plan?.name || 'Pa plan'}</p>
+                        <p className="text-xs text-dark-400 mb-1">{t('adminDash.subscriptions.currentPlan')}</p>
+                        <p className="text-lg font-bold text-dark-950">{plan?.name || t('adminDash.subscriptions.noPlan')}</p>
                       </div>
                       <div className="bg-gray-50 rounded-xl p-4">
-                        <p className="text-xs text-dark-400 mb-1">Cmimi mujor</p>
+                        <p className="text-xs text-dark-400 mb-1">{t('adminDash.subscriptions.monthlyPriceLabel')}</p>
                         <p className="text-lg font-bold text-green-600">{plan ? `${plan.price_monthly} EUR` : '0 EUR'}</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-gray-50 rounded-xl p-4">
-                        <p className="text-xs text-dark-400 mb-1">Statusi</p>
-                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>{statusInfo.label}</span>
+                        <p className="text-xs text-dark-400 mb-1">{t('adminDash.subscriptions.colStatus')}</p>
+                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor}`}>{statusLabel}</span>
                       </div>
                       <div className="bg-gray-50 rounded-xl p-4">
-                        <p className="text-xs text-dark-400 mb-1">Skadon me</p>
-                        <p className="text-sm font-semibold text-dark-900">{selectedCompany.subscription_expires_at ? new Date(selectedCompany.subscription_expires_at).toLocaleDateString('sq-AL') : '-'}</p>
+                        <p className="text-xs text-dark-400 mb-1">{t('adminDash.subscriptions.expiresOn')}</p>
+                        <p className="text-sm font-semibold text-dark-900">{selectedCompany.subscription_expires_at ? new Date(selectedCompany.subscription_expires_at).toLocaleDateString(localeForDate) : '-'}</p>
                       </div>
                     </div>
                     <div className="border-t border-gray-100 pt-4">
-                      <h4 className="text-sm font-semibold text-dark-950 mb-2">Kontakti</h4>
+                      <h4 className="text-sm font-semibold text-dark-950 mb-2">{t('adminDash.subscriptions.contact')}</h4>
                       <div className="space-y-1.5 text-sm text-dark-700">
-                        <p>Tel: {selectedCompany.phone || '-'}</p>
-                        <p>Adresa: {selectedCompany.address || '-'}, {selectedCompany.city}</p>
-                        <p>Licensa: {selectedCompany.license_number || '-'}</p>
+                        <p>{t('adminDash.subscriptions.contactPhone', { value: selectedCompany.phone || '-' })}</p>
+                        <p>{t('adminDash.subscriptions.contactAddress', { value: `${selectedCompany.address || '-'}, ${selectedCompany.city}` })}</p>
+                        <p>{t('adminDash.subscriptions.contactLicense', { value: selectedCompany.license_number || '-' })}</p>
                       </div>
                     </div>
                     {plan && (
                       <div className="border-t border-gray-100 pt-4">
-                        <h4 className="text-sm font-semibold text-dark-950 mb-2">Limitet e planit</h4>
+                        <h4 className="text-sm font-semibold text-dark-950 mb-2">{t('adminDash.subscriptions.planLimits')}</h4>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="bg-gray-50 rounded-lg p-3 text-center">
                             <p className="text-xl font-bold text-dark-950">{plan.max_vehicles === -1 ? '∞' : plan.max_vehicles}</p>
-                            <p className="text-[10px] text-dark-400">Automjete max</p>
+                            <p className="text-[10px] text-dark-400">{t('adminDash.subscriptions.maxVehiclesShort')}</p>
                           </div>
                           <div className="bg-gray-50 rounded-lg p-3 text-center">
                             <p className="text-xl font-bold text-dark-950">{plan.max_bookings_monthly === -1 ? '∞' : plan.max_bookings_monthly}</p>
-                            <p className="text-[10px] text-dark-400">Rezervime/muaj max</p>
+                            <p className="text-[10px] text-dark-400">{t('adminDash.subscriptions.maxBookingsShort')}</p>
                           </div>
                         </div>
                       </div>
@@ -655,7 +669,7 @@ export default function AdminSubscriptions() {
                       onClick={() => { setSelectedCompany(null); setShowAssignFor(selectedCompany.id); setAssignPlanId(selectedCompany.subscription_plan_id || ''); }}
                       className="w-full py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors"
                     >
-                      Ndrysho planin
+                      {t('adminDash.subscriptions.changePlan')}
                     </button>
                   </div>
                 );
@@ -669,29 +683,29 @@ export default function AdminSubscriptions() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-semibold text-dark-950">Cakto plan abonimi</h3>
+              <h3 className="font-semibold text-dark-950">{t('adminDash.subscriptions.assignTitle')}</h3>
               <button onClick={() => setShowAssignFor(null)} className="p-2 text-dark-400 hover:text-dark-600 hover:bg-gray-100 rounded-lg transition-all">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-dark-600 mb-1.5">Zgjedh planin</label>
+                <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.subscriptions.assignSelectPlan')}</label>
                 <select value={assignPlanId} onChange={e => setAssignPlanId(e.target.value)} className={inputClass}>
-                  <option value="">-- Zgjedh planin --</option>
+                  <option value="">{t('adminDash.subscriptions.assignPickPlan')}</option>
                   {plans.filter(p => p.is_active).map(p => (
-                    <option key={p.id} value={p.id}>{p.name} – {p.price_monthly} EUR/muaj</option>
+                    <option key={p.id} value={p.id}>{p.name} – {p.price_monthly} {t('adminDash.subscriptions.pricePerMonth')}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-dark-600 mb-1.5">Faturimi</label>
+                <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.subscriptions.assignBilling')}</label>
                 <div className="flex gap-3">
                   <button onClick={() => setAssignBilling('monthly')} className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border-2 transition-all ${assignBilling === 'monthly' ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-gray-200 text-dark-500 hover:border-gray-300'}`}>
-                    Mujor
+                    {t('adminDash.subscriptions.billingMonthly')}
                   </button>
                   <button onClick={() => setAssignBilling('yearly')} className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border-2 transition-all ${assignBilling === 'yearly' ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-gray-200 text-dark-500 hover:border-gray-300'}`}>
-                    Vjetor
+                    {t('adminDash.subscriptions.billingYearly')}
                     {assignPlanId && plans.find(p => p.id === assignPlanId)?.yearly_discount_percent ? (
                       <span className="ml-1 text-xs text-green-600">(-{plans.find(p => p.id === assignPlanId)?.yearly_discount_percent}%)</span>
                     ) : null}
@@ -704,14 +718,15 @@ export default function AdminSubscriptions() {
                     const p = plans.find(pl => pl.id === assignPlanId);
                     if (!p) return null;
                     const price = assignBilling === 'yearly' ? p.price_yearly : p.price_monthly;
-                    const period = assignBilling === 'yearly' ? 'vit' : 'muaj';
+                    const periodLabel = assignBilling === 'yearly' ? t('adminDash.subscriptions.perYear') : t('adminDash.subscriptions.perMonth');
+                    const billingLabel = assignBilling === 'yearly' ? t('adminDash.subscriptions.billingYearlyLabel') : t('adminDash.subscriptions.billingMonthlyLabel');
                     return (
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-semibold text-dark-950">{p.name}</p>
-                          <p className="text-xs text-dark-400">Faturim {period === 'muaj' ? 'mujor' : 'vjetor'}</p>
+                          <p className="text-xs text-dark-400">{billingLabel}</p>
                         </div>
-                        <p className="text-lg font-bold text-green-600">{price} EUR/{period}</p>
+                        <p className="text-lg font-bold text-green-600">{price} EUR/{periodLabel}</p>
                       </div>
                     );
                   })()}
@@ -719,7 +734,7 @@ export default function AdminSubscriptions() {
               )}
               <button onClick={assignPlanToCompany} disabled={!assignPlanId || assignSaving} className="w-full py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
                 {assignSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-                Cakto planin
+                {t('adminDash.subscriptions.assignButton')}
               </button>
             </div>
           </div>
@@ -730,6 +745,7 @@ export default function AdminSubscriptions() {
 }
 
 function HomepagePricingPreview({ plans }: { plans: SubscriptionPlan[] }) {
+  const { t } = useTranslation();
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
 
   return (
@@ -737,10 +753,10 @@ function HomepagePricingPreview({ plans }: { plans: SubscriptionPlan[] }) {
       <div className="flex justify-center mb-8">
         <div className="flex bg-gray-100 rounded-xl p-1">
           <button onClick={() => setBilling('monthly')} className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${billing === 'monthly' ? 'bg-white text-dark-900 shadow-sm' : 'text-dark-400 hover:text-dark-700'}`}>
-            Mujor
+            {t('adminDash.subscriptions.billingMonthly')}
           </button>
           <button onClick={() => setBilling('yearly')} className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${billing === 'yearly' ? 'bg-white text-dark-900 shadow-sm' : 'text-dark-400 hover:text-dark-700'}`}>
-            Vjetor
+            {t('adminDash.subscriptions.billingYearly')}
             <span className="ml-1.5 text-[10px] font-bold text-green-600 bg-green-100 px-1.5 py-0.5 rounded-full">-20%</span>
           </button>
         </div>
@@ -755,7 +771,7 @@ function HomepagePricingPreview({ plans }: { plans: SubscriptionPlan[] }) {
             <div key={plan.id} className={`rounded-2xl border-2 overflow-hidden ${plan.is_popular ? 'border-amber-400 shadow-xl shadow-amber-100 scale-[1.02]' : 'border-gray-100'}`}>
               {plan.is_popular && (
                 <div className="bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider text-center py-1.5">
-                  Plani me i Popullar
+                  {t('adminDash.subscriptions.mostPopular')}
                 </div>
               )}
               <div className={`bg-gradient-to-br ${meta.gradient} p-5 text-white`}>
@@ -768,24 +784,24 @@ function HomepagePricingPreview({ plans }: { plans: SubscriptionPlan[] }) {
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-extrabold">{price}</span>
-                  <span className="text-white/70 text-sm">EUR/muaj</span>
+                  <span className="text-white/70 text-sm">{t('adminDash.subscriptions.pricePerMonth')}</span>
                 </div>
                 {billing === 'yearly' && plan.price_yearly > 0 && (
-                  <p className="text-white/60 text-xs mt-0.5">{totalPrice} EUR faturim vjetor</p>
+                  <p className="text-white/60 text-xs mt-0.5">{t('adminDash.subscriptions.pricePerYearBilled', { price: totalPrice })}</p>
                 )}
                 {billing === 'monthly' && plan.price_monthly === 0 && (
-                  <p className="text-white/60 text-xs mt-0.5">Pa pagesë</p>
+                  <p className="text-white/60 text-xs mt-0.5">{t('adminDash.subscriptions.free')}</p>
                 )}
               </div>
               <div className="bg-white p-5">
                 <ul className="space-y-2 mb-5">
                   <li className="flex items-center gap-2 text-sm text-dark-700 font-medium">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    {plan.max_vehicles === -1 ? 'Automjete pa limit' : `${plan.max_vehicles} automjete`}
+                    {plan.max_vehicles === -1 ? t('adminDash.subscriptions.unlimitedVehicles') : t('adminDash.subscriptions.vehiclesCount', { count: plan.max_vehicles })}
                   </li>
                   <li className="flex items-center gap-2 text-sm text-dark-700 font-medium">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    {plan.max_bookings_monthly === -1 ? 'Rezervime pa limit' : `${plan.max_bookings_monthly} rezervime/muaj`}
+                    {plan.max_bookings_monthly === -1 ? t('adminDash.subscriptions.unlimitedBookings') : t('adminDash.subscriptions.bookingsPerMonth', { count: plan.max_bookings_monthly })}
                   </li>
                   {(plan.features || []).slice(0, 4).map((ft, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-dark-600">
@@ -794,11 +810,11 @@ function HomepagePricingPreview({ plans }: { plans: SubscriptionPlan[] }) {
                     </li>
                   ))}
                   {(plan.features || []).length > 4 && (
-                    <li className="text-xs text-dark-400 pl-6">+{plan.features.length - 4} vecori te tjera</li>
+                    <li className="text-xs text-dark-400 pl-6">{t('adminDash.subscriptions.moreFeatures', { count: plan.features.length - 4 })}</li>
                   )}
                 </ul>
                 <button className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all bg-gradient-to-r ${meta.gradient} text-white hover:opacity-90`}>
-                  {plan.price_monthly === 0 ? 'Fillo falas' : 'Abonohu tani'}
+                  {plan.price_monthly === 0 ? t('adminDash.subscriptions.startFree') : t('adminDash.subscriptions.subscribeNow')}
                 </button>
               </div>
             </div>

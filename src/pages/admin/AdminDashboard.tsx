@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, Users, Car, CalendarDays, TrendingUp, AlertCircle, CheckCircle2, CreditCard, Globe, MessageSquare, BarChart3, Megaphone, Settings, ArrowRight, DollarSign, Clock, FileText, Receipt } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Building2, Users, Car, CalendarDays, CreditCard, Globe, MessageSquare, BarChart3, Megaphone, Settings, DollarSign, Clock, FileText, Receipt } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Company, Profile, Booking, Invoice, SubscriptionPlan } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
+import { localeFromI18n } from '../../lib/clientDashHelpers';
 
 export default function AdminDashboard() {
   const { profile } = useAuth();
+  const { t, i18n } = useTranslation();
   const [stats, setStats] = useState({
     users: 0, clients: 0, companyAdmins: 0,
     companies: 0, pendingCompanies: 0, approvedCompanies: 0,
@@ -84,31 +87,31 @@ export default function AdminDashboard() {
   }
 
   const companyStatuses: Record<string, { label: string; color: string; dot: string }> = {
-    pending: { label: 'Ne pritje', color: 'bg-yellow-100 text-yellow-700', dot: 'bg-yellow-500' },
-    approved: { label: 'Aprovuar', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
-    rejected: { label: 'Refuzuar', color: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
-    suspended: { label: 'Pezulluar', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-500' },
+    pending: { label: t('adminDash.statusCompany.pending'), color: 'bg-yellow-100 text-yellow-700', dot: 'bg-yellow-500' },
+    approved: { label: t('adminDash.statusCompany.approved'), color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
+    rejected: { label: t('adminDash.statusCompany.rejected'), color: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
+    suspended: { label: t('adminDash.statusCompany.suspended'), color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-500' },
   };
 
   const roleLabels: Record<string, { label: string; color: string }> = {
-    client: { label: 'Klient', color: 'bg-blue-100 text-blue-700' },
-    company_admin: { label: 'Kompani', color: 'bg-amber-100 text-amber-700' },
-    super_admin: { label: 'Admin', color: 'bg-red-100 text-red-700' },
+    client: { label: t('adminDash.role.client'), color: 'bg-blue-100 text-blue-700' },
+    company_admin: { label: t('adminDash.role.company_admin'), color: 'bg-amber-100 text-amber-700' },
+    super_admin: { label: t('adminDash.role.super_admin'), color: 'bg-red-100 text-red-700' },
   };
 
   const bookingStatuses: Record<string, { label: string; color: string }> = {
-    pending: { label: 'Ne pritje', color: 'bg-yellow-100 text-yellow-700' },
-    confirmed: { label: 'Konfirmuar', color: 'bg-blue-100 text-blue-700' },
-    active: { label: 'Aktiv', color: 'bg-green-100 text-green-700' },
-    completed: { label: 'Perfunduar', color: 'bg-gray-100 text-gray-600' },
-    cancelled: { label: 'Anuluar', color: 'bg-red-100 text-red-700' },
+    pending: { label: t('adminDash.statusBooking.pending'), color: 'bg-yellow-100 text-yellow-700' },
+    confirmed: { label: t('adminDash.statusBooking.confirmed'), color: 'bg-blue-100 text-blue-700' },
+    active: { label: t('adminDash.statusBooking.active'), color: 'bg-green-100 text-green-700' },
+    completed: { label: t('adminDash.statusBooking.completed'), color: 'bg-gray-100 text-gray-600' },
+    cancelled: { label: t('adminDash.statusBooking.cancelled'), color: 'bg-red-100 text-red-700' },
   };
 
   const invoiceStatuses: Record<string, { label: string; color: string }> = {
-    draft: { label: 'Draft', color: 'bg-gray-100 text-gray-600' },
-    issued: { label: 'Leshuar', color: 'bg-blue-100 text-blue-700' },
-    paid: { label: 'Paguar', color: 'bg-green-100 text-green-700' },
-    cancelled: { label: 'Anuluar', color: 'bg-red-100 text-red-700' },
+    draft: { label: t('adminDash.statusInvoice.draft'), color: 'bg-gray-100 text-gray-600' },
+    issued: { label: t('adminDash.statusInvoice.issued'), color: 'bg-blue-100 text-blue-700' },
+    paid: { label: t('adminDash.statusInvoice.paid'), color: 'bg-green-100 text-green-700' },
+    cancelled: { label: t('adminDash.statusInvoice.cancelled'), color: 'bg-red-100 text-red-700' },
   };
 
   if (loading) {
@@ -124,39 +127,39 @@ export default function AdminDashboard() {
   return (
     <DashboardLayout title="Admin" navItems={adminNavItems} navGroups={adminNavGroups}>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-dark-950">Administrimi i platformes</h1>
-        <p className="text-dark-500 mt-1 text-[15px]">Pershendetje {profile?.full_name?.split(' ')[0]}, ketu menaxhoni platformen.</p>
+        <h1 className="text-2xl font-bold text-dark-950">{t('adminDash.dashboard.title')}</h1>
+        <p className="text-dark-500 mt-1 text-[15px]">{t('adminDash.dashboard.greeting', { name: profile?.full_name?.split(' ')[0] || '' })}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Stat icon={<Users className="w-4 h-4 text-dark-500" />} value={stats.users} label="Perdorues" sub={`${stats.clients} kliente, ${stats.companyAdmins} kompani`} />
-        <Stat icon={<Building2 className="w-4 h-4 text-dark-500" />} value={stats.companies} label="Kompani" sub={`${stats.approvedCompanies} aktive, ${stats.pendingCompanies} ne pritje`} />
-        <Stat icon={<Car className="w-4 h-4 text-dark-500" />} value={stats.vehicles} label="Automjete" />
-        <Stat icon={<CalendarDays className="w-4 h-4 text-dark-500" />} value={stats.bookings} label="Rezervime" sub={`${stats.activeBookings} aktive`} />
+        <Stat icon={<Users className="w-4 h-4 text-dark-500" />} value={stats.users} label={t('adminDash.dashboard.statUsers')} sub={t('adminDash.dashboard.statUsersSub', { clients: stats.clients, companies: stats.companyAdmins })} />
+        <Stat icon={<Building2 className="w-4 h-4 text-dark-500" />} value={stats.companies} label={t('adminDash.dashboard.statCompanies')} sub={t('adminDash.dashboard.statCompaniesSub', { active: stats.approvedCompanies, pending: stats.pendingCompanies })} />
+        <Stat icon={<Car className="w-4 h-4 text-dark-500" />} value={stats.vehicles} label={t('adminDash.dashboard.statVehicles')} />
+        <Stat icon={<CalendarDays className="w-4 h-4 text-dark-500" />} value={stats.bookings} label={t('adminDash.dashboard.statBookings')} sub={t('adminDash.dashboard.statBookingsSub', { active: stats.activeBookings })} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <RevenueCard to="/admin/transaksionet" icon={<DollarSign className="w-4 h-4 text-dark-400" />} value={`${stats.paidRevenue.toFixed(0)} EUR`} label="Pagesat e mbledhura" />
-        <RevenueCard to="/admin/transaksionet" icon={<Clock className="w-4 h-4 text-dark-400" />} value={`${stats.pendingPayments.toFixed(0)} EUR`} label="Ne pritje per pagese" />
-        <RevenueCard to="/admin/planet" icon={<CreditCard className="w-4 h-4 text-dark-400" />} value={`${stats.subscriptionRevenue.toFixed(0)} EUR/muaj`} label="Te ardhura nga abonimet" />
-        <RevenueCard to="/admin/raportet" icon={<Receipt className="w-4 h-4 text-dark-400" />} value={`${stats.invoicesTotal}`} label={`Fatura (${stats.invoicesPaid} te paguara)`} />
+        <RevenueCard to="/admin/transaksionet" icon={<DollarSign className="w-4 h-4 text-dark-400" />} value={`${stats.paidRevenue.toFixed(0)} EUR`} label={t('adminDash.dashboard.revenueCollected')} />
+        <RevenueCard to="/admin/transaksionet" icon={<Clock className="w-4 h-4 text-dark-400" />} value={`${stats.pendingPayments.toFixed(0)} EUR`} label={t('adminDash.dashboard.revenuePending')} />
+        <RevenueCard to="/admin/planet" icon={<CreditCard className="w-4 h-4 text-dark-400" />} value={t('adminDash.dashboard.revenuePerMonth', { amount: stats.subscriptionRevenue.toFixed(0) })} label={t('adminDash.dashboard.revenueSubscriptions')} />
+        <RevenueCard to="/admin/raportet" icon={<Receipt className="w-4 h-4 text-dark-400" />} value={`${stats.invoicesTotal}`} label={t('adminDash.dashboard.revenueInvoices', { paid: stats.invoicesPaid })} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
         {[
-          { icon: <CreditCard className="w-4 h-4" />, label: 'Planet', value: stats.plans, path: '/admin/planet' },
-          { icon: <Globe className="w-4 h-4" />, label: 'Faqja kryesore', value: '', path: '/admin/faqja' },
-          { icon: <MessageSquare className="w-4 h-4" />, label: 'Chat AI', value: stats.chatResponses, path: '/admin/chat' },
-          { icon: <BarChart3 className="w-4 h-4" />, label: 'Raportet', value: '', path: '/admin/raportet' },
-          { icon: <Megaphone className="w-4 h-4" />, label: 'Reklamat', value: stats.ads, path: '/admin/reklamat' },
-          { icon: <Settings className="w-4 h-4" />, label: 'Cilesimet', value: '', path: '/admin/cilesimet' },
+          { icon: <CreditCard className="w-4 h-4" />, label: t('adminDash.dashboard.quickPlans'), value: stats.plans, path: '/admin/planet' },
+          { icon: <Globe className="w-4 h-4" />, label: t('adminDash.dashboard.quickHomepage'), value: '', path: '/admin/faqja' },
+          { icon: <MessageSquare className="w-4 h-4" />, label: t('adminDash.dashboard.quickChat'), value: stats.chatResponses, path: '/admin/chat' },
+          { icon: <BarChart3 className="w-4 h-4" />, label: t('adminDash.dashboard.quickReports'), value: '', path: '/admin/raportet' },
+          { icon: <Megaphone className="w-4 h-4" />, label: t('adminDash.dashboard.quickAds'), value: stats.ads, path: '/admin/reklamat' },
+          { icon: <Settings className="w-4 h-4" />, label: t('adminDash.dashboard.quickSettings'), value: '', path: '/admin/cilesimet' },
         ].map(q => (
           <Link key={q.path} to={q.path} className="bg-white rounded-lg border border-gray-200 px-3 py-3 hover:border-gray-300 transition-colors">
             <div className="flex items-center gap-2 mb-1.5">
               <span className="text-dark-500">{q.icon}</span>
               <p className="text-sm font-semibold text-dark-800">{q.label}</p>
             </div>
-            {q.value !== '' && <p className="text-[11px] text-dark-400">{q.value} gjithsej</p>}
+            {q.value !== '' && <p className="text-[11px] text-dark-400">{t('adminDash.dashboard.quickTotal', { count: q.value as number })}</p>}
           </Link>
         ))}
       </div>
@@ -164,8 +167,8 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="font-semibold text-dark-950">Kompanite ({companies.length})</h2>
-            <Link to="/admin/kompanite" className="text-xs text-primary-600 font-medium hover:text-primary-700 transition-colors">Shiko te gjitha</Link>
+            <h2 className="font-semibold text-dark-950">{t('adminDash.dashboard.companiesTitle', { count: companies.length })}</h2>
+            <Link to="/admin/kompanite" className="text-xs text-primary-600 font-medium hover:text-primary-700 transition-colors">{t('adminDash.common.viewAll')}</Link>
           </div>
           <div className="divide-y divide-gray-50">
             {companies.slice(0, 6).map(c => {
@@ -193,8 +196,8 @@ export default function AdminDashboard() {
 
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="font-semibold text-dark-950">Perdoruesit ({users.length})</h2>
-            <Link to="/admin/perdoruesit" className="text-xs text-primary-600 font-medium hover:text-primary-700 transition-colors">Shiko te gjitha</Link>
+            <h2 className="font-semibold text-dark-950">{t('adminDash.dashboard.usersTitle', { count: users.length })}</h2>
+            <Link to="/admin/perdoruesit" className="text-xs text-primary-600 font-medium hover:text-primary-700 transition-colors">{t('adminDash.common.viewAll')}</Link>
           </div>
           <div className="divide-y divide-gray-50">
             {users.map(u => {
@@ -223,9 +226,9 @@ export default function AdminDashboard() {
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-dark-400" />
-              <h2 className="font-semibold text-dark-950">Rezervimet e fundit</h2>
+              <h2 className="font-semibold text-dark-950">{t('adminDash.dashboard.recentBookings')}</h2>
             </div>
-            <Link to="/admin/transaksionet" className="text-xs text-primary-600 font-medium hover:text-primary-700 transition-colors">Shiko te gjitha</Link>
+            <Link to="/admin/transaksionet" className="text-xs text-primary-600 font-medium hover:text-primary-700 transition-colors">{t('adminDash.common.viewAll')}</Link>
           </div>
           <div className="divide-y divide-gray-50">
             {recentBookings.map(b => {
@@ -234,7 +237,7 @@ export default function AdminDashboard() {
                 <div key={b.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
                   <div>
                     <p className="text-sm font-medium text-dark-900">{b.client_name}</p>
-                    <p className="text-[11px] text-dark-400">{new Date(b.created_at).toLocaleDateString('sq-AL')} - {b.total_days} dite</p>
+                    <p className="text-[11px] text-dark-400">{new Date(b.created_at).toLocaleDateString(localeFromI18n(i18n.language))} - {t('adminDash.dashboard.bookingDays', { count: b.total_days })}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-dark-900">{b.total_price} EUR</span>
@@ -244,7 +247,7 @@ export default function AdminDashboard() {
               );
             })}
             {recentBookings.length === 0 && (
-              <div className="py-8 text-center text-sm text-dark-400">Nuk ka rezervime</div>
+              <div className="py-8 text-center text-sm text-dark-400">{t('adminDash.dashboard.noBookings')}</div>
             )}
           </div>
         </div>
@@ -253,7 +256,7 @@ export default function AdminDashboard() {
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-dark-400" />
-              <h2 className="font-semibold text-dark-950">Faturat e fundit</h2>
+              <h2 className="font-semibold text-dark-950">{t('adminDash.dashboard.recentInvoices')}</h2>
             </div>
           </div>
           <div className="divide-y divide-gray-50">
@@ -273,7 +276,7 @@ export default function AdminDashboard() {
               );
             })}
             {recentInvoices.length === 0 && (
-              <div className="py-8 text-center text-sm text-dark-400">Nuk ka fatura</div>
+              <div className="py-8 text-center text-sm text-dark-400">{t('adminDash.dashboard.noInvoices')}</div>
             )}
           </div>
         </div>

@@ -1,30 +1,39 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Users, Loader2, Search, Mail, Phone, ChevronLeft, ChevronRight,
-  AlertCircle, Download, X, DollarSign, CalendarDays,
+  AlertCircle, Download, X, CalendarDays,
   Car, Eye, Building2, CheckCircle, AlertTriangle, UserCheck,
-  UserX, ArrowUpDown, ShieldAlert, Clock, TrendingUp, Hash,
+  UserX, ArrowUpDown, Clock, TrendingUp, Hash,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import { supabase } from '../../lib/supabase';
 import type { Profile, Booking, Company } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
 import { useAuth } from '../../contexts/AuthContext';
 import { exportToCSV } from '../../lib/csvExport';
+import { localeFromI18n } from '../../lib/clientDashHelpers';
 
 const ITEMS_PER_PAGE = 15;
 
-const ROLE_META: Record<string, { label: string; color: string }> = {
-  client:       { label: 'Klient',    color: 'bg-blue-100 text-blue-700' },
-  company_admin:{ label: 'Kompani',   color: 'bg-amber-100 text-amber-700' },
-  super_admin:  { label: 'Admin',     color: 'bg-red-100 text-red-700' },
+const ROLE_COLORS: Record<string, string> = {
+  client: 'bg-blue-100 text-blue-700',
+  company_admin: 'bg-amber-100 text-amber-700',
+  super_admin: 'bg-red-100 text-red-700',
 };
 
-const ROLE_OPTIONS: { value: Profile['role']; label: string }[] = [
-  { value: 'client', label: 'Klient' },
-  { value: 'company_admin', label: 'Kompani' },
-  { value: 'super_admin', label: 'Super Admin' },
-];
+function roleLabel(t: TFunction, role: string): string {
+  const key = `adminDash.role.${role}`;
+  const v = t(key);
+  return v === key ? role : v;
+}
+
+function bookingStatusLabel(t: TFunction, status: string): string {
+  const key = `adminDash.statusBooking.${status}`;
+  const v = t(key);
+  return v === key ? status : v;
+}
 
 interface UserReport extends Profile {
   bookingsCount: number;
@@ -36,6 +45,7 @@ interface UserReport extends Profile {
 }
 
 export default function AdminUsers() {
+  const { t, i18n } = useTranslation();
   const { profile: currentUser } = useAuth();
   const [users, setUsers] = useState<UserReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +65,12 @@ export default function AdminUsers() {
 
   const isSuperAdmin = currentUser?.role === 'super_admin';
 
+  const ROLE_OPTIONS: { value: Profile['role']; label: string }[] = [
+    { value: 'client', label: t('adminDash.role.client') },
+    { value: 'company_admin', label: t('adminDash.role.company_admin') },
+    { value: 'super_admin', label: t('adminDash.role.superAdminFull') },
+  ];
+
   useEffect(() => { loadUsers(); }, []);
   useEffect(() => { setPage(1); }, [search, roleFilter, statusFilter, sortBy, sortDir]);
 
@@ -66,7 +82,7 @@ export default function AdminUsers() {
       supabase.from('bookings').select('id, client_id, total_price, created_at, status, payment_status'),
       supabase.from('companies').select('id, owner_id, name, status'),
     ]);
-    if (profilesRes.error) { setError('Gabim: ' + profilesRes.error.message); setLoading(false); return; }
+    if (profilesRes.error) { setError(t('adminDash.users.loadError', { msg: profilesRes.error.message })); setLoading(false); return; }
     const profiles = (profilesRes.data || []) as Profile[];
     const bookings = (bookingsRes.data || []) as Booking[];
     const companies = (companiesRes.data || []) as Company[];
@@ -100,10 +116,10 @@ export default function AdminUsers() {
   async function toggleActive(user: UserReport) {
     setUpdatingId(user.id);
     const { error: err } = await supabase.from('profiles').update({ is_active: !user.is_active }).eq('id', user.id);
-    if (err) { setError('Gabim: ' + err.message); setUpdatingId(null); return; }
+    if (err) { setError(t('adminDash.users.loadError', { msg: err.message })); setUpdatingId(null); return; }
     setUsers(prev => prev.map(u => u.id === user.id ? { ...u, is_active: !u.is_active } : u));
     if (selectedUser?.id === user.id) setSelectedUser(prev => prev ? { ...prev, is_active: !prev.is_active } : null);
-    setFeedback({ msg: 'Statusi u ndryshua me sukses!', type: 'ok' });
+    setFeedback({ msg: t('adminDash.users.statusUpdateSuccess'), type: 'ok' });
     setTimeout(() => setFeedback(null), 3000);
     setUpdatingId(null);
   }
@@ -112,23 +128,29 @@ export default function AdminUsers() {
     if (newRole === user.role) return;
     setUpdatingId(user.id);
     const { error: err } = await supabase.from('profiles').update({ role: newRole }).eq('id', user.id);
-    if (err) { setError('Gabim: ' + err.message); setUpdatingId(null); return; }
+    if (err) { setError(t('adminDash.users.loadError', { msg: err.message })); setUpdatingId(null); return; }
     setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: newRole } : u));
     if (selectedUser?.id === user.id) setSelectedUser(prev => prev ? { ...prev, role: newRole } : null);
-    setFeedback({ msg: `Roli u ndryshua ne "${ROLE_META[newRole]?.label}"!`, type: 'ok' });
+    setFeedback({ msg: t('adminDash.users.roleChangedSuccess', { role: roleLabel(t, newRole) }), type: 'ok' });
     setTimeout(() => setFeedback(null), 3000);
     setUpdatingId(null);
   }
 
   function handleExport() {
     const data = filtered.map(u => ({
-      Emri: u.full_name, Email: u.email, Telefoni: u.phone || '-',
-      Roli: ROLE_META[u.role]?.label || u.role, Kompania: u.companyName || '-',
-      Rezervime: u.bookingsCount, Perfunduar: u.completedBookings, Anuluar: u.cancelledBookings,
-      'Shpenzuar EUR': u.totalSpent.toFixed(0), Statusi: u.is_active ? 'Aktiv' : 'Joaktiv',
-      Regjistruar: new Date(u.created_at).toLocaleDateString('sq-AL'),
+      [t('adminDash.users.csvName')]: u.full_name,
+      [t('adminDash.users.csvEmail')]: u.email,
+      [t('adminDash.users.csvPhone')]: u.phone || '-',
+      [t('adminDash.users.csvRole')]: roleLabel(t, u.role),
+      [t('adminDash.users.csvCompany')]: u.companyName || '-',
+      [t('adminDash.users.csvBookings')]: u.bookingsCount,
+      [t('adminDash.users.csvCompleted')]: u.completedBookings,
+      [t('adminDash.users.csvCancelled')]: u.cancelledBookings,
+      [t('adminDash.users.csvSpent')]: u.totalSpent.toFixed(0),
+      [t('adminDash.users.csvStatus')]: u.is_active ? t('adminDash.users.statusActive') : t('adminDash.users.statusInactive'),
+      [t('adminDash.users.csvRegistered')]: new Date(u.created_at).toLocaleDateString(localeFromI18n(i18n.language)),
     }));
-    exportToCSV(data, 'perdoruesit');
+    exportToCSV(data, t('adminDash.users.csvFilename'));
   }
 
   function toggleSort(field: typeof sortBy) {
@@ -164,14 +186,14 @@ export default function AdminUsers() {
   const newThisMonth = users.filter(u => { const d = new Date(u.created_at); const n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); }).length;
 
   return (
-    <DashboardLayout title="Perdoruesit" navItems={adminNavItems} navGroups={adminNavGroups}>
+    <DashboardLayout title={t('admin.users')} navItems={adminNavItems} navGroups={adminNavGroups}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-dark-950">Menaxhimi i perdoruesve</h1>
-          <p className="text-dark-500 mt-1 text-[15px]">Shikoni dhe menaxhoni te gjithe perdoruesit e platformes</p>
+          <h1 className="text-2xl font-bold text-dark-950">{t('adminDash.users.title')}</h1>
+          <p className="text-dark-500 mt-1 text-[15px]">{t('adminDash.users.subtitle')}</p>
         </div>
         <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-primary-50 text-primary-700 text-sm font-semibold rounded-xl hover:bg-primary-100 transition-colors shrink-0">
-          <Download className="w-4 h-4" />Exporto CSV
+          <Download className="w-4 h-4" />{t('adminDash.common.exportCsv')}
         </button>
       </div>
 
@@ -189,11 +211,11 @@ export default function AdminUsers() {
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
-        <StatCard icon={<Users className="w-5 h-5 text-dark-600" />} label="Gjithsej" value={users.length} bg="bg-white" iconBg="bg-gray-100" />
-        <StatCard icon={<Car className="w-5 h-5 text-blue-600" />} label="Kliente" value={clientCount} bg="bg-blue-50" iconBg="bg-blue-100" />
-        <StatCard icon={<Building2 className="w-5 h-5 text-amber-600" />} label="Kompani" value={companyCount} bg="bg-amber-50" iconBg="bg-amber-100" />
-        <StatCard icon={<UserCheck className="w-5 h-5 text-green-600" />} label="Aktive" value={activeCount} bg="bg-green-50" iconBg="bg-green-100" />
-        <StatCard icon={<TrendingUp className="w-5 h-5 text-primary-600" />} label="Kete muaj" value={newThisMonth} bg="bg-primary-50" iconBg="bg-primary-100" />
+        <StatCard icon={<Users className="w-5 h-5 text-dark-600" />} label={t('adminDash.users.statTotal')} value={users.length} bg="bg-white" iconBg="bg-gray-100" />
+        <StatCard icon={<Car className="w-5 h-5 text-blue-600" />} label={t('adminDash.users.statClients')} value={clientCount} bg="bg-blue-50" iconBg="bg-blue-100" />
+        <StatCard icon={<Building2 className="w-5 h-5 text-amber-600" />} label={t('adminDash.users.statCompanies')} value={companyCount} bg="bg-amber-50" iconBg="bg-amber-100" />
+        <StatCard icon={<UserCheck className="w-5 h-5 text-green-600" />} label={t('adminDash.users.statActive')} value={activeCount} bg="bg-green-50" iconBg="bg-green-100" />
+        <StatCard icon={<TrendingUp className="w-5 h-5 text-primary-600" />} label={t('adminDash.users.statThisMonth')} value={newThisMonth} bg="bg-primary-50" iconBg="bg-primary-100" />
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
@@ -201,16 +223,16 @@ export default function AdminUsers() {
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Kerko emrin, email, nr. telefoni, kompani..." className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('adminDash.users.searchPlaceholder')} className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" />
             </div>
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as '' | 'active' | 'inactive')} className="px-3 py-2 text-xs font-medium bg-gray-50 border border-gray-200 rounded-xl text-dark-700 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500">
-              <option value="">Cdo status</option>
-              <option value="active">Aktiv</option>
-              <option value="inactive">Joaktiv</option>
+              <option value="">{t('adminDash.users.anyStatus')}</option>
+              <option value="active">{t('adminDash.users.statusActive')}</option>
+              <option value="inactive">{t('adminDash.users.statusInactive')}</option>
             </select>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {[['', 'Te gjitha', users.length], ['client', 'Kliente', clientCount], ['company_admin', 'Kompani', companyCount], ['super_admin', 'Admin', users.filter(u => u.role === 'super_admin').length]].map(([v, l, count]) => (
+            {[['', t('adminDash.users.filterAll'), users.length], ['client', t('adminDash.users.filterClients'), clientCount], ['company_admin', t('adminDash.users.filterCompanies'), companyCount], ['super_admin', t('adminDash.users.filterAdmin'), users.filter(u => u.role === 'super_admin').length]].map(([v, l, count]) => (
               <button key={String(v)} onClick={() => setRoleFilter(String(v))} className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${roleFilter === v ? 'bg-primary-600 text-white' : 'bg-gray-100 text-dark-600 hover:bg-gray-200'}`}>
                 {l}
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${roleFilter === v ? 'bg-white/20 text-white' : 'bg-white text-dark-500'}`}>{count}</span>
@@ -224,7 +246,7 @@ export default function AdminUsers() {
         ) : filtered.length === 0 ? (
           <div className="p-16 text-center">
             <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-dark-600 font-medium">Nuk u gjenden perdorues</p>
+            <p className="text-dark-600 font-medium">{t('adminDash.users.emptyState')}</p>
           </div>
         ) : (
           <>
@@ -232,19 +254,19 @@ export default function AdminUsers() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/60">
-                    <SortTh label="Perdoruesi" field="name" current={sortBy} dir={sortDir} onSort={toggleSort} align="left" />
-                    <th className="text-left px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Kontakti</th>
-                    <th className="text-left px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Roli</th>
-                    <SortTh label="Rezervime" field="bookings" current={sortBy} dir={sortDir} onSort={toggleSort} align="right" />
-                    <SortTh label="Shpenzuar" field="spent" current={sortBy} dir={sortDir} onSort={toggleSort} align="right" />
-                    <th className="text-left px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Statusi</th>
-                    <SortTh label="Regjistruar" field="created_at" current={sortBy} dir={sortDir} onSort={toggleSort} align="right" />
-                    <th className="text-center px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Veprime</th>
+                    <SortTh label={t('adminDash.users.thUser')} field="name" current={sortBy} dir={sortDir} onSort={toggleSort} align="left" />
+                    <th className="text-left px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.users.thContact')}</th>
+                    <th className="text-left px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.users.thRole')}</th>
+                    <SortTh label={t('adminDash.users.thBookings')} field="bookings" current={sortBy} dir={sortDir} onSort={toggleSort} align="right" />
+                    <SortTh label={t('adminDash.users.thSpent')} field="spent" current={sortBy} dir={sortDir} onSort={toggleSort} align="right" />
+                    <th className="text-left px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.users.thStatus')}</th>
+                    <SortTh label={t('adminDash.users.thRegistered')} field="created_at" current={sortBy} dir={sortDir} onSort={toggleSort} align="right" />
+                    <th className="text-center px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.users.thActions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {paginated.map(u => {
-                    const r = ROLE_META[u.role] || ROLE_META.client;
+                    const roleColor = ROLE_COLORS[u.role] || ROLE_COLORS.client;
                     const isUpd = updatingId === u.id;
                     return (
                       <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
@@ -267,28 +289,28 @@ export default function AdminUsers() {
                         </td>
                         <td className="px-5 py-3.5">
                           {isSuperAdmin ? (
-                            <select value={u.role} disabled={isUpd} onChange={e => changeRole(u, e.target.value as Profile['role'])} className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border-0 cursor-pointer focus:ring-2 focus:ring-primary-500/20 ${r.color} ${isUpd ? 'opacity-50' : ''}`}>
+                            <select value={u.role} disabled={isUpd} onChange={e => changeRole(u, e.target.value as Profile['role'])} className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border-0 cursor-pointer focus:ring-2 focus:ring-primary-500/20 ${roleColor} ${isUpd ? 'opacity-50' : ''}`}>
                               {ROLE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                             </select>
                           ) : (
-                            <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-semibold ${r.color}`}>{r.label}</span>
+                            <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-semibold ${roleColor}`}>{roleLabel(t, u.role)}</span>
                           )}
                         </td>
                         <td className="px-5 py-3.5 text-right">
                           <span className="text-sm font-bold text-dark-900">{u.bookingsCount}</span>
-                          {u.cancelledBookings > 0 && <><br /><span className="text-[11px] text-red-500">{u.cancelledBookings} anuluar</span></>}
+                          {u.cancelledBookings > 0 && <><br /><span className="text-[11px] text-red-500">{t('adminDash.users.cancelledShort', { count: u.cancelledBookings })}</span></>}
                         </td>
                         <td className="px-5 py-3.5 text-right">
                           <span className="text-sm font-bold text-dark-900">{u.totalSpent.toFixed(0)} EUR</span>
                         </td>
                         <td className="px-5 py-3.5">
                           <button onClick={() => toggleActive(u)} disabled={isUpd} className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all ${u.is_active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'} ${isUpd ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
-                            {isUpd ? <Loader2 className="w-3 h-3 animate-spin inline" /> : u.is_active ? 'Aktiv' : 'Joaktiv'}
+                            {isUpd ? <Loader2 className="w-3 h-3 animate-spin inline" /> : u.is_active ? t('adminDash.users.statusActive') : t('adminDash.users.statusInactive')}
                           </button>
                         </td>
-                        <td className="px-5 py-3.5 text-right text-xs text-dark-500">{new Date(u.created_at).toLocaleDateString('sq-AL')}</td>
+                        <td className="px-5 py-3.5 text-right text-xs text-dark-500">{new Date(u.created_at).toLocaleDateString(localeFromI18n(i18n.language))}</td>
                         <td className="px-5 py-3.5 text-center">
-                          <button onClick={() => openUserDetail(u)} className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all" title="Shiko detajet"><Eye className="w-4 h-4" /></button>
+                          <button onClick={() => openUserDetail(u)} className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all" title={t('adminDash.users.viewDetailsTooltip')}><Eye className="w-4 h-4" /></button>
                         </td>
                       </tr>
                     );
@@ -299,7 +321,7 @@ export default function AdminUsers() {
 
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100">
-                <p className="text-sm text-dark-500">{(safePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safePage * ITEMS_PER_PAGE, filtered.length)} nga {filtered.length}</p>
+                <p className="text-sm text-dark-500">{t('adminDash.users.pageRange', { from: (safePage - 1) * ITEMS_PER_PAGE + 1, to: Math.min(safePage * ITEMS_PER_PAGE, filtered.length), total: filtered.length })}</p>
                 <div className="flex items-center gap-1.5">
                   <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage <= 1} className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-all"><ChevronLeft className="w-4 h-4 text-dark-600" /></button>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1).reduce<(number | string)[]>((acc, p, idx, arr) => { if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...'); acc.push(p); return acc; }, []).map((item, idx) =>
@@ -325,8 +347,8 @@ export default function AdminUsers() {
                 <div>
                   <h3 className="font-bold text-dark-950 text-lg leading-tight">{selectedUser.full_name}</h3>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${ROLE_META[selectedUser.role]?.color}`}>{ROLE_META[selectedUser.role]?.label}</span>
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${selectedUser.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{selectedUser.is_active ? 'Aktiv' : 'Joaktiv'}</span>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${ROLE_COLORS[selectedUser.role]}`}>{roleLabel(t, selectedUser.role)}</span>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${selectedUser.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{selectedUser.is_active ? t('adminDash.users.detailActive') : t('adminDash.users.detailInactive')}</span>
                   </div>
                 </div>
               </div>
@@ -334,7 +356,7 @@ export default function AdminUsers() {
             </div>
 
             <div className="flex border-b border-gray-100 shrink-0 bg-gray-50/50">
-              {([['info', 'Informacioni'], ['bookings', `Rezervimet (${userBookings.length})`], ['activity', 'Aktiviteti']] as const).map(([tab, label]) => (
+              {([['info', t('adminDash.users.tabInfo')], ['bookings', t('adminDash.users.tabBookings', { count: userBookings.length })], ['activity', t('adminDash.users.tabActivity')]] as const).map(([tab, label]) => (
                 <button key={tab} onClick={() => setDetailTab(tab)} className={`px-5 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${detailTab === tab ? 'border-primary-600 text-primary-600 bg-white' : 'border-transparent text-dark-500 hover:text-dark-700'}`}>{label}</button>
               ))}
             </div>
@@ -343,11 +365,11 @@ export default function AdminUsers() {
               {loadingDetail ? (
                 <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 text-primary-600 animate-spin" /></div>
               ) : detailTab === 'info' ? (
-                <UserDetailInfo user={selectedUser} />
+                <UserDetailInfo user={selectedUser} t={t} lang={i18n.language} />
               ) : detailTab === 'bookings' ? (
-                <UserDetailBookings bookings={userBookings} />
+                <UserDetailBookings bookings={userBookings} t={t} lang={i18n.language} />
               ) : (
-                <UserDetailActivity user={selectedUser} bookings={userBookings} />
+                <UserDetailActivity user={selectedUser} bookings={userBookings} t={t} lang={i18n.language} />
               )}
             </div>
 
@@ -356,7 +378,7 @@ export default function AdminUsers() {
                 {isSuperAdmin && (
                   <button onClick={() => toggleActive(selectedUser)} disabled={updatingId === selectedUser.id} className={`flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 ${selectedUser.is_active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-700 hover:bg-green-100'}`}>
                     {updatingId === selectedUser.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : selectedUser.is_active ? <UserX className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
-                    {selectedUser.is_active ? 'Deaktivizo' : 'Aktivizo'}
+                    {selectedUser.is_active ? t('adminDash.users.deactivate') : t('adminDash.users.activate')}
                   </button>
                 )}
                 {isSuperAdmin && selectedUser.role !== 'super_admin' && (
@@ -365,7 +387,7 @@ export default function AdminUsers() {
                   </select>
                 )}
               </div>
-              <button onClick={() => setSelectedUser(null)} className="px-4 py-2 bg-gray-100 text-dark-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors">Mbyll</button>
+              <button onClick={() => setSelectedUser(null)} className="px-4 py-2 bg-gray-100 text-dark-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors">{t('adminDash.users.close')}</button>
             </div>
           </div>
         </div>
@@ -374,44 +396,43 @@ export default function AdminUsers() {
   );
 }
 
-function UserDetailInfo({ user }: { user: UserReport }) {
+function UserDetailInfo({ user, t, lang }: { user: UserReport; t: TFunction; lang: string }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MiniStat label="Rezervime" value={user.bookingsCount} color="text-primary-600" />
-        <MiniStat label="Perfunduar" value={user.completedBookings} color="text-green-600" />
-        <MiniStat label="Anuluar" value={user.cancelledBookings} color="text-red-500" />
-        <MiniStat label="EUR shpenzuar" value={user.totalSpent.toFixed(0)} color="text-dark-900" />
+        <MiniStat label={t('adminDash.users.infoBookings')} value={user.bookingsCount} color="text-primary-600" />
+        <MiniStat label={t('adminDash.users.infoCompleted')} value={user.completedBookings} color="text-green-600" />
+        <MiniStat label={t('adminDash.users.infoCancelled')} value={user.cancelledBookings} color="text-red-500" />
+        <MiniStat label={t('adminDash.users.infoSpent')} value={user.totalSpent.toFixed(0)} color="text-dark-900" />
       </div>
       <div>
-        <h4 className="text-sm font-bold text-dark-900 mb-3">Te dhenat personale</h4>
+        <h4 className="text-sm font-bold text-dark-900 mb-3">{t('adminDash.users.infoSectionTitle')}</h4>
         <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-          <InfoField icon={<Mail className="w-3.5 h-3.5" />} label="Email" value={user.email} />
-          <InfoField icon={<Phone className="w-3.5 h-3.5" />} label="Telefoni" value={user.phone || '—'} />
-          <InfoField icon={<CalendarDays className="w-3.5 h-3.5" />} label="Regjistruar" value={new Date(user.created_at).toLocaleDateString('sq-AL', { year: 'numeric', month: 'long', day: 'numeric' })} />
-          <InfoField icon={<Clock className="w-3.5 h-3.5" />} label="Rez. i fundit" value={user.lastBookingDate ? new Date(user.lastBookingDate).toLocaleDateString('sq-AL') : 'Nuk ka'} />
-          {user.companyName && <InfoField icon={<Building2 className="w-3.5 h-3.5" />} label="Kompania" value={user.companyName} />}
-          <InfoField icon={<Hash className="w-3.5 h-3.5" />} label="ID" value={user.id.slice(0, 20) + '...'} />
+          <InfoField icon={<Mail className="w-3.5 h-3.5" />} label={t('adminDash.users.infoEmail')} value={user.email} />
+          <InfoField icon={<Phone className="w-3.5 h-3.5" />} label={t('adminDash.users.infoPhone')} value={user.phone || '—'} />
+          <InfoField icon={<CalendarDays className="w-3.5 h-3.5" />} label={t('adminDash.users.infoRegistered')} value={new Date(user.created_at).toLocaleDateString(localeFromI18n(lang), { year: 'numeric', month: 'long', day: 'numeric' })} />
+          <InfoField icon={<Clock className="w-3.5 h-3.5" />} label={t('adminDash.users.infoLastBooking')} value={user.lastBookingDate ? new Date(user.lastBookingDate).toLocaleDateString(localeFromI18n(lang)) : t('adminDash.users.infoLastBookingNone')} />
+          {user.companyName && <InfoField icon={<Building2 className="w-3.5 h-3.5" />} label={t('adminDash.users.infoCompany')} value={user.companyName} />}
+          <InfoField icon={<Hash className="w-3.5 h-3.5" />} label={t('adminDash.users.infoId')} value={user.id.slice(0, 20) + '...'} />
         </div>
       </div>
     </div>
   );
 }
 
-function UserDetailBookings({ bookings }: { bookings: Booking[] }) {
+function UserDetailBookings({ bookings, t, lang }: { bookings: Booking[]; t: TFunction; lang: string }) {
   const SC: Record<string, string> = { pending: 'bg-amber-100 text-amber-700', confirmed: 'bg-blue-100 text-blue-700', active: 'bg-green-100 text-green-700', completed: 'bg-gray-100 text-gray-600', cancelled: 'bg-red-100 text-red-700' };
-  const SN: Record<string, string> = { pending: 'Ne pritje', confirmed: 'Konfirmuar', active: 'Aktiv', completed: 'Perfunduar', cancelled: 'Anuluar' };
-  if (bookings.length === 0) return <div className="text-center py-12 text-dark-400 text-sm">Nuk ka rezervime.</div>;
+  if (bookings.length === 0) return <div className="text-center py-12 text-dark-400 text-sm">{t('adminDash.users.bookingsEmpty')}</div>;
   return (
     <div className="space-y-2">
       {bookings.map(b => (
         <div key={b.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-dark-900">{new Date(b.pickup_date).toLocaleDateString('sq-AL')} → {new Date(b.return_date).toLocaleDateString('sq-AL')}</p>
-            <p className="text-[11px] text-dark-400">{b.total_days} dite · {b.pickup_location}</p>
+            <p className="text-sm font-semibold text-dark-900">{new Date(b.pickup_date).toLocaleDateString(localeFromI18n(lang))} → {new Date(b.return_date).toLocaleDateString(localeFromI18n(lang))}</p>
+            <p className="text-[11px] text-dark-400">{t('adminDash.users.bookingDaysLocation', { days: b.total_days, location: b.pickup_location })}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${SC[b.status] || 'bg-gray-100 text-gray-600'}`}>{SN[b.status] || b.status}</span>
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${SC[b.status] || 'bg-gray-100 text-gray-600'}`}>{bookingStatusLabel(t, b.status)}</span>
             <span className="text-sm font-bold text-dark-900">{b.total_price} EUR</span>
           </div>
         </div>
@@ -420,22 +441,22 @@ function UserDetailBookings({ bookings }: { bookings: Booking[] }) {
   );
 }
 
-function UserDetailActivity({ user, bookings }: { user: UserReport; bookings: Booking[] }) {
+function UserDetailActivity({ user, bookings, t, lang }: { user: UserReport; bookings: Booking[]; t: TFunction; lang: string }) {
   const totalRevenue = bookings.filter(b => b.status === 'completed' || b.payment_status === 'paid').reduce((s, b) => s + Number(b.total_price), 0);
   const avgValue = bookings.length > 0 ? totalRevenue / bookings.length : 0;
   const uniqueCompanies = new Set(bookings.map(b => b.company_id)).size;
-  const lastActivity = bookings.length > 0 ? new Date(bookings[0].created_at).toLocaleDateString('sq-AL', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Nuk ka aktivitet';
+  const lastActivity = bookings.length > 0 ? new Date(bookings[0].created_at).toLocaleDateString(localeFromI18n(lang), { year: 'numeric', month: 'long', day: 'numeric' }) : t('adminDash.users.activityLastNone');
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-gray-50 rounded-xl p-4"><p className="text-xs text-dark-400 mb-1">Shpenzimi total</p><p className="text-xl font-bold text-dark-950">{user.totalSpent.toFixed(0)} EUR</p></div>
-        <div className="bg-gray-50 rounded-xl p-4"><p className="text-xs text-dark-400 mb-1">Mesatare/rezervim</p><p className="text-xl font-bold text-dark-950">{avgValue.toFixed(0)} EUR</p></div>
-        <div className="bg-gray-50 rounded-xl p-4"><p className="text-xs text-dark-400 mb-1">Kompani te ndryshme</p><p className="text-xl font-bold text-dark-950">{uniqueCompanies}</p></div>
-        <div className="bg-gray-50 rounded-xl p-4"><p className="text-xs text-dark-400 mb-1">Aktiviteti i fundit</p><p className="text-sm font-semibold text-dark-950">{lastActivity}</p></div>
+        <div className="bg-gray-50 rounded-xl p-4"><p className="text-xs text-dark-400 mb-1">{t('adminDash.users.activityTotalSpent')}</p><p className="text-xl font-bold text-dark-950">{user.totalSpent.toFixed(0)} EUR</p></div>
+        <div className="bg-gray-50 rounded-xl p-4"><p className="text-xs text-dark-400 mb-1">{t('adminDash.users.activityAvgValue')}</p><p className="text-xl font-bold text-dark-950">{avgValue.toFixed(0)} EUR</p></div>
+        <div className="bg-gray-50 rounded-xl p-4"><p className="text-xs text-dark-400 mb-1">{t('adminDash.users.activityUniqueCompanies')}</p><p className="text-xl font-bold text-dark-950">{uniqueCompanies}</p></div>
+        <div className="bg-gray-50 rounded-xl p-4"><p className="text-xs text-dark-400 mb-1">{t('adminDash.users.activityLast')}</p><p className="text-sm font-semibold text-dark-950">{lastActivity}</p></div>
       </div>
       <div className="space-y-3">
-        <ProgressBar label="Shkalla e perfundimit" value={user.bookingsCount > 0 ? (user.completedBookings / user.bookingsCount) * 100 : 0} color="bg-green-500" />
-        <ProgressBar label="Shkalla e anulimit" value={user.bookingsCount > 0 ? (user.cancelledBookings / user.bookingsCount) * 100 : 0} color="bg-red-400" />
+        <ProgressBar label={t('adminDash.users.completionRate')} value={user.bookingsCount > 0 ? (user.completedBookings / user.bookingsCount) * 100 : 0} color="bg-green-500" />
+        <ProgressBar label={t('adminDash.users.cancellationRate')} value={user.bookingsCount > 0 ? (user.cancelledBookings / user.bookingsCount) * 100 : 0} color="bg-red-400" />
       </div>
     </div>
   );
@@ -459,7 +480,7 @@ function SortTh({ label, field, current, dir, onSort, align }: { label: string; 
   return (
     <th className={`text-${align} px-5 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider`}>
       <button onClick={() => onSort(field as 'name' | 'created_at' | 'bookings' | 'spent')} className={`flex items-center gap-1 ${align === 'right' ? 'ml-auto' : ''} hover:text-dark-700 transition-colors`}>
-        {label}<ArrowUpDown className={`w-3 h-3 ${current === field ? 'text-primary-600' : 'text-dark-300'}`} />
+        {label}<ArrowUpDown className={`w-3 h-3 ${current === field ? 'text-primary-600' : 'text-dark-300'} ${dir === 'asc' ? 'rotate-180' : ''}`} />
       </button>
     </th>
   );
