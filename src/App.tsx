@@ -96,8 +96,9 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       {!isAppMode && <Navbar />}
-      {/* Ne app mode shtojme padding-top per status bar/notch */}
-      <div className={`flex-1 ${isAppMode ? 'pt-safe pb-20' : ''}`}>{children}</div>
+      {/* Ne app mode shtojme padding-top per status bar/notch.
+          Padding-bottom aplikohet automatikisht ne body permes index.css. */}
+      <div className={`flex-1 ${isAppMode ? 'pt-safe' : ''}`}>{children}</div>
       {!isAppMode && <Footer />}
     </div>
   );
@@ -182,9 +183,19 @@ export default function App() {
   );
 }
 
-/** Shfaqet vetem ne app mode (PWA standalone ose Capacitor native) */
+/** Shfaqet vetem ne app mode (PWA standalone ose Capacitor native).
+ *  Gjithashtu toggle-ohet klasa `app-mode` ne body per padding global (vlen per
+ *  Capacitor, sepse PWA standalone e ka tashme ne @media display-mode). */
 function AppModeBottomNav() {
-  const { isAppMode } = useStandaloneMode();
+  const { isAppMode, isNative } = useStandaloneMode();
+
+  useEffect(() => {
+    if (isNative) {
+      document.body.classList.add('app-mode');
+      return () => document.body.classList.remove('app-mode');
+    }
+  }, [isNative]);
+
   if (!isAppMode) return null;
   return <MobileBottomNav />;
 }

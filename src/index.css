@@ -47,7 +47,22 @@ body {
 @media (display-mode: standalone) {
   body {
     overscroll-behavior-y: contain;
+    /* Sigurojme qe permbajtja te mos fshihet nga bottom nav fixed */
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
+}
+
+/* Per Capacitor native (qe nuk e match-on display-mode: standalone)
+   shtojme klase ne body dhe perdorim te njejten padding. */
+body.app-mode {
+  overscroll-behavior-y: contain;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Tailwind utility qe layouts e brendshme mund ta perdorin per padding shtese
+   po deshojne (psh sticky toolbars brenda dashboard-it) */
+.pb-app-safe {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
 }
 
 .animate-fade-in {

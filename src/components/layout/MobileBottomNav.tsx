@@ -12,7 +12,7 @@
  *  - Super admin: Dashboard / Kompani / Perdorues / Cilesimet
  */
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Car, CalendarDays, User, Building2, Users, Settings, LayoutDashboard } from 'lucide-react';
+import { Home, Car, CalendarDays, Building2, Settings, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 type TabItem = {
@@ -28,7 +28,6 @@ function getTabs(role: string | undefined, isLoggedIn: boolean): TabItem[] {
     return [
       { to: '/admin', label: 'Paneli', icon: <LayoutDashboard className="w-5 h-5" /> },
       { to: '/admin/kompanite', label: 'Kompani', icon: <Building2 className="w-5 h-5" />, prefix: true },
-      { to: '/admin/perdoruesit', label: 'Perdorues', icon: <Users className="w-5 h-5" />, prefix: true },
       { to: '/admin/cilesimet', label: 'Cilësimet', icon: <Settings className="w-5 h-5" />, prefix: true },
     ];
   }
@@ -38,25 +37,23 @@ function getTabs(role: string | undefined, isLoggedIn: boolean): TabItem[] {
       { to: '/kompania', label: 'Paneli', icon: <LayoutDashboard className="w-5 h-5" /> },
       { to: '/kompania/automjetet', label: 'Veturat', icon: <Car className="w-5 h-5" />, prefix: true },
       { to: '/kompania/rezervimet', label: 'Rezervime', icon: <CalendarDays className="w-5 h-5" />, prefix: true },
-      { to: '/kompania/cilesimet', label: 'Cilësimet', icon: <Settings className="w-5 h-5" />, prefix: true },
     ];
   }
 
-  // Default: visitor + client
+  // Klient i kycur: tre tabs te thelluara me nje sherbim primar
   if (isLoggedIn) {
     return [
       { to: '/', label: 'Ballina', icon: <Home className="w-5 h-5" /> },
       { to: '/automjetet', label: 'Veturat', icon: <Car className="w-5 h-5" />, prefix: true },
       { to: '/dashboard/rezervimet', label: 'Rezervime', icon: <CalendarDays className="w-5 h-5" />, prefix: true },
-      { to: '/dashboard/profili', label: 'Profili', icon: <User className="w-5 h-5" />, prefix: true },
     ];
   }
 
+  // Visitor (i pa-kyqur): pa link te login/profile, vetem navigim publik
   return [
     { to: '/', label: 'Ballina', icon: <Home className="w-5 h-5" /> },
     { to: '/automjetet', label: 'Veturat', icon: <Car className="w-5 h-5" />, prefix: true },
     { to: '/per-platformen', label: 'Rreth', icon: <Building2 className="w-5 h-5" /> },
-    { to: '/login', label: 'Kycu', icon: <User className="w-5 h-5" /> },
   ];
 }
 
@@ -74,7 +71,9 @@ export default function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 grid grid-cols-4 safe-area-bottom"
+      className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 grid safe-area-bottom ${
+        tabs.length === 3 ? 'grid-cols-3' : 'grid-cols-4'
+      }`}
       aria-label="Mobile navigation"
     >
       {tabs.map((tab) => {
