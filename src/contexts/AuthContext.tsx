@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 import type { User, Session } from '@supabase/supabase-js';
@@ -42,49 +42,83 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
 
+  // Ndjek user-in aktual te tilte sa lloji i fetchProfile nuk shkruan
+  // mbi state nese eshte vjeter (race-condition mbrojtje gjate sign-out/sign-in te shpejtë).
+  const activeUserIdRef = useRef<string | null>(null);
+
   async function fetchProfile(userId: string) {
+    activeUserIdRef.current = userId;
     setProfileLoading(true);
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-    setProfile(data);
-    if (data && (data as { preferred_language?: string }).preferred_language) {
-      const lang = (data as { preferred_language: string }).preferred_language;
-      if ((SUPPORTED_LANGUAGES as readonly string[]).includes(lang)) {
-        changeLanguage(lang as SupportedLanguage);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      // Nese ne kohen e fetch-it user-i ka ndryshuar, hidh poshte
+      if (activeUserIdRef.current !== userId) return;
+
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.warn('[auth] fetchProfile error:', error.message);
+        setProfile(null);
+        return;
+      }
+
+      setProfile(data ?? null);
+      const preferred = (data as { preferred_language?: string } | null)?.preferred_language;
+      if (preferred && (SUPPORTED_LANGUAGES as readonly string[]).includes(preferred)) {
+        changeLanguage(preferred as SupportedLanguage);
+      }
+    } finally {
+      if (activeUserIdRef.current === userId) {
+        setProfileLoading(false);
       }
     }
-    setProfileLoading(false);
   }
 
   useEffect(() => {
+    let mounted = true;
+
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      if (!mounted) return;
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
         await fetchProfile(s.user.id);
+      } else {
+        activeUserIdRef.current = null;
       }
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (!mounted) return;
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
-        (async () => {
-          await fetchProfile(s.user.id);
-        })();
+        void fetchProfile(s.user.id);
       } else {
+        activeUserIdRef.current = null;
         setProfile(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  async function signUp(email: string, password: string, fullName: string, countryId?: string, cityId?: string, captchaToken?: string) {
+  async function signUp(
+    email: string,
+    password: string,
+    fullName: string,
+    countryId?: string,
+    cityId?: string,
+    captchaToken?: string,
+  ) {
     const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
@@ -96,18 +130,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return { error: error.message };
 
     if (authData.user && (countryId || cityId)) {
-      const updates: Record<string, unknown> = {};
-      if (countryId) updates.country_id = countryId;
-      if (cityId) updates.city_id = cityId;
-      await supabase.from('profiles').update(updates).eq('id', authData.user.id);
+      // Perdor RPC-n e sigurte ne vend te update direkt te profiles
+      try {
+        await supabase.rpc('update_own_profile', {
+          p_country_id: countryId ?? null,
+          p_city_id: cityId ?? null,
+        });
+      } catch (rpcErr) {
+        // eslint-disable-next-line no-console
+        console.warn('[auth] update_own_profile failed (handle_new_user trigger may not have run yet):', rpcErr);
+      }
     }
 
     if (authData.user) {
-      await sendWelcomeClientEmail(
-        email,
-        fullName,
-        authData.user.id
-      );
+      try {
+        await sendWelcomeClientEmail(email, fullName, authData.user.id);
+      } catch (emailErr) {
+        // eslint-disable-next-line no-console
+        console.warn('[auth] welcome email failed:', emailErr);
+      }
     }
 
     return { error: null };
@@ -125,7 +166,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (authError) return { error: authError.message };
     if (!authData.user) return { error: 'Regjistrimi deshtoi.' };
 
-    // Thirr RPC-n atomike — ben update profile.role + insert company ne nje transaksion
     const { data: companyData, error: rpcError } = await supabase.rpc('create_company_for_current_user', {
       p_name: data.companyName,
       p_phone: data.phone,
@@ -141,11 +181,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (rpcError) return { error: rpcError.message };
 
     if (companyData) {
-      await sendWelcomeCompanyEmail(
-        data.email,
-        data.companyName,
-        (companyData as { id: string }).id
-      );
+      try {
+        await sendWelcomeCompanyEmail(
+          data.email,
+          data.companyName,
+          (companyData as { id: string }).id,
+        );
+      } catch (emailErr) {
+        // eslint-disable-next-line no-console
+        console.warn('[auth] welcome company email failed:', emailErr);
+      }
     }
 
     await fetchProfile(authData.user.id);
@@ -163,6 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
+    activeUserIdRef.current = null;
     await supabase.auth.signOut();
     setProfile(null);
   }

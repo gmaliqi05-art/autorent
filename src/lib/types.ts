@@ -1,3 +1,5 @@
+export type Currency = 'EUR' | 'ALL' | 'USD' | 'MKD' | 'RSD' | 'GBP' | 'CHF';
+
 export interface Profile {
   id: string;
   email: string;
@@ -8,6 +10,7 @@ export interface Profile {
   country_id: string | null;
   city_id: string | null;
   is_active: boolean;
+  preferred_language?: 'sq' | 'en' | 'de' | 'it' | 'fr' | 'es' | 'pl' | 'nl';
   created_at: string;
   updated_at: string;
 }
@@ -74,6 +77,8 @@ export interface Company {
   updated_at: string;
 }
 
+export type FuelPolicy = 'full_to_full' | 'full_to_empty' | 'same_to_same' | 'prepaid';
+
 export interface Vehicle {
   id: string;
   company_id: string;
@@ -90,6 +95,7 @@ export interface Vehicle {
   price_per_day: number;
   price_per_km: number;
   deposit_amount: number;
+  currency: Currency;
   features: string[];
   images: string[];
   main_image_url: string;
@@ -99,7 +105,105 @@ export interface Vehicle {
   status: 'draft' | 'active' | 'inactive' | 'maintenance';
   rating: number;
   total_reviews: number;
+  // Industri policies
+  included_km_per_day: number; // 0 = unlimited
+  extra_km_price: number;
+  fuel_policy: FuelPolicy;
+  min_driver_age: number;
+  min_license_years: number;
+  young_driver_fee_per_day: number;
+  cross_border_allowed: boolean;
+  allowed_countries: string[];
   deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InsurancePlan {
+  id: string;
+  company_id: string | null; // null = platform-wide
+  code: string;
+  name_sq: string;
+  name_en: string;
+  name_de: string;
+  description_sq: string;
+  description_en: string;
+  description_de: string;
+  tier: 'basic' | 'standard' | 'premium' | 'platinum';
+  price_per_day: number;
+  currency: Currency;
+  deductible_amount: number;
+  includes_cdw: boolean;
+  includes_theft_protection: boolean;
+  includes_third_party: boolean;
+  includes_personal_accident: boolean;
+  includes_glass_tire: boolean;
+  includes_roadside_assistance: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ExtraCategory = 'comfort' | 'safety' | 'equipment' | 'driver' | 'connectivity' | 'winter' | 'child';
+
+export interface VehicleExtra {
+  id: string;
+  company_id: string | null;
+  code: string;
+  name_sq: string;
+  name_en: string;
+  name_de: string;
+  description_sq: string;
+  description_en: string;
+  description_de: string;
+  category: ExtraCategory;
+  icon: string;
+  price_per_day: number;
+  price_per_rental: number;
+  currency: Currency;
+  max_quantity: number;
+  requires_extra_license: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BookingExtra {
+  id: string;
+  booking_id: string;
+  extra_id: string;
+  quantity: number;
+  unit_price_per_day: number;
+  unit_price_per_rental: number;
+  subtotal: number;
+  currency: Currency;
+  created_at: string;
+}
+
+export type LocationType = 'office' | 'airport' | 'train_station' | 'hotel_delivery' | 'port' | 'custom';
+
+export interface PickupLocation {
+  id: string;
+  company_id: string;
+  name: string;
+  type: LocationType;
+  address: string;
+  city_id: string | null;
+  country_id: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  pickup_fee: number;
+  dropoff_fee: number;
+  one_way_fee: number;
+  currency: Currency;
+  opening_hours: Record<string, { open: string; close: string } | null>;
+  phone: string;
+  is_24_7: boolean;
+  meet_and_greet_available: boolean;
+  is_active: boolean;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 }
@@ -113,10 +217,25 @@ export interface Booking {
   return_date: string;
   pickup_location: string;
   return_location: string;
+  pickup_location_id: string | null;
+  return_location_id: string | null;
   total_days: number;
   price_per_day: number;
   total_price: number;
   deposit_amount: number;
+  currency: Currency;
+  // Add-ons & sigurim
+  insurance_plan_id: string | null;
+  insurance_total: number;
+  extras_total: number;
+  one_way_fee: number;
+  tax_total: number;
+  discount_total: number;
+  discount_code_id: string | null;
+  // Mileage
+  included_km: number;
+  extra_km_price: number;
+  // Status
   status: 'pending' | 'confirmed' | 'active' | 'completed' | 'cancelled';
   payment_method: 'stripe' | 'paypal' | 'bank_transfer' | 'cash';
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
@@ -138,11 +257,24 @@ export interface Booking {
 export interface Review {
   id: string;
   booking_id: string;
+  vehicle_id: string | null;
   company_id: string;
   client_id: string;
   rating: number;
+  cleanliness_rating: number | null;
+  value_rating: number | null;
+  service_rating: number | null;
+  condition_rating: number | null;
   comment: string;
+  photos: string[];
+  company_reply: string;
+  company_reply_at: string | null;
+  helpful_count: number;
+  is_verified_booking: boolean;
+  is_hidden: boolean;
+  hidden_reason: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface ChatResponse {
@@ -219,6 +351,7 @@ export interface Invoice {
   booking_id: string;
   company_id: string;
   client_id: string;
+  vehicle_id: string | null;
   client_name: string;
   client_email: string;
   client_phone: string;
@@ -233,6 +366,7 @@ export interface Invoice {
   subtotal: number;
   deposit_amount: number;
   total_price: number;
+  currency: Currency;
   payment_method: string;
   payment_status: string;
   status: 'draft' | 'issued' | 'paid' | 'cancelled';
@@ -307,5 +441,65 @@ export interface Notification {
   reference_id: string | null;
   reference_type: string | null;
   is_read: boolean;
+  created_at: string;
+}
+
+export interface CurrencyRate {
+  base_currency: Currency;
+  quote_currency: Currency;
+  rate: number;
+  source: string;
+  fetched_at: string;
+}
+
+export interface WishlistItem {
+  user_id: string;
+  vehicle_id: string;
+  created_at: string;
+}
+
+export interface SavedSearch {
+  id: string;
+  user_id: string;
+  name: string;
+  filters: Record<string, unknown>;
+  alert_enabled: boolean;
+  max_price: number | null;
+  currency: Currency;
+  last_alerted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DamageReport {
+  id: string;
+  booking_id: string;
+  vehicle_id: string;
+  phase: 'pickup' | 'return';
+  reported_by: string | null;
+  mileage: number | null;
+  fuel_level: 'empty' | 'quarter' | 'half' | 'three_quarter' | 'full' | null;
+  cleanliness: 'poor' | 'fair' | 'good' | 'excellent' | null;
+  exterior_notes: string;
+  interior_notes: string;
+  photos: string[];
+  damage_marks: Array<{ x: number; y: number; severity: string; note?: string }>;
+  client_signature: string | null;
+  staff_signature: string | null;
+  acknowledged_by_client: boolean;
+  acknowledged_at: string | null;
+  created_at: string;
+}
+
+export interface AuditLog {
+  id: string;
+  user_id: string | null;
+  user_role: string | null;
+  action: 'create' | 'update' | 'delete' | 'login' | 'logout' | 'status_change' | 'approve' | 'reject' | 'suspend' | 'restore' | 'export' | 'import';
+  entity_type: string;
+  entity_id: string | null;
+  changes: Record<string, unknown>;
+  ip_address: string | null;
+  user_agent: string | null;
   created_at: string;
 }
