@@ -8,6 +8,8 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import { clientNavItems } from '../../lib/clientNav';
 import BookingInvoice from '../../components/booking/BookingInvoice';
 import { exportToCSV } from '../../lib/csvExport';
+import { downloadInvoicePdf } from '../../lib/invoiceService';
+import { FileDown } from 'lucide-react';
 import {
   formatDateShort,
   formatTime,
@@ -36,6 +38,7 @@ export default function ClientPayments() {
   const [yearFilter, setYearFilter] = useState(new Date().getFullYear().toString());
   const [invoiceBooking, setInvoiceBooking] = useState<BookingWithRelations | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -297,14 +300,32 @@ export default function ClientPayments() {
                               )}
                             </td>
                             <td className="px-5 py-4 text-center">
-                              <button
-                                onClick={() => setInvoiceBooking(b)}
-                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
-                                title={t('clientDash.payments.downloadInvoice')}
-                              >
-                                <Download className="w-3 h-3" />
-                                {t('clientDash.payments.invoice')}
-                              </button>
+                              <div className="inline-flex items-center gap-1">
+                                <button
+                                  onClick={() => setInvoiceBooking(b)}
+                                  className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+                                  title={t('clientDash.payments.downloadInvoice')}
+                                >
+                                  <Download className="w-3 h-3" />
+                                  {t('clientDash.payments.invoice')}
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    setDownloadingId(b.id);
+                                    const { error } = await downloadInvoicePdf(b.id, i18n.language?.split('-')[0] || 'sq');
+                                    setDownloadingId(null);
+                                    if (error) setError(error);
+                                  }}
+                                  disabled={downloadingId === b.id}
+                                  className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
+                                  title="PDF"
+                                >
+                                  {downloadingId === b.id
+                                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                                    : <FileDown className="w-3 h-3" />}
+                                  PDF
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );

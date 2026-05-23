@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CalendarDays, Car, FileText, MapPin, Loader2, CreditCard, Wallet, Building, Banknote, Download, AlertTriangle, ChevronLeft, ChevronRight, Star, X, CheckCircle2, Search, RotateCw } from 'lucide-react';
+import { CalendarDays, Car, FileText, MapPin, Loader2, CreditCard, Wallet, Building, Banknote, Download, AlertTriangle, ChevronLeft, ChevronRight, Star, X, CheckCircle2, Search, RotateCw, FileDown } from 'lucide-react';
+import { downloadInvoicePdf } from '../../lib/invoiceService';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -35,6 +36,7 @@ export default function ClientBookings() {
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [cancellationPreview, setCancellationPreview] = useState<{ id: string; fee: number; total: number } | null>(null);
   const [invoiceBooking, setInvoiceBooking] = useState<(Booking & { vehicle?: Vehicle; company?: Company }) | null>(null);
+  const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [reviewBooking, setReviewBooking] = useState<(Booking & { vehicle?: Vehicle; company?: Company }) | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
@@ -396,14 +398,32 @@ export default function ClientBookings() {
                         {bookingStatusLabel(b.status, t)}
                       </span>
                       {(b.status === 'confirmed' || b.status === 'active' || b.status === 'completed') && b.company && (
-                        <button
-                          onClick={() => setInvoiceBooking(b)}
-                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                          title={t('clientDash.bookings.downloadInvoice')}
-                        >
-                          <Download className="w-3 h-3" />
-                          {t('clientDash.bookings.invoice')}
-                        </button>
+                        <>
+                          <button
+                            onClick={() => setInvoiceBooking(b)}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                            title={t('clientDash.bookings.downloadInvoice')}
+                          >
+                            <Download className="w-3 h-3" />
+                            {t('clientDash.bookings.invoice')}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              setDownloadingPdfId(b.id);
+                              const { error } = await downloadInvoicePdf(b.id, i18n.language?.split('-')[0] || 'sq');
+                              setDownloadingPdfId(null);
+                              if (error) setError(error);
+                            }}
+                            disabled={downloadingPdfId === b.id}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
+                            title="PDF"
+                          >
+                            {downloadingPdfId === b.id
+                              ? <Loader2 className="w-3 h-3 animate-spin" />
+                              : <FileDown className="w-3 h-3" />}
+                            PDF
+                          </button>
+                        </>
                       )}
                       {b.status === 'completed' && !reviewedBookingIds.has(b.id) && (
                         <button
