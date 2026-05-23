@@ -1,6 +1,61 @@
 import { supabase } from './supabase';
 import { sendBookingInvoiceEmail } from './emailService';
 
+/**
+ * Therret edge function-in generate-invoice-pdf dhe shkarkon PDF-in si file.
+ * Funksionon per booking-un e dhene; verifikim auth behet ne edge function.
+ *
+ * @param bookingId UUID i booking-ut
+ * @param lang i18n locale per perkthimet ne PDF (default 'sq')
+ * @param filename emri i file-it (default `invoice-<bookingId>.pdf`)
+ */
+export async function downloadInvoicePdf(
+  bookingId: string,
+  lang: string = 'sq',
+  filename?: string,
+): Promise<{ error: string | null }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { error: 'Not authenticated' };
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const fnUrl = `${supabaseUrl}/functions/v1/generate-invoice-pdf?lang=${encodeURIComponent(lang)}`;
+
+  let resp: Response;
+  try {
+    resp = await fetch(fnUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ bookingId }),
+    });
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Network error' };
+  }
+
+  if (!resp.ok) {
+    let msg = `HTTP ${resp.status}`;
+    try {
+      const errBody = await resp.json();
+      msg = (errBody as { error?: string }).error || msg;
+    } catch { /* ignore */ }
+    return { error: msg };
+  }
+
+  const blob = await resp.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename || `invoice-${bookingId.slice(0, 8)}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  return { error: null };
+}
+
 interface CreateInvoiceParams {
   bookingId: string;
   companyId: string;

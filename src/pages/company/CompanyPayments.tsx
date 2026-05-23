@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Car, DollarSign, CreditCard, Wallet, Building, Banknote, FileText, Download, ArrowUpRight, Clock, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Car, DollarSign, CreditCard, Wallet, Building, Banknote, FileText, Download, ArrowUpRight, Clock, ChevronLeft, ChevronRight, AlertTriangle, FileDown, Loader2 } from 'lucide-react';
+import { downloadInvoicePdf } from '../../lib/invoiceService';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -38,6 +39,7 @@ export default function CompanyPayments() {
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period>('month');
   const [selectedBooking, setSelectedBooking] = useState<(Booking & { vehicle?: Vehicle }) | null>(null);
+  const [pdfDownloadingId, setPdfDownloadingId] = useState<string | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [customFrom, setCustomFrom] = useState('');
@@ -410,13 +412,31 @@ export default function CompanyPayments() {
                         ) : null}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => handleViewInvoice(booking)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary-700 hover:text-primary-800 hover:bg-primary-50 rounded-lg transition-colors"
-                        >
-                          <FileText className="w-3.5 h-3.5" />
-                          {t('companyDash.payments.invoice')}
-                        </button>
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            onClick={() => handleViewInvoice(booking)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary-700 hover:text-primary-800 hover:bg-primary-50 rounded-lg transition-colors"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            {t('companyDash.payments.invoice')}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              setPdfDownloadingId(booking.id);
+                              const { error: pdfError } = await downloadInvoicePdf(booking.id, i18n.language?.split('-')[0] || 'sq');
+                              setPdfDownloadingId(null);
+                              if (pdfError) setError(pdfError);
+                            }}
+                            disabled={pdfDownloadingId === booking.id}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
+                            title="PDF"
+                          >
+                            {pdfDownloadingId === booking.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : <FileDown className="w-3.5 h-3.5" />}
+                            PDF
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
