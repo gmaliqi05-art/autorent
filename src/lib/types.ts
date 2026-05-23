@@ -10,7 +10,7 @@ export interface Profile {
   country_id: string | null;
   city_id: string | null;
   is_active: boolean;
-  preferred_language?: 'sq' | 'en' | 'de' | 'it' | 'fr' | 'es' | 'pl' | 'nl';
+  preferred_language?: 'sq' | 'en' | 'de' | 'it' | 'fr' | 'nl' | 'pl';
   created_at: string;
   updated_at: string;
 }

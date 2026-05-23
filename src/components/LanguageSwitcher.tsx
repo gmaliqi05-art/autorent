@@ -30,7 +30,13 @@ export default function LanguageSwitcher({ variant = 'navbar' }: Props) {
     changeLanguage(lang);
     setOpen(false);
     if (user) {
-      await supabase.from('profiles').update({ preferred_language: lang }).eq('id', user.id);
+      // Perdor RPC-n e sigurte ne vend te update direkt
+      try {
+        await supabase.rpc('update_own_profile', { p_preferred_language: lang });
+      } catch {
+        // Fallback: nese RPC s\'eshte e disponueshme, beje direkt
+        await supabase.from('profiles').update({ preferred_language: lang }).eq('id', user.id);
+      }
     }
   }
 
@@ -56,7 +62,7 @@ export default function LanguageSwitcher({ variant = 'navbar' }: Props) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl ring-1 ring-gray-200 py-1.5 z-50">
+        <div className="absolute right-0 mt-2 w-44 max-h-[60vh] overflow-y-auto bg-white rounded-xl shadow-xl ring-1 ring-gray-200 py-1.5 z-50">
           {SUPPORTED_LANGUAGES.map(lang => {
             const meta = LANGUAGE_LABELS[lang];
             const isActive = lang === safeCurrent;
