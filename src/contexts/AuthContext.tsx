@@ -60,7 +60,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (activeUserIdRef.current !== userId) return;
 
       if (error) {
-        // eslint-disable-next-line no-console
         console.warn('[auth] fetchProfile error:', error.message);
         setProfile(null);
         return;
@@ -137,7 +136,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           p_city_id: cityId ?? null,
         });
       } catch (rpcErr) {
-        // eslint-disable-next-line no-console
         console.warn('[auth] update_own_profile failed (handle_new_user trigger may not have run yet):', rpcErr);
       }
     }
@@ -146,7 +144,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         await sendWelcomeClientEmail(email, fullName, authData.user.id);
       } catch (emailErr) {
-        // eslint-disable-next-line no-console
         console.warn('[auth] welcome email failed:', emailErr);
       }
     }
@@ -188,7 +185,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           (companyData as { id: string }).id,
         );
       } catch (emailErr) {
-        // eslint-disable-next-line no-console
         console.warn('[auth] welcome company email failed:', emailErr);
       }
     }
