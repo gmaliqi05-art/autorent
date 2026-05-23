@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Upload, ShieldCheck, ShieldAlert, Clock, FileText } from 'lucide-react';
+import { Loader2, Upload, ShieldCheck, ShieldAlert, Clock, FileText, Sparkles, ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
+import { startIdentityVerification } from '../../lib/identityService';
 
 interface DocumentsRow {
   client_id: string;
@@ -14,7 +15,10 @@ interface DocumentsRow {
   id_type: 'passport' | 'national_id' | null;
   id_number: string | null;
   verified: boolean;
+  verified_via: 'manual' | 'stripe_identity' | null;
   rejection_reason: string | null;
+  stripe_verification_status: 'requires_input' | 'processing' | 'verified' | 'canceled' | 'requires_action' | null;
+  stripe_verified_at: string | null;
 }
 
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -26,6 +30,7 @@ export default function ClientDocumentsCard({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [startingIdentity, setStartingIdentity] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const [licenseNumber, setLicenseNumber] = useState('');
@@ -35,6 +40,22 @@ export default function ClientDocumentsCard({ userId }: { userId: string }) {
   const [idNumber, setIdNumber] = useState('');
 
   useEffect(() => { loadDoc(); }, [userId]);
+
+  // Trajto callback nga Stripe Identity (returnUrl)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('identity_verification') === 'complete') {
+      setMessage({ type: 'success', text: t('clientDash.profile.docs.stripeReturnMsg', 'Verifikimi po procesohet. Statusi do perditesohet automatikisht ne disa sekonda.') });
+      // Hiq query param
+      const url = new URL(window.location.href);
+      url.searchParams.delete('identity_verification');
+      window.history.replaceState({}, '', url.toString());
+      // Reload status pas 3 sekondash (webhook duhet te kete mberritur)
+      const t1 = setTimeout(() => loadDoc(), 3000);
+      const t2 = setTimeout(() => loadDoc(), 8000);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadDoc() {
     setLoading(true);
@@ -157,6 +178,57 @@ export default function ClientDocumentsCard({ userId }: { userId: string }) {
         <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           <strong className="block font-semibold">{t('clientDash.profile.docs.rejectionTitle')}</strong>
           <p className="mt-0.5">{doc.rejection_reason}</p>
+        </div>
+      )}
+
+      {/* Stripe Identity verification - auto OCR */}
+      {!doc?.verified && (
+        <div className="mb-5 rounded-xl border-2 border-primary-200 bg-gradient-to-r from-primary-50 to-purple-50 p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-primary-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-dark-900 text-sm">
+                {t('clientDash.profile.docs.stripeIdentityTitle', 'Verifikim automatik me Stripe Identity')}
+              </h3>
+              <p className="text-xs text-dark-600 mt-1">
+                {t('clientDash.profile.docs.stripeIdentityDesc', 'Skanim automatik i patentes me OCR + match i fytyres. Verifikim ne 2 minuta — pa pritje per admin.')}
+              </p>
+              {doc?.stripe_verification_status === 'processing' && (
+                <p className="mt-2 text-xs text-amber-700 font-medium inline-flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  {t('clientDash.profile.docs.stripeProcessing', 'Verifikimi po procesohet. Do njoftoheni kur te perfundoje.')}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={async () => {
+                  setStartingIdentity(true);
+                  setMessage(null);
+                  const { error } = await startIdentityVerification('/dashboard/profili');
+                  if (error) {
+                    setStartingIdentity(false);
+                    setMessage({ type: 'error', text: error });
+                  }
+                }}
+                disabled={startingIdentity || doc?.stripe_verification_status === 'processing'}
+                className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-all"
+              >
+                {startingIdentity
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <ExternalLink className="w-4 h-4" />}
+                {t('clientDash.profile.docs.startStripeVerification', 'Verifiko tani')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {doc?.verified && doc?.verified_via === 'stripe_identity' && (
+        <div className="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4" />
+          <span>{t('clientDash.profile.docs.stripeVerifiedBadge', 'Verifikuar nga Stripe Identity')} {doc?.stripe_verified_at && `· ${new Date(doc.stripe_verified_at).toLocaleDateString()}`}</span>
         </div>
       )}
 
