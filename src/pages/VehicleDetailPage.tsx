@@ -1,23 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, Star, MapPin, Calendar, Fuel, Cog, Users, DoorOpen, Gauge, Shield, CheckCircle2, Loader2, Car, Building2, Phone, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, Calendar, Fuel, Cog, Users, DoorOpen, Gauge, Shield, CheckCircle2, Loader2, Car, Building2, Phone, ArrowRight, ShieldCheck, Package } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import type { Vehicle, Company, Review } from '../lib/types';
+import type { Vehicle, Company, Review, InsurancePlan } from '../lib/types';
 import BookingInvoice from '../components/booking/BookingInvoice';
 import PaymentMethodSelector, { type PaymentMethodType } from '../components/booking/PaymentMethodSelector';
 import AvailabilityCalendar from '../components/booking/AvailabilityCalendar';
+import InsurancePlanSelector from '../components/booking/InsurancePlanSelector';
+import ExtrasSelector from '../components/booking/ExtrasSelector';
+import PriceBreakdown from '../components/booking/PriceBreakdown';
 import { getOptimizedImageUrl } from '../lib/imageOptimizer';
 import { sendBookingConfirmationToClient, sendBookingNotificationToCompany } from '../lib/emailService';
 import { createInvoice } from '../lib/invoiceService';
 import { createNotification } from '../lib/notificationService';
 import { startStripeCheckout } from '../lib/stripeService';
 import { startPaypalCheckout } from '../lib/paypalService';
+import { calculateBookingPrice, type ExtraSelection } from '../lib/bookingCalculator';
+import { formatCurrency } from '../lib/currency';
 import CashHoldForm from '../components/booking/CashHoldForm';
 
-type BookingStep = 'dates' | 'invoice' | 'payment' | 'cash_hold' | 'success';
+type BookingStep = 'dates' | 'customize' | 'invoice' | 'payment' | 'cash_hold' | 'success';
 
 export default function VehicleDetailPage() {
   const { t, i18n } = useTranslation();
@@ -45,6 +50,9 @@ export default function VehicleDetailPage() {
   const [cashBookingId, setCashBookingId] = useState<string | null>(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [availabilityError, setAvailabilityError] = useState('');
+  // Step 'customize': sigurim + extras
+  const [selectedInsurance, setSelectedInsurance] = useState<InsurancePlan | null>(null);
+  const [extrasSelections, setExtrasSelections] = useState<ExtraSelection[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -118,6 +126,11 @@ export default function VehicleDetailPage() {
       return;
     }
 
+    setStep('customize');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function handleCustomizeToInvoice() {
     setStep('invoice');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -133,6 +146,19 @@ export default function VehicleDetailPage() {
     setBooking(true);
     setBookingError('');
 
+    const breakdown = calculateBookingPrice({
+      vehicle: {
+        price_per_day: Number(vehicle.price_per_day),
+        deposit_amount: Number(vehicle.deposit_amount),
+        young_driver_fee_per_day: Number(vehicle.young_driver_fee_per_day ?? 0),
+        min_driver_age: vehicle.min_driver_age ?? 21,
+        currency: (vehicle.currency ?? 'EUR'),
+      },
+      days,
+      insurance: selectedInsurance,
+      extras: extrasSelections,
+    });
+
     const { data: bookingData, error } = await supabase.from('bookings').insert({
       vehicle_id: vehicle.id,
       company_id: company.id,
@@ -143,11 +169,20 @@ export default function VehicleDetailPage() {
       return_location: company.city,
       total_days: days,
       price_per_day: vehicle.price_per_day,
-      total_price: days * Number(vehicle.price_per_day),
+      total_price: breakdown.total,
       deposit_amount: vehicle.deposit_amount,
+      currency: breakdown.currency,
+      insurance_plan_id: selectedInsurance?.id ?? null,
+      insurance_total: breakdown.insuranceTotal,
+      extras_total: breakdown.extrasTotal,
+      one_way_fee: breakdown.oneWayFee,
+      tax_total: breakdown.tax,
+      discount_total: breakdown.discount,
+      included_km: (vehicle.included_km_per_day ?? 0) * days,
+      extra_km_price: Number(vehicle.extra_km_price ?? 0),
       status: 'pending',
       payment_method: paymentMethod,
-      payment_status: paymentMethod === 'cash' ? 'pending' : 'pending',
+      payment_status: 'pending',
       client_name: profile.full_name || '',
       client_phone: profile.phone || '',
       client_email: profile.email || '',
@@ -157,6 +192,23 @@ export default function VehicleDetailPage() {
       setBookingError(t('vehicleDetail.bookingError'));
       setBooking(false);
       return;
+    }
+
+    // Insert booking_extras (nese ka)
+    if (extrasSelections.length > 0) {
+      const extrasRows = extrasSelections.map((sel) => ({
+        booking_id: bookingData.id,
+        extra_id: sel.extra.id,
+        quantity: sel.quantity,
+        unit_price_per_day: Number(sel.extra.price_per_day),
+        unit_price_per_rental: Number(sel.extra.price_per_rental),
+        subtotal: (Number(sel.extra.price_per_day) * days + Number(sel.extra.price_per_rental)) * sel.quantity,
+        currency: breakdown.currency,
+      }));
+      const { error: extrasError } = await supabase.from('booking_extras').insert(extrasRows);
+      if (extrasError) {
+        console.warn('[booking] failed to insert booking_extras:', extrasError);
+      }
     }
 
     const paymentMethodLabel =
@@ -177,7 +229,7 @@ export default function VehicleDetailPage() {
         pricePerDay: Number(vehicle.price_per_day),
         deposit: Number(vehicle.deposit_amount),
         paymentMethod: paymentMethodLabel,
-        totalPrice: days * Number(vehicle.price_per_day),
+        totalPrice: breakdown.total,
         status: t('vehicleDetail.pendingApproval'),
       }
     );
@@ -194,7 +246,7 @@ export default function VehicleDetailPage() {
         pickupDate: new Date(pickupDate).toLocaleDateString(dateLocale),
         returnDate: new Date(returnDate).toLocaleDateString(dateLocale),
         totalDays: days,
-        totalPrice: days * Number(vehicle.price_per_day),
+        totalPrice: breakdown.total,
         paymentMethod: paymentMethodLabel,
       }
     );
@@ -215,7 +267,7 @@ export default function VehicleDetailPage() {
       totalDays: days,
       pricePerDay: Number(vehicle.price_per_day),
       depositAmount: Number(vehicle.deposit_amount),
-      totalPrice: days * Number(vehicle.price_per_day),
+      totalPrice: breakdown.total,
       paymentMethod,
       status: 'draft',
     });
@@ -277,7 +329,8 @@ export default function VehicleDetailPage() {
 
   function goBack() {
     if (step === 'payment') setStep('invoice');
-    else if (step === 'invoice') setStep('dates');
+    else if (step === 'invoice') setStep('customize');
+    else if (step === 'customize') setStep('dates');
   }
 
   if (loading) {
@@ -299,8 +352,94 @@ export default function VehicleDetailPage() {
   }
 
   const totalDays = getTotalDays();
-  const totalPrice = totalDays * Number(vehicle.price_per_day);
+  const liveBreakdown = calculateBookingPrice({
+    vehicle: {
+      price_per_day: Number(vehicle.price_per_day),
+      deposit_amount: Number(vehicle.deposit_amount),
+      young_driver_fee_per_day: Number(vehicle.young_driver_fee_per_day ?? 0),
+      min_driver_age: vehicle.min_driver_age ?? 21,
+      currency: (vehicle.currency ?? 'EUR'),
+    },
+    days: totalDays,
+    insurance: selectedInsurance,
+    extras: extrasSelections,
+  });
+  const totalPrice = liveBreakdown.total;
   const features = Array.isArray(vehicle.features) ? vehicle.features : [];
+
+  if (step === 'customize' && company && profile) {
+    return (
+      <div className="min-h-screen bg-gray-50/80 pt-[68px]">
+        <div className="bg-white border-b border-gray-100">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <button onClick={goBack} className="inline-flex items-center gap-1.5 text-sm text-dark-500 hover:text-dark-900 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+              {t('vehicleDetail.backToVehicle')}
+            </button>
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <StepIndicator current={1} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-8">
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <ShieldCheck className="w-5 h-5 text-primary-600" />
+                  <h2 className="text-lg font-bold text-dark-950">{t('customize.insuranceTitle', 'Zgjidh sigurimin')}</h2>
+                </div>
+                <p className="text-sm text-dark-500 mb-4">
+                  {t('customize.insuranceDesc', 'Mbron veturen dhe ty gjate qerase. Rekomandojme CDW Standard ose me lart.')}
+                </p>
+                <InsurancePlanSelector
+                  companyId={company.id}
+                  totalDays={totalDays}
+                  selectedId={selectedInsurance?.id ?? null}
+                  onSelect={setSelectedInsurance}
+                  displayCurrency={vehicle.currency ?? 'EUR'}
+                />
+              </section>
+
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <Package className="w-5 h-5 text-primary-600" />
+                  <h2 className="text-lg font-bold text-dark-950">{t('customize.extrasTitle', 'Shto shtesa')}</h2>
+                </div>
+                <p className="text-sm text-dark-500 mb-4">
+                  {t('customize.extrasDesc', 'Bej qiren me te rehatshme — sjellese, GPS, Wi-Fi e me shume.')}
+                </p>
+                <ExtrasSelector
+                  companyId={company.id}
+                  totalDays={totalDays}
+                  selections={extrasSelections}
+                  onChange={setExtrasSelections}
+                  displayCurrency={vehicle.currency ?? 'EUR'}
+                />
+              </section>
+            </div>
+
+            <aside className="lg:col-span-1">
+              <div className="sticky top-24 space-y-4">
+                <PriceBreakdown
+                  breakdown={liveBreakdown}
+                  days={totalDays}
+                  pricePerDay={Number(vehicle.price_per_day)}
+                />
+                <button
+                  onClick={handleCustomizeToInvoice}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-all shadow-sm shadow-primary-600/20 active:scale-[0.98]"
+                >
+                  {t('customize.continue', 'Vazhdo')}
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (step === 'invoice' && company && profile) {
     return (
@@ -315,7 +454,7 @@ export default function VehicleDetailPage() {
         </div>
 
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <StepIndicator current={1} />
+          <StepIndicator current={2} />
 
           <BookingInvoice
             vehicle={vehicle}
@@ -326,6 +465,14 @@ export default function VehicleDetailPage() {
             totalDays={totalDays}
             totalPrice={totalPrice}
           />
+
+          <div className="mt-6">
+            <PriceBreakdown
+              breakdown={liveBreakdown}
+              days={totalDays}
+              pricePerDay={Number(vehicle.price_per_day)}
+            />
+          </div>
 
           <div className="mt-6 flex items-center justify-between">
             <button onClick={goBack} className="px-5 py-2.5 text-sm font-medium text-dark-600 hover:text-dark-900 transition-colors">
@@ -357,7 +504,7 @@ export default function VehicleDetailPage() {
         </div>
 
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <StepIndicator current={2} />
+          <StepIndicator current={3} />
 
           <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
@@ -374,7 +521,7 @@ export default function VehicleDetailPage() {
                   <p className="text-xs text-dark-400">{t('vehicleDetail.daysCount', { count: totalDays })} | {new Date(pickupDate).toLocaleDateString(dateLocale)} - {new Date(returnDate).toLocaleDateString(dateLocale)}</p>
                 </div>
               </div>
-              <p className="text-lg font-bold text-primary-600">{totalPrice} EUR</p>
+              <p className="text-lg font-bold text-primary-600">{formatCurrency(totalPrice, liveBreakdown.currency)}</p>
             </div>
 
             <PaymentMethodSelector
@@ -470,7 +617,7 @@ export default function VehicleDetailPage() {
                 </div>
                 <div className="flex justify-between pt-2 border-t border-gray-200">
                   <span className="font-bold text-dark-900">{t('vehicleDetail.total')}</span>
-                  <span className="font-bold text-primary-600">{totalPrice} EUR</span>
+                  <span className="font-bold text-primary-600">{formatCurrency(totalPrice, liveBreakdown.currency)}</span>
                 </div>
               </div>
             </div>
@@ -568,7 +715,7 @@ export default function VehicleDetailPage() {
                   <p className="text-dark-500 text-sm mt-1">{vehicle.year} | <span className="capitalize">{vehicle.category}</span></p>
                 </div>
                 <div className="text-right">
-                  <p className="text-3xl font-bold text-primary-600">{vehicle.price_per_day}EUR</p>
+                  <p className="text-3xl font-bold text-primary-600">{formatCurrency(Number(vehicle.price_per_day), vehicle.currency ?? 'EUR')}</p>
                   <p className="text-xs text-dark-400">{t('vehicleDetail.perDay')}</p>
                 </div>
               </div>
@@ -718,18 +865,18 @@ export default function VehicleDetailPage() {
                 {totalDays > 0 && (
                   <div className="mt-5 pt-5 border-t border-gray-100 space-y-2.5">
                     <div className="flex justify-between text-sm">
-                      <span className="text-dark-500">{vehicle.price_per_day}EUR x {t('vehicleDetail.daysCount', { count: totalDays })}</span>
-                      <span className="font-medium text-dark-900">{totalPrice}EUR</span>
+                      <span className="text-dark-500">{formatCurrency(Number(vehicle.price_per_day), liveBreakdown.currency)} × {t('vehicleDetail.daysCount', { count: totalDays })}</span>
+                      <span className="font-medium text-dark-900">{formatCurrency(liveBreakdown.baseRental, liveBreakdown.currency)}</span>
                     </div>
                     {Number(vehicle.deposit_amount) > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-dark-500">{t('vehicleDetail.deposit')}</span>
-                        <span className="font-medium text-dark-900">{vehicle.deposit_amount}EUR</span>
+                        <span className="font-medium text-dark-900">{formatCurrency(Number(vehicle.deposit_amount), liveBreakdown.currency)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-base font-bold pt-2.5 border-t border-gray-100">
                       <span className="text-dark-950">{t('vehicleDetail.total')}</span>
-                      <span className="text-primary-600">{totalPrice}EUR</span>
+                      <span className="text-primary-600">{formatCurrency(totalPrice, liveBreakdown.currency)}</span>
                     </div>
                   </div>
                 )}
@@ -773,8 +920,9 @@ function StepIndicator({ current }: { current: number }) {
   const { t } = useTranslation();
   const steps = [
     { num: 0, label: t('steps.dates') },
-    { num: 1, label: t('steps.invoice') },
-    { num: 2, label: t('steps.payment') },
+    { num: 1, label: t('steps.customize', 'Personalizo') },
+    { num: 2, label: t('steps.invoice') },
+    { num: 3, label: t('steps.payment') },
   ];
 
   return (

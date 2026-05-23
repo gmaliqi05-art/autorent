@@ -14,7 +14,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(supabaseUrl)) {
-  // eslint-disable-next-line no-console
   console.warn(
     `[supabase] VITE_SUPABASE_URL nuk duket si Supabase URL e vlefshme: ${supabaseUrl}`,
   );
