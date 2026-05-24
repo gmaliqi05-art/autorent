@@ -59,14 +59,33 @@ supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_xxx
 supabase secrets set CORS_ALLOWED_ORIGINS=https://rentcars.life,http://localhost:5173
 ```
 
+#### b1) Web Push (VAPID)
+Gjenero ciftin e cesave:
+```bash
+node scripts/generate-vapid-keys.cjs
+```
+Pastaj:
+```bash
+# E njejta publicKey ne te dyja:
+supabase secrets set VAPID_PUBLIC_KEY=<publicKey>
+supabase secrets set VAPID_PRIVATE_KEY=<privateKey>
+supabase secrets set VAPID_SUBJECT=mailto:contact@rentcars.life
+
+# Dhe ne .env:
+# VITE_VAPID_PUBLIC_KEY=<publicKey>
+```
+Sistemi i push notifications eshte i lidhur automatikisht me events permes DB trigger ne `notifications` (shih `supabase/migrations/20260527130000_notifications_push_trigger.sql`). Asnje thirrje shtese nuk nevojitet nga frontend-i — cdo insert ne `notifications` prodhon push.
+
 #### c) Deploy Edge Functions
 ```bash
 supabase functions deploy send-email
 supabase functions deploy delete-account
 supabase functions deploy create-checkout-session
 supabase functions deploy stripe-webhook --no-verify-jwt
+supabase functions deploy send-push-notification --no-verify-jwt
+supabase functions deploy scheduled-tasks --no-verify-jwt
 ```
-> ⚠️ `stripe-webhook` **duhet** të deploy-ohet me `--no-verify-jwt` sepse Stripe nuk dërgon JWT — verifikimi bëhet me signing secret.
+> ⚠️ `stripe-webhook`, `send-push-notification` dhe `scheduled-tasks` **duhet** të deploy-ohen me `--no-verify-jwt` — secila ka autentikim te brendshem (Stripe signature, x-push-secret, x-cron-secret).
 
 #### d) Stripe Webhook
 1. Shko në [Stripe Dashboard → Developers → Webhooks](https://dashboard.stripe.com/webhooks)
