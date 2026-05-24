@@ -129,3 +129,51 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// === PUSH NOTIFICATIONS ===
+self.addEventListener('push', (event) => {
+  let payload = { title: 'RentaKar', body: 'Keni nje njoftim te ri', url: '/dashboard' };
+
+  if (event.data) {
+    try {
+      payload = { ...payload, ...event.data.json() };
+    } catch {
+      payload.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: payload.body,
+    icon: payload.icon || '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    tag: payload.tag,
+    data: { url: payload.url, ...(payload.data || {}) },
+    renotify: !!payload.tag,
+  };
+
+  event.waitUntil(self.registration.showNotification(payload.title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/dashboard';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Nese eshte hapur tashme nje tab i app-it, fokuso ate dhe navigo
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.focus();
+          if ('navigate' in client) {
+            client.navigate(targetUrl).catch(() => {});
+          }
+          return;
+        }
+      }
+      // Perndryshe hap nje tab te ri
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
