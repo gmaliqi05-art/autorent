@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, BellOff, Mail, Smartphone, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Bell, BellOff, Mail, Smartphone, Loader2, AlertCircle, CheckCircle2, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import {
@@ -37,6 +37,7 @@ export default function NotificationPreferencesCard({ userId }: { userId: string
   const [saving, setSaving] = useState(false);
   const [pushStatus, setPushStatus] = useState<PushStatus>('default');
   const [pushBusy, setPushBusy] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -121,6 +122,28 @@ export default function NotificationPreferencesCard({ userId }: { userId: string
     }
     await refreshPushStatus();
     setPushBusy(false);
+  }
+
+  async function handleTestPush() {
+    setTesting(true);
+    setMessage(null);
+    // Insert nje notification — DB trigger fire-on automatikisht push.
+    const { error } = await supabase.from('notifications').insert({
+      user_id: userId,
+      title: t('notificationPrefs.testTitle', 'Test njoftim'),
+      message: t('notificationPrefs.testBody', 'Ky eshte nje test. Nese e merr push-in, gjithcka funksionon.'),
+      type: 'test',
+    });
+    setTesting(false);
+    if (error) {
+      setMessage({ type: 'error', text: error.message });
+    } else {
+      setMessage({
+        type: 'success',
+        text: t('notificationPrefs.testSent', 'U dergua. Kontrollo zilen lart djathtas + njoftimin push.'),
+      });
+      setTimeout(() => setMessage(null), 4000);
+    }
   }
 
   if (loading) {
@@ -254,6 +277,24 @@ export default function NotificationPreferencesCard({ userId }: { userId: string
           </span>
         </div>
       )}
+
+      <div className="pt-3 border-t border-gray-100">
+        <button
+          type="button"
+          onClick={handleTestPush}
+          disabled={testing}
+          className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-gray-200 text-dark-700 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          {t('notificationPrefs.testButton', 'Testo njoftim')}
+        </button>
+        <p className="text-xs text-dark-500 mt-2">
+          {t(
+            'notificationPrefs.testHint',
+            'Dergon nje njoftim test te ky user. E sheh ne zile + (nese push eshte aktiv) si push notification.',
+          )}
+        </p>
+      </div>
     </div>
   );
 }
