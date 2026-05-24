@@ -18,10 +18,25 @@ interface ResendResponse {
   name?: string;
 }
 
-function replacePlaceholders(template: string, data: Record<string, unknown>): string {
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function replacePlaceholders(
+  template: string,
+  data: Record<string, unknown>,
+  context: "html" | "text" = "text",
+): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
     const value = data[key];
-    return value === null || value === undefined ? "" : String(value);
+    if (value === null || value === undefined) return "";
+    const str = String(value);
+    return context === "html" ? escapeHtml(str) : str;
   });
 }
 
@@ -146,11 +161,11 @@ Deno.serve(async (req: Request) => {
       return jsonResponse(req, { error: "Email template not found" }, 404);
     }
 
-    // 2. Render template
-    const subject = replacePlaceholders(template.subject_template, templateData);
-    const htmlBody = replacePlaceholders(template.html_template, templateData);
+    // 2. Render template — escape HTML vlerat ne html_template, te tjerat plain text
+    const subject = replacePlaceholders(template.subject_template, templateData, "text");
+    const htmlBody = replacePlaceholders(template.html_template, templateData, "html");
     const textBody = template.text_template
-      ? replacePlaceholders(template.text_template, templateData)
+      ? replacePlaceholders(template.text_template, templateData, "text")
       : "";
 
     // 3. Krijo email log si "queued"
