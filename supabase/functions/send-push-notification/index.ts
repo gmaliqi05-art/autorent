@@ -40,6 +40,65 @@ interface PushPayload {
   icon?: string;
   tag?: string;
   data?: Record<string, unknown>;
+  template_key?: string | null;
+  template_vars?: Record<string, unknown> | null;
+}
+
+type Lang = "sq" | "en" | "de" | "it" | "fr" | "nl" | "pl";
+
+interface Template {
+  title: string;
+  body: string;
+}
+
+// Inline template registry per push notifications. Cdo entry rendon
+// ne gjuhen e recipient-it (jo te sender-it). Per shtimin e key-eve te reja,
+// add-o entry me te paktcen ne 3 gjuhe (sq/en/de) + opsionalisht te tjerat.
+const TEMPLATES: Record<string, Partial<Record<Lang, Template>>> = {
+  booking_created_client: {
+    sq: { title: "Rezervimi u krye", body: "Rezervimi juaj per {{vehicle}} u krye me sukses. Kompania do ta shqyrtoje brenda 24 oreve." },
+    en: { title: "Booking received", body: "Your booking for {{vehicle}} was created. The company will review it within 24 hours." },
+    de: { title: "Buchung eingegangen", body: "Deine Buchung fuer {{vehicle}} wurde erstellt. Das Unternehmen prueft sie innerhalb von 24 Stunden." },
+  },
+  booking_created_company: {
+    sq: { title: "Rezervim i ri", body: "{{clientName}} ka bere nje rezervim per {{vehicle}}." },
+    en: { title: "New booking", body: "{{clientName}} has made a booking for {{vehicle}}." },
+    de: { title: "Neue Buchung", body: "{{clientName}} hat eine Buchung fuer {{vehicle}} vorgenommen." },
+  },
+  booking_approved: {
+    sq: { title: "Rezervimi u aprovua", body: "{{companyName}} aprovoi rezervimin tuaj per {{vehicle}}." },
+    en: { title: "Booking approved", body: "{{companyName}} approved your booking for {{vehicle}}." },
+    de: { title: "Buchung genehmigt", body: "{{companyName}} hat deine Buchung fuer {{vehicle}} genehmigt." },
+  },
+  booking_rejected: {
+    sq: { title: "Rezervimi u refuzua", body: "{{companyName}} refuzoi rezervimin tuaj per {{vehicle}}. Arsyeja: {{reason}}." },
+    en: { title: "Booking rejected", body: "{{companyName}} rejected your booking for {{vehicle}}. Reason: {{reason}}." },
+    de: { title: "Buchung abgelehnt", body: "{{companyName}} hat deine Buchung fuer {{vehicle}} abgelehnt. Grund: {{reason}}." },
+  },
+  booking_completed: {
+    sq: { title: "Rezervimi u perfundua", body: "Faleminderit qe perdoret {{companyName}}! Lutemi vleresoni eksperiencen." },
+    en: { title: "Booking completed", body: "Thanks for using {{companyName}}! Please rate your experience." },
+    de: { title: "Buchung abgeschlossen", body: "Danke, dass du {{companyName}} verwendet hast! Bitte bewerte deine Erfahrung." },
+  },
+  payment_received: {
+    sq: { title: "Pagesa u pranua", body: "Pagesa per {{vehicle}} ({{amount}} EUR) u konfirmua." },
+    en: { title: "Payment received", body: "Payment for {{vehicle}} ({{amount}} EUR) was confirmed." },
+    de: { title: "Zahlung erhalten", body: "Zahlung fuer {{vehicle}} ({{amount}} EUR) wurde bestaetigt." },
+  },
+  pickup_reminder: {
+    sq: { title: "Kujtues marrjeje", body: "Marrja per {{vehicle}} eshte neser ne {{pickupTime}}." },
+    en: { title: "Pickup reminder", body: "Pickup for {{vehicle}} is tomorrow at {{pickupTime}}." },
+    de: { title: "Abholerinnerung", body: "Abholung von {{vehicle}} ist morgen um {{pickupTime}}." },
+  },
+};
+
+function renderTemplate(tpl: Template, vars: Record<string, unknown>): Template {
+  const replace = (s: string) =>
+    s.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+      const v = vars[key];
+      return v === null || v === undefined ? "" : String(v);
+    });
+  return { title: replace(tpl.title), body: replace(tpl.body) };
 }
 
 interface Subscription {
@@ -138,12 +197,32 @@ Deno.serve(async (req: Request) => {
     return new Response("Missing required fields", { status: 400 });
   }
 
-  // Kontrollo preferencat
-  const { data: prefs } = await supabase
+  // Kontrollo preferencat + fetch language (per i18n render)
+  const { data: profile } = await supabase
     .from("notification_preferences")
     .select("push_enabled")
     .eq("user_id", payload.user_id)
     .maybeSingle();
+  const prefs = profile;
+
+  // Render-o template ne gjuhen e recipient-it nese eshte ofruar template_key
+  let renderedTitle = payload.title;
+  let renderedBody = payload.body;
+  if (payload.template_key && TEMPLATES[payload.template_key]) {
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("preferred_language")
+      .eq("id", payload.user_id)
+      .maybeSingle();
+    const lang = (profileRow?.preferred_language as Lang | undefined) ?? "sq";
+    const langTemplates = TEMPLATES[payload.template_key];
+    const tpl = langTemplates[lang] ?? langTemplates.en ?? langTemplates.sq;
+    if (tpl) {
+      const rendered = renderTemplate(tpl, payload.template_vars ?? {});
+      renderedTitle = rendered.title;
+      renderedBody = rendered.body;
+    }
+  }
 
   const notificationId = (payload.data?.notification_id as string | undefined) ?? null;
 
@@ -189,8 +268,8 @@ Deno.serve(async (req: Request) => {
   webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
 
   const pushPayload = JSON.stringify({
-    title: payload.title,
-    body: payload.body,
+    title: renderedTitle,
+    body: renderedBody,
     url: payload.url || "/dashboard",
     icon: payload.icon || "/icons/icon-192.png",
     tag: payload.tag,

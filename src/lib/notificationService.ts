@@ -7,6 +7,15 @@ interface CreateNotificationParams {
   type: string;
   referenceId?: string;
   referenceType?: string;
+  /**
+   * Opsional. Identifikues per template push notification (psh 'booking_approved').
+   * Kur set, push notification render-ohet ne gjuhen e recipient-it
+   * ne edge function (jo gjuhen e sender-it). In-app notification perdor
+   * title/message e ruajtur. Shih supabase/functions/send-push-notification
+   * per template-t e disponueshme.
+   */
+  templateKey?: string;
+  templateVars?: Record<string, unknown>;
 }
 
 export async function createNotification(params: CreateNotificationParams) {
@@ -17,6 +26,8 @@ export async function createNotification(params: CreateNotificationParams) {
     type: params.type,
     reference_id: params.referenceId || null,
     reference_type: params.referenceType || null,
+    template_key: params.templateKey || null,
+    template_vars: params.templateVars || {},
   });
   return { error };
 }
