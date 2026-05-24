@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Car, CalendarDays, Check, X, Loader2, CreditCard, Wallet, Building, Banknote, ChevronLeft, ChevronRight, Search, Download, StickyNote, Unlock, AlertTriangle, HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import DOMPurify from 'dompurify';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Booking, Vehicle, Company } from '../../lib/types';
@@ -782,10 +783,13 @@ export default function CompanyBookings() {
             <p
               className="text-sm text-dark-500 mb-4"
               dangerouslySetInnerHTML={{
-                __html: t('companyDash.bookings.captureBodyHtml', {
-                  amount: captureModal.cash_hold_amount,
-                  name: captureModal.client_name,
-                }),
+                __html: DOMPurify.sanitize(
+                  t('companyDash.bookings.captureBodyHtml', {
+                    amount: captureModal.cash_hold_amount,
+                    name: captureModal.client_name,
+                  }),
+                  { ALLOWED_TAGS: ['strong', 'em', 'br'], ALLOWED_ATTR: [] },
+                ),
               }}
             />
             <label className="block text-xs font-semibold text-dark-600 uppercase tracking-wide mb-1.5">
