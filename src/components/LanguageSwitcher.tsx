@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Globe, Check, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { changeLanguage, SUPPORTED_LANGUAGES, LANGUAGE_LABELS, type SupportedLanguage } from '../i18n';
+import { changeLanguage, SUPPORTED_LANGUAGES, VISIBLE_LANGUAGES, LANGUAGE_LABELS, type SupportedLanguage } from '../i18n';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -63,7 +63,7 @@ export default function LanguageSwitcher({ variant = 'navbar' }: Props) {
 
       {open && (
         <div className="absolute right-0 mt-2 w-44 max-h-[60vh] overflow-y-auto bg-white rounded-xl shadow-xl ring-1 ring-gray-200 py-1.5 z-50">
-          {SUPPORTED_LANGUAGES.map(lang => {
+          {VISIBLE_LANGUAGES.map(lang => {
             const meta = LANGUAGE_LABELS[lang];
             const isActive = lang === safeCurrent;
             return (
