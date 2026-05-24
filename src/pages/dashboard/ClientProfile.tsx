@@ -8,6 +8,7 @@ import { clientNavItems } from '../../lib/clientNav';
 import type { Country, City } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import ClientDocumentsCard from '../../components/profile/ClientDocumentsCard';
+import NotificationPreferencesCard from '../../components/profile/NotificationPreferencesCard';
 
 const inputClass = 'w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all';
 
@@ -284,6 +285,12 @@ export default function ClientProfile() {
         </div>
 
         {user && <ClientDocumentsCard userId={user.id} />}
+
+        {user && (
+          <div className="mt-6">
+            <NotificationPreferencesCard userId={user.id} />
+          </div>
+        )}
 
         <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
           <h2 className="text-lg font-semibold text-dark-950 mb-1">{t('clientDash.profile.changePassword')}</h2>
