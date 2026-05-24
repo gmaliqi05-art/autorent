@@ -3,8 +3,11 @@
  *
  * Dergon Web Push notifications te te gjitha pajisjet e nje user-i.
  *
- * Authorization: kerkon `service_role` JWT (vetem server-side, edge functions ose
- * trigger-a). Klienti i browser-it nuk e thrret kete funksion direkt.
+ * Authorization (njera nga te dyja):
+ *  - `Authorization: Bearer <service_role JWT>` (per edge functions te tjera)
+ *  - `x-push-secret: <push_secret>` (per DB triggers nepermjet pg_net)
+ *
+ * Klienti i browser-it nuk e thrret kete funksion direkt.
  *
  * Body:
  *  {
@@ -64,16 +67,22 @@ Deno.serve(async (req: Request) => {
     return new Response("VAPID keys not configured", { status: 500 });
   }
 
-  // Vetem service role mund te thrresi (ose nje secret i ndare).
-  // Validojme JWT-n permes Supabase, duke kerkuar role = service_role.
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  // Auth: ose Bearer = service_role, ose x-push-secret = vault push_secret.
   const authHeader = req.headers.get("authorization") || "";
-  const token = authHeader.replace(/^Bearer\s+/i, "");
-  if (!token) {
-    return new Response("Unauthorized", { status: 401 });
+  const bearer = authHeader.replace(/^Bearer\s+/i, "");
+  const pushSecret = req.headers.get("x-push-secret") || "";
+
+  let authorized = false;
+  if (bearer && bearer === serviceKey) {
+    authorized = true;
+  } else if (pushSecret) {
+    const { data: ok } = await supabase.rpc("is_push_secret_valid", { p_secret: pushSecret });
+    authorized = ok === true;
   }
-  // Krahaso direkt me service key (te dyja jane JWT te firmuara).
-  if (token !== serviceKey) {
-    return new Response("Forbidden", { status: 403 });
+  if (!authorized) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
   let payload: PushPayload;
@@ -86,8 +95,6 @@ Deno.serve(async (req: Request) => {
   if (!payload.user_id || !payload.title || !payload.body) {
     return new Response("Missing required fields", { status: 400 });
   }
-
-  const supabase = createClient(supabaseUrl, serviceKey);
 
   // Kontrollo preferencat
   const { data: prefs } = await supabase
