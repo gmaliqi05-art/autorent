@@ -12,6 +12,10 @@ import pl from './locales/pl.json';
 export const SUPPORTED_LANGUAGES = ['sq', 'en', 'de', 'it', 'fr', 'nl', 'pl'] as const;
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
 
+// Locale plotesisht te perkthyera; vetem keto shfaqen ne LanguageSwitcher.
+// fr/it/nl/pl mbahen ne resources per fallback gradual deri sa te kompletohen.
+export const VISIBLE_LANGUAGES: readonly SupportedLanguage[] = ['sq', 'en', 'de'];
+
 export const LANGUAGE_LABELS: Record<SupportedLanguage, { native: string; flag: string; english: string }> = {
   sq: { native: 'Shqip', flag: 'AL', english: 'Albanian' },
   en: { native: 'English', flag: 'GB', english: 'English' },
