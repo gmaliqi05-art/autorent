@@ -74,6 +74,46 @@ Deno.serve(async (req: Request) => {
             })
             .eq("booking_id", bookingId);
 
+          // Krijo notifications per klient + pronar (auto-trigger push)
+          const { data: bk } = await admin
+            .from("bookings")
+            .select("client_id, company_id, total_price, currency, vehicle:vehicles(brand, model), company:companies(owner_id, name)")
+            .eq("id", bookingId)
+            .maybeSingle();
+
+          if (bk) {
+            // deno-lint-ignore no-explicit-any
+            const b = bk as any;
+            const vehicleName = `${b.vehicle?.brand || ""} ${b.vehicle?.model || ""}`.trim();
+            const amount = b.total_price ? `${b.total_price} ${b.currency || "EUR"}` : "";
+
+            const rows: Array<Record<string, unknown>> = [];
+            if (b.client_id) {
+              rows.push({
+                user_id: b.client_id,
+                title: "Pagesa u konfirmua",
+                message: `Pagesa juaj ${amount} per ${vehicleName} u krye me sukses.`,
+                type: "payment_success",
+                reference_id: bookingId,
+                reference_type: "booking",
+              });
+            }
+            if (b.company?.owner_id) {
+              rows.push({
+                user_id: b.company.owner_id,
+                title: "Pagese e re per booking",
+                message: `${amount} u arketua per ${vehicleName}.`,
+                type: "payment_success",
+                reference_id: bookingId,
+                reference_type: "booking",
+              });
+            }
+            if (rows.length > 0) {
+              const { error: nErr } = await admin.from("notifications").insert(rows);
+              if (nErr) console.error("notification insert failed:", nErr);
+            }
+          }
+
           console.log(`Booking ${bookingId} marked as paid`);
         }
         break;
@@ -99,6 +139,24 @@ Deno.serve(async (req: Request) => {
               payment_status: "failed",
             })
             .eq("id", bookingId);
+
+          const { data: bk } = await admin
+            .from("bookings")
+            .select("client_id, vehicle:vehicles(brand, model)")
+            .eq("id", bookingId)
+            .maybeSingle();
+          // deno-lint-ignore no-explicit-any
+          const b = bk as any;
+          if (b?.client_id) {
+            await admin.from("notifications").insert({
+              user_id: b.client_id,
+              title: "Pagesa nuk u krye",
+              message: `Pagesa per ${b.vehicle?.brand || ""} ${b.vehicle?.model || ""} deshtoi. Provo perseri.`,
+              type: "payment_failed",
+              reference_id: bookingId,
+              reference_type: "booking",
+            });
+          }
           console.log(`Booking ${bookingId} payment failed`);
         }
         break;

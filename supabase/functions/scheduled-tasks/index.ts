@@ -121,6 +121,17 @@ Deno.serve(async (req: Request) => {
           referenceId: booking.id,
           referenceType: "booking",
         });
+        // Notification ne DB → auto-trigger push
+        if (booking.client_id) {
+          await supabase.from("notifications").insert({
+            user_id: booking.client_id,
+            title: "Pickup neser",
+            message: `${booking.vehicle?.brand} ${booking.vehicle?.model} ju pret neser. Mos harroni dokumentet.`,
+            type: "pickup_reminder",
+            reference_id: booking.id,
+            reference_type: "booking",
+          });
+        }
         await supabase
           .from("bookings")
           .update({ pickup_reminder_sent_at: new Date().toISOString() })
@@ -168,6 +179,16 @@ Deno.serve(async (req: Request) => {
           referenceId: booking.id,
           referenceType: "booking",
         });
+        if (booking.client_id) {
+          await supabase.from("notifications").insert({
+            user_id: booking.client_id,
+            title: "Booking u anulua",
+            message: `${booking.vehicle?.brand} ${booking.vehicle?.model} u anulua: 48h pa konfirmim.`,
+            type: "booking_cancelled",
+            reference_id: booking.id,
+            reference_type: "booking",
+          });
+        }
         results.auto_cancelled++;
       } catch (e) {
         results.errors.push(`auto-cancel ${booking.id}: ${(e as Error).message}`);
@@ -217,6 +238,16 @@ Deno.serve(async (req: Request) => {
           referenceId: booking.id,
           referenceType: "booking",
         });
+        if (booking.client_id) {
+          await supabase.from("notifications").insert({
+            user_id: booking.client_id,
+            title: "Si shkoi udhetimi?",
+            message: `Le nje review per ${booking.vehicle?.brand} ${booking.vehicle?.model}.`,
+            type: "review_request",
+            reference_id: booking.id,
+            reference_type: "booking",
+          });
+        }
       } catch (e) {
         results.errors.push(`review-req ${booking.id}: ${(e as Error).message}`);
       }
