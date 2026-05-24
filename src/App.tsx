@@ -47,6 +47,7 @@ const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
 const AdminSEO = lazy(() => import('./pages/admin/AdminSEO'));
 const AdminSEOReport = lazy(() => import('./pages/admin/AdminSEOReport'));
 const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications'));
+const AdminPushLogs = lazy(() => import('./pages/admin/AdminPushLogs'));
 const AdminSendNotification = lazy(() => import('./pages/admin/AdminSendNotification'));
 const AdminNotificationDesign = lazy(() => import('./pages/admin/AdminNotificationDesign'));
 const AdminTestNotification = lazy(() => import('./pages/admin/AdminTestNotification'));
@@ -139,6 +140,7 @@ export default function App() {
             <Route path="/admin/hero" element={<SA><AdminHomepage /></SA>} />
             <Route path="/admin/chat" element={<SA><AdminChat /></SA>} />
             <Route path="/admin/emailet" element={<SA><AdminEmails /></SA>} />
+            <Route path="/admin/push-logs" element={<SA><AdminPushLogs /></SA>} />
             <Route path="/admin/raportet" element={<SA><AdminFinancials /></SA>} />
             <Route path="/admin/transaksionet" element={<SA><AdminTransactions /></SA>} />
             <Route path="/admin/reklamat" element={<SA><AdminAds /></SA>} />
