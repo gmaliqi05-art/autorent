@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Scale, Save, Loader2, CheckCircle, FileText, Eye, CreditCard as Edit3 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
@@ -121,7 +122,15 @@ export default function AdminLegalPages() {
 
               {preview ? (
                 <div className="bg-white rounded-xl border border-gray-100 p-8 prose max-w-none min-h-96">
-                  <div dangerouslySetInnerHTML={{ __html: editContent.replace(/\n/g, '<br>').replace(/#{1,6} (.+)/g, '<strong>$1</strong>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') }} />
+                  <div dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(
+                      editContent
+                        .replace(/\n/g, '<br>')
+                        .replace(/#{1,6} (.+)/g, '<strong>$1</strong>')
+                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'),
+                      { ALLOWED_TAGS: ['br', 'strong', 'em', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a'], ALLOWED_ATTR: ['href', 'target', 'rel'] },
+                    ),
+                  }} />
                 </div>
               ) : (
                 <div className="bg-white rounded-xl border border-gray-100 p-4">
