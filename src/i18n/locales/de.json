@@ -1871,5 +1871,36 @@
       "csvRegistered": "Registriert",
       "csvFilename": "benutzer"
     }
+  },
+  "notificationPrefs": {
+    "title": "Benachrichtigungseinstellungen",
+    "subtitle": "Wähle, wie du benachrichtigt werden möchtest",
+    "saved": "Einstellungen gespeichert",
+    "channels": "Kanäle",
+    "types": "Typen",
+    "pushTitle": "Browser-Push-Benachrichtigungen",
+    "pushUnsupported": "Dein Browser unterstützt kein Push",
+    "pushDenied": "Berechtigung vom Browser blockiert",
+    "pushOn": "Auf diesem Gerät aktiv",
+    "pushOff": "Deaktiviert",
+    "pushFailed": "Fehlgeschlagen",
+    "pushDeniedHelp": "Um Push zu aktivieren, erlaube zuerst Benachrichtigungen über das Symbol neben der Adressleiste.",
+    "emailTitle": "E-Mail-Benachrichtigungen",
+    "emailDesc": "Buchungsbestätigungen, Rechnungen, Erinnerungen",
+    "inAppTitle": "In-App-Benachrichtigungen",
+    "inAppDesc": "Glocke oben rechts + Dashboard",
+    "bookingUpdates": "Buchungsupdates",
+    "bookingUpdatesDesc": "Genehmigung, Ablehnung, Statusänderungen",
+    "pickupReminders": "Abholerinnerungen",
+    "pickupRemindersDesc": "24 Stunden vor dem Abholdatum",
+    "paymentAlerts": "Zahlungsbenachrichtigungen",
+    "paymentAlertsDesc": "Erfolgreiche und fehlgeschlagene Zahlungen",
+    "marketingEmails": "Marketing-E-Mails",
+    "marketingDesc": "Angebote und Plattform-News",
+    "testButton": "Testbenachrichtigung senden",
+    "testHint": "Sendet eine Testbenachrichtigung an dich. Erscheint in der Glocke und, wenn Push aktiv ist, als Push-Benachrichtigung.",
+    "testTitle": "Testbenachrichtigung",
+    "testBody": "Dies ist ein Test. Wenn du diesen Push erhalten hast, funktioniert alles.",
+    "testSent": "Gesendet. Prüfe die Glocke oben rechts + die Push-Benachrichtigung."
   }
 }

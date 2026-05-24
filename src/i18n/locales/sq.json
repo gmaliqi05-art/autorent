@@ -1871,5 +1871,36 @@
       "csvRegistered": "Regjistruar",
       "csvFilename": "perdoruesit"
     }
+  },
+  "notificationPrefs": {
+    "title": "Preferencat e njoftimeve",
+    "subtitle": "Zgjidh si do te njoftohesh",
+    "saved": "Preferencat u ruajten",
+    "channels": "Kanalet",
+    "types": "Llojet",
+    "pushTitle": "Njoftime push ne shfletues",
+    "pushUnsupported": "Shfletuesi yt nuk e mbeshtet",
+    "pushDenied": "Te kerkohet leja nga shfletuesi (block)",
+    "pushOn": "Aktiv ne kete pajisje",
+    "pushOff": "I cakuar",
+    "pushFailed": "Deshtoi",
+    "pushDeniedHelp": "Per te aktivizuar push, fillimisht leje shfletuesin nga ikona afer shiritit te adreses.",
+    "emailTitle": "Njoftime me email",
+    "emailDesc": "Konfirmime rezervimi, fatura, kujtues",
+    "inAppTitle": "Njoftime ne app",
+    "inAppDesc": "Zilja lart djathtas + dashboard",
+    "bookingUpdates": "Perditesime rezervimi",
+    "bookingUpdatesDesc": "Aprovim, refuzim, ndryshim statusi",
+    "pickupReminders": "Kujtues per marrjen",
+    "pickupRemindersDesc": "24 ore para datës se marrjes",
+    "paymentAlerts": "Alerte pagese",
+    "paymentAlertsDesc": "Pagesa te suksesshme, te deshtuara",
+    "marketingEmails": "Email-e marketingu",
+    "marketingDesc": "Oferta dhe lajme te platformes",
+    "testButton": "Testo njoftim",
+    "testHint": "Dergon nje njoftim test te ky user. E sheh ne zile + (nese push eshte aktiv) si push notification.",
+    "testTitle": "Test njoftim",
+    "testBody": "Ky eshte nje test. Nese e merr push-in, gjithcka funksionon.",
+    "testSent": "U dergua. Kontrollo zilen lart djathtas + njoftimin push."
   }
 }
