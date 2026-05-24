@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import type { NavGroup } from '../../lib/adminNav';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../LanguageSwitcher';
+import { useStandaloneMode } from '../../lib/useStandaloneMode';
 
 
 interface NavItem {
@@ -43,6 +44,7 @@ export default function DashboardLayout({ children, title, navItems, navGroups }
   }
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const { isAppMode } = useStandaloneMode();
 
   async function handleSignOut() {
     await signOut();
@@ -124,7 +126,7 @@ export default function DashboardLayout({ children, title, navItems, navGroups }
             )}
           </nav>
 
-          <div className="border-t border-gray-100 p-4">
+          <div className={`border-t border-gray-100 p-4 ${isAppMode ? 'pb-20' : ''}`}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-sm font-bold text-primary-700">
                 {profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
@@ -164,7 +166,7 @@ export default function DashboardLayout({ children, title, navItems, navGroups }
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className={`p-4 sm:p-6 lg:p-8 ${isAppMode ? 'pb-24' : ''}`}>
           {children}
         </main>
       </div>

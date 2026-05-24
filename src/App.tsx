@@ -97,7 +97,7 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
       {!isAppMode && <Navbar />}
       {/* Ne app mode shtojme padding-top per status bar/notch.
           Padding-bottom aplikohet automatikisht ne body permes index.css. */}
-      <div className={`flex-1 ${isAppMode ? 'pt-safe' : ''}`}>{children}</div>
+      <div className={`flex-1 ${isAppMode ? 'pt-safe pb-20' : ''}`}>{children}</div>
       {!isAppMode && <Footer />}
     </div>
   );
