@@ -1871,5 +1871,36 @@
       "csvRegistered": "Registered",
       "csvFilename": "users"
     }
+  },
+  "notificationPrefs": {
+    "title": "Notification preferences",
+    "subtitle": "Choose how you'd like to be notified",
+    "saved": "Preferences saved",
+    "channels": "Channels",
+    "types": "Types",
+    "pushTitle": "Browser push notifications",
+    "pushUnsupported": "Your browser doesn't support push",
+    "pushDenied": "Permission blocked by browser",
+    "pushOn": "Active on this device",
+    "pushOff": "Disabled",
+    "pushFailed": "Failed",
+    "pushDeniedHelp": "To enable push, first allow notifications from the icon next to the address bar.",
+    "emailTitle": "Email notifications",
+    "emailDesc": "Booking confirmations, invoices, reminders",
+    "inAppTitle": "In-app notifications",
+    "inAppDesc": "Bell icon top right + dashboard",
+    "bookingUpdates": "Booking updates",
+    "bookingUpdatesDesc": "Approval, rejection, status changes",
+    "pickupReminders": "Pickup reminders",
+    "pickupRemindersDesc": "24 hours before pickup date",
+    "paymentAlerts": "Payment alerts",
+    "paymentAlertsDesc": "Successful and failed payments",
+    "marketingEmails": "Marketing emails",
+    "marketingDesc": "Offers and platform news",
+    "testButton": "Send test notification",
+    "testHint": "Sends a test notification to you. Appears in the bell icon and, if push is enabled, as a push notification.",
+    "testTitle": "Test notification",
+    "testBody": "This is a test. If you received this push, everything works.",
+    "testSent": "Sent. Check the bell icon top right + push notification."
   }
 }
