@@ -49,6 +49,36 @@ interface Subscription {
   auth_key: string;
 }
 
+type LogStatus = "sent" | "partial" | "failed" | "no_subscriptions" | "push_disabled" | "no_vapid";
+
+async function logResult(
+  supabase: ReturnType<typeof createClient>,
+  fields: {
+    user_id?: string;
+    notification_id?: string | null;
+    status: LogStatus;
+    subscriptions_total?: number;
+    sent_count?: number;
+    expired_count?: number;
+    error_message?: string;
+  },
+): Promise<void> {
+  // Fire-and-forget; nese log-imi deshton vete, mos blockoji response.
+  try {
+    await supabase.from("push_send_log").insert({
+      user_id: fields.user_id ?? null,
+      notification_id: fields.notification_id ?? null,
+      status: fields.status,
+      subscriptions_total: fields.subscriptions_total ?? 0,
+      sent_count: fields.sent_count ?? 0,
+      expired_count: fields.expired_count ?? 0,
+      error_message: fields.error_message ?? null,
+    });
+  } catch (err) {
+    console.error("[push] log insert failed:", err);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -63,11 +93,13 @@ Deno.serve(async (req: Request) => {
   if (!supabaseUrl || !serviceKey) {
     return new Response("Supabase env missing", { status: 500 });
   }
-  if (!vapidPublic || !vapidPrivate) {
-    return new Response("VAPID keys not configured", { status: 500 });
-  }
 
   const supabase = createClient(supabaseUrl, serviceKey);
+
+  if (!vapidPublic || !vapidPrivate) {
+    await logResult(supabase, { status: "no_vapid", error_message: "VAPID keys not configured" });
+    return new Response("VAPID keys not configured", { status: 500 });
+  }
 
   // Auth: ose Bearer = service_role, ose x-push-secret = vault push_secret.
   const authHeader = req.headers.get("authorization") || "";
@@ -103,7 +135,14 @@ Deno.serve(async (req: Request) => {
     .eq("user_id", payload.user_id)
     .maybeSingle();
 
+  const notificationId = (payload.data?.notification_id as string | undefined) ?? null;
+
   if (prefs && prefs.push_enabled === false) {
+    await logResult(supabase, {
+      user_id: payload.user_id,
+      notification_id: notificationId,
+      status: "push_disabled",
+    });
     return new Response(
       JSON.stringify({ skipped: true, reason: "push_disabled" }),
       { status: 200, headers: { "Content-Type": "application/json" } },
@@ -117,9 +156,20 @@ Deno.serve(async (req: Request) => {
     .eq("user_id", payload.user_id);
 
   if (subsErr) {
+    await logResult(supabase, {
+      user_id: payload.user_id,
+      notification_id: notificationId,
+      status: "failed",
+      error_message: `DB error: ${subsErr.message}`,
+    });
     return new Response(`DB error: ${subsErr.message}`, { status: 500 });
   }
   if (!subs || subs.length === 0) {
+    await logResult(supabase, {
+      user_id: payload.user_id,
+      notification_id: notificationId,
+      status: "no_subscriptions",
+    });
     return new Response(
       JSON.stringify({ sent: 0, reason: "no_subscriptions" }),
       { status: 200, headers: { "Content-Type": "application/json" } },
@@ -139,6 +189,7 @@ Deno.serve(async (req: Request) => {
 
   let sent = 0;
   const expiredIds: string[] = [];
+  const errors: string[] = [];
 
   await Promise.all(
     (subs as Subscription[]).map(async (sub) => {
@@ -161,6 +212,7 @@ Deno.serve(async (req: Request) => {
           // Subscription ka skaduar — fshije
           expiredIds.push(sub.id);
         } else {
+          errors.push(`${statusCode ?? "?"}: ${(err as Error).message ?? "unknown"}`);
           console.error("[push] send failed:", statusCode, err);
         }
       }
@@ -169,13 +221,31 @@ Deno.serve(async (req: Request) => {
 
   if (expiredIds.length > 0) {
     await supabase.from("push_subscriptions").delete().in("id", expiredIds);
-  } else if (sent > 0) {
+  }
+  if (sent > 0) {
     // perditeso last_used_at
     await supabase
       .from("push_subscriptions")
       .update({ last_used_at: new Date().toISOString() })
       .eq("user_id", payload.user_id);
   }
+
+  const logStatus: LogStatus =
+    sent === subs.length
+      ? "sent"
+      : sent > 0
+        ? "partial"
+        : "failed";
+
+  await logResult(supabase, {
+    user_id: payload.user_id,
+    notification_id: notificationId,
+    status: logStatus,
+    subscriptions_total: subs.length,
+    sent_count: sent,
+    expired_count: expiredIds.length,
+    error_message: errors.length > 0 ? errors.join("; ").slice(0, 1000) : undefined,
+  });
 
   return new Response(
     JSON.stringify({ sent, expired: expiredIds.length, total: subs.length }),
