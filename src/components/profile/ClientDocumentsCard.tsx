@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Upload, ShieldCheck, ShieldAlert, Clock, FileText, Sparkles, ExternalLink } from 'lucide-react';
+import { Loader2, Upload, ShieldCheck, ShieldAlert, Clock, FileText, Sparkles, ExternalLink, AlertTriangle, XCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { startIdentityVerification } from '../../lib/identityService';
@@ -161,7 +161,9 @@ export default function ClientDocumentsCard({ userId }: { userId: string }) {
       ? { color: 'bg-red-50 text-red-700 border-red-200', icon: <ShieldAlert className="w-4 h-4" />, label: t('clientDash.profile.docs.statusRejected') }
       : doc.verified
         ? { color: 'bg-green-50 text-green-700 border-green-200', icon: <ShieldCheck className="w-4 h-4" />, label: t('clientDash.profile.docs.statusVerified') }
-        : { color: 'bg-amber-50 text-amber-700 border-amber-200', icon: <Clock className="w-4 h-4" />, label: t('clientDash.profile.docs.statusPending') };
+        : doc.stripe_verification_status === 'requires_action'
+          ? { color: 'bg-orange-50 text-orange-700 border-orange-200', icon: <AlertTriangle className="w-4 h-4" />, label: t('clientDash.profile.docs.statusRequiresAction', 'Kerkohet veprim') }
+          : { color: 'bg-amber-50 text-amber-700 border-amber-200', icon: <Clock className="w-4 h-4" />, label: t('clientDash.profile.docs.statusPending') };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6 mt-6">
@@ -201,6 +203,22 @@ export default function ClientDocumentsCard({ userId }: { userId: string }) {
                   {t('clientDash.profile.docs.stripeProcessing', 'Verifikimi po procesohet. Do njoftoheni kur te perfundoje.')}
                 </p>
               )}
+              {doc?.stripe_verification_status === 'requires_action' && (
+                <div className="mt-2 rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-xs text-orange-800 flex items-start gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  <span>
+                    {t('clientDash.profile.docs.stripeRequiresAction', 'Stripe kerkon veprim shtese. Klikoni "Vazhdo verifikimin" me poshte per te perfunduar (psh re-upload i dokumenteve me cilesi me te mire).')}
+                  </span>
+                </div>
+              )}
+              {doc?.stripe_verification_status === 'canceled' && (
+                <div className="mt-2 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-dark-600 flex items-start gap-2">
+                  <XCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  <span>
+                    {t('clientDash.profile.docs.stripeCanceled', 'Verifikimi u anulua. Provoni perseri.')}
+                  </span>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={async () => {
@@ -218,7 +236,11 @@ export default function ClientDocumentsCard({ userId }: { userId: string }) {
                 {startingIdentity
                   ? <Loader2 className="w-4 h-4 animate-spin" />
                   : <ExternalLink className="w-4 h-4" />}
-                {t('clientDash.profile.docs.startStripeVerification', 'Verifiko tani')}
+                {doc?.stripe_verification_status === 'requires_action'
+                  ? t('clientDash.profile.docs.continueStripeVerification', 'Vazhdo verifikimin')
+                  : doc?.stripe_verification_status === 'canceled'
+                    ? t('clientDash.profile.docs.retryStripeVerification', 'Riprovo verifikimin')
+                    : t('clientDash.profile.docs.startStripeVerification', 'Verifiko tani')}
               </button>
             </div>
           </div>
