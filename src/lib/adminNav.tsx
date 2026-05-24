@@ -51,6 +51,7 @@ export const adminNavGroups: NavGroup[] = [
       { labelKey: 'adminNav.notificationDesign', label: 'Dizajni Badge & Push', path: '/admin/notification-design', icon: <Palette className="w-4 h-4" /> },
       { labelKey: 'adminNav.testNotifications', label: 'Test Njoftimet', path: '/admin/test-njoftimet', icon: <TestTube className="w-4 h-4" /> },
       { labelKey: 'adminNav.sendNotifications', label: 'Dergo Njoftime', path: '/admin/dergo-njoftime', icon: <Send className="w-4 h-4" /> },
+      { labelKey: 'adminNav.pushLogs', label: 'Push Logs', path: '/admin/push-logs', icon: <Bell className="w-4 h-4" /> },
     ],
   },
   {
