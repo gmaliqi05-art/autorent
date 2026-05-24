@@ -12,7 +12,7 @@
  *  - Super admin: Dashboard / Kompani / Perdorues / Cilesimet
  */
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Car, CalendarDays, Building2, Settings, LayoutDashboard } from 'lucide-react';
+import { Home, Car, CalendarDays, Building2, Settings, LayoutDashboard, User, LogIn } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -41,20 +41,20 @@ function getTabs(role: string | undefined, isLoggedIn: boolean, t: (k: string) =
     ];
   }
 
-  // Klient i kycur: tre tabs te thelluara me nje sherbim primar
   if (isLoggedIn) {
     return [
       { to: '/', label: t('nav.home'), icon: <Home className="w-5 h-5" /> },
       { to: '/automjetet', label: t('nav.vehicles'), icon: <Car className="w-5 h-5" />, prefix: true },
       { to: '/dashboard/rezervimet', label: t('nav.bookings'), icon: <CalendarDays className="w-5 h-5" />, prefix: true },
+      { to: '/dashboard/profili', label: t('nav.profile'), icon: <User className="w-5 h-5" />, prefix: true },
     ];
   }
 
-  // Visitor (i pa-kyqur): pa link te login/profile, vetem navigim publik
   return [
     { to: '/', label: t('nav.home'), icon: <Home className="w-5 h-5" /> },
     { to: '/automjetet', label: t('nav.vehicles'), icon: <Car className="w-5 h-5" />, prefix: true },
     { to: '/per-platformen', label: t('nav.about'), icon: <Building2 className="w-5 h-5" /> },
+    { to: '/login', label: t('nav.login'), icon: <LogIn className="w-5 h-5" /> },
   ];
 }
 
