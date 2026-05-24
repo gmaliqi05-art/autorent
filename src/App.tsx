@@ -5,7 +5,6 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import MobileBottomNav from './components/layout/MobileBottomNav';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import ChatWidget from './components/chat/ChatWidget';
 import CookieConsent from './components/CookieConsent';
 import { useStandaloneMode } from './lib/useStandaloneMode';
 
@@ -175,7 +174,7 @@ export default function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
-        <ChatWidget />
+
         <CookieConsent />
         <AppModeBottomNav />
       </AuthProvider>
