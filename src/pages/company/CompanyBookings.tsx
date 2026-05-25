@@ -230,6 +230,8 @@ export default function CompanyBookings() {
         type: 'booking_approved',
         referenceId: booking.id,
         referenceType: 'booking',
+        templateKey: 'booking_approved',
+        templateVars: { companyName: company.name, vehicle: vehicleName },
       });
 
       await loadData();
@@ -282,6 +284,8 @@ export default function CompanyBookings() {
         type: 'booking_rejected',
         referenceId: booking.id,
         referenceType: 'booking',
+        templateKey: 'booking_rejected',
+        templateVars: { companyName: company.name, vehicle: vehicleName, reason },
       });
 
       await loadData();
@@ -347,6 +351,8 @@ export default function CompanyBookings() {
           type: 'booking_completed',
           referenceId: booking.id,
           referenceType: 'booking',
+          templateKey: 'booking_completed',
+          templateVars: { companyName: company.name, vehicle: vehicleName },
         });
       }
 
