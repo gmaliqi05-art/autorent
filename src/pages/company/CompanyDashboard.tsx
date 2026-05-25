@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Vehicle, Booking, Company, SubscriptionPlan } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import SharedEmptyState from '../../components/common/EmptyState';
 import { companyNavItems } from '../../lib/companyNav';
 import { formatDate, bookingStatusColors, bookingStatusLabel } from '../../lib/companyDashHelpers';
 
@@ -301,10 +302,6 @@ function StatCard({ icon, bg, value, label }: { icon: React.ReactNode; bg: strin
 }
 
 function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <div className="p-10 text-center">
-      <div className="mx-auto mb-2">{icon}</div>
-      <p className="text-sm text-dark-500">{text}</p>
-    </div>
-  );
+  // Wrapper i thjeshte qe del-on ne komponentin e perbashket per BC.
+  return <SharedEmptyState icon={icon} description={text} />;
 }
