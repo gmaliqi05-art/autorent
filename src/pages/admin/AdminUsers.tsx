@@ -272,7 +272,7 @@ export default function AdminUsers() {
                       <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-white shrink-0">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
                               {u.full_name?.charAt(0)?.toUpperCase() || 'U'}
                             </div>
                             <div className="min-w-0">
@@ -341,7 +341,7 @@ export default function AdminUsers() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-bold text-white shrink-0">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-lg font-bold text-white shrink-0">
                   {selectedUser.full_name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
                 <div>

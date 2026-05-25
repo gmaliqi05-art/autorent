@@ -124,28 +124,28 @@ export default function AdminTransactions() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           icon={<DollarSign className="w-5 h-5 text-white" />}
-          bg="bg-white border border-gray-200"
+          bg="bg-gradient-to-br from-primary-600 to-primary-700"
           value={`${totalVolume.toFixed(0)} EUR`}
           label={t('adminDash.transactions.statVolume')}
           gradient
         />
         <StatCard
           icon={<CreditCard className="w-5 h-5 text-white" />}
-          bg="bg-white border border-gray-200"
+          bg="bg-gradient-to-br from-green-600 to-emerald-700"
           value={`${successRate.toFixed(1)}%`}
           label={t('adminDash.transactions.statSuccessRate')}
           gradient
         />
         <StatCard
           icon={<FileText className="w-5 h-5 text-white" />}
-          bg="bg-white border border-gray-200"
+          bg="bg-gradient-to-br from-blue-600 to-indigo-700"
           value={`${avgTransaction.toFixed(0)} EUR`}
           label={t('adminDash.transactions.statAvgValue')}
           gradient
         />
         <StatCard
           icon={<Building2 className="w-5 h-5 text-white" />}
-          bg="bg-white border border-gray-200"
+          bg="bg-gradient-to-br from-rose-600 to-red-700"
           value={failedCount.toString()}
           label={t('adminDash.transactions.statFailed')}
           gradient

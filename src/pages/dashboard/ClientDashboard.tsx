@@ -154,7 +154,7 @@ export default function ClientDashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 text-white">
+        <div className="bg-gradient-to-br from-primary-600 to-purple-700 rounded-2xl p-6 text-white">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
               <DollarSign className="w-6 h-6" />
@@ -167,7 +167,7 @@ export default function ClientDashboard() {
           <p className="text-sm text-white/80">{t('clientDash.overview.totalPaid')}</p>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 text-white">
+        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 text-white">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
               <TrendingUp className="w-6 h-6" />
