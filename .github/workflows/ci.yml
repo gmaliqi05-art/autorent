@@ -45,6 +45,14 @@ jobs:
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: placeholder-anon-key
           VITE_SITE_URL: https://rentcars.life
+          # Versioni i release-it qe lidhet me Sentry (commit SHA)
+          VITE_APP_VERSION: ${{ github.sha }}
+          # Sentry source maps upload — aktiv vetem nese secrets jane configured
+          # Vendos ne GitHub: Settings → Secrets → Actions:
+          #   SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
 
       - name: Check build output size
         run: |

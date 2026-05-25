@@ -1,14 +1,37 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
+
+// Sentry vite plugin aktivizohet vetem nese keto env vars jane set:
+//   SENTRY_AUTH_TOKEN (organization auth token; vendos ne CI secrets)
+//   SENTRY_ORG
+//   SENTRY_PROJECT
+// Pa keto, source maps gjenerohen lokalisht por nuk ngarkohen.
+const sentryEnabled = !!(process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT);
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    ...(sentryEnabled
+      ? [
+          sentryVitePlugin({
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            release: { name: process.env.VITE_APP_VERSION || process.env.GITHUB_SHA },
+            sourcemaps: { assets: './dist/**' },
+            telemetry: false,
+          }),
+        ]
+      : []),
+  ],
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
   build: {
     chunkSizeWarningLimit: 600,
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks: (id) => {
