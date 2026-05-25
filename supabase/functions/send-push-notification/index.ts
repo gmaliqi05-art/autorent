@@ -90,6 +90,11 @@ const TEMPLATES: Record<string, Partial<Record<Lang, Template>>> = {
     en: { title: "Pickup reminder", body: "Pickup for {{vehicle}} is tomorrow at {{pickupTime}}." },
     de: { title: "Abholerinnerung", body: "Abholung von {{vehicle}} ist morgen um {{pickupTime}}." },
   },
+  identity_stale: {
+    sq: { title: "Verifikimi i patentes", body: "Verifikimi ngeci ne procesim. Provoni perseri nga profili." },
+    en: { title: "Identity verification", body: "Verification stalled. Please retry from your profile." },
+    de: { title: "Identitaetspruefung", body: "Pruefung blieb haengen. Bitte erneut versuchen im Profil." },
+  },
 };
 
 function renderTemplate(tpl: Template, vars: Record<string, unknown>): Template {
