@@ -71,7 +71,11 @@ Deno.serve(async (req: Request) => {
     }
 
     const stripe = new Stripe(stripeSecret, { apiVersion: "2024-12-18.acacia" });
-    const cancelled = await stripe.paymentIntents.cancel(booking.cash_hold_payment_intent_id);
+    const cancelled = await stripe.paymentIntents.cancel(
+      booking.cash_hold_payment_intent_id,
+      undefined,
+      { idempotencyKey: `release-${bookingId}` },
+    );
 
     if (cancelled.status !== "canceled") {
       return jsonResponse(req, {

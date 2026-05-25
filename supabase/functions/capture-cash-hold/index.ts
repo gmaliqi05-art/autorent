@@ -77,9 +77,14 @@ Deno.serve(async (req: Request) => {
       : maxAmount;
 
     const stripe = new Stripe(stripeSecret, { apiVersion: "2024-12-18.acacia" });
+    // Idempotency key i lidhur me bookingId + amount + 'capture' — Stripe garanton
+    // qe retry-t e te njejtit request kthejne te njejtin response (mbron nga
+    // double-capture ne network failures). Amount perfshihet sepse partial captures
+    // me amount-e te ndryshme jane requests semantikisht te ndryshme.
     const captured = await stripe.paymentIntents.capture(
       booking.cash_hold_payment_intent_id,
       { amount_to_capture: captureAmount },
+      { idempotencyKey: `capture-${bookingId}-${captureAmount}` },
     );
 
     if (captured.status !== "succeeded") {
