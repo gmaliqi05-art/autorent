@@ -1,22 +1,27 @@
 import { useState, useEffect } from 'react';
 import { DollarSign, Building2, User, CreditCard, Wallet, Building, Banknote, FileText, Download, Search, Receipt } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import type { Booking, Company, Vehicle, Invoice } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
+import { localeFromI18n } from '../../lib/clientDashHelpers';
 import { exportToCSV } from '../../lib/csvExport';
 
-const paymentMethodLabels: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  stripe: { label: 'Karte Krediti', icon: <CreditCard className="w-3.5 h-3.5" />, color: 'bg-blue-50 text-blue-700' },
-  paypal: { label: 'PayPal', icon: <Wallet className="w-3.5 h-3.5" />, color: 'bg-yellow-50 text-yellow-700' },
-  bank_transfer: { label: 'Transfer Bankar', icon: <Building className="w-3.5 h-3.5" />, color: 'bg-green-50 text-green-700' },
-  cash: { label: 'Kesh', icon: <Banknote className="w-3.5 h-3.5" />, color: 'bg-gray-50 text-gray-700' },
+type PaymentMethodMeta = { labelKey: string; icon: React.ReactNode; color: string };
+type PaymentStatusMeta = { labelKey: string; color: string };
+
+const paymentMethodMeta: Record<string, PaymentMethodMeta> = {
+  stripe: { labelKey: 'adminDash.transactions.methodStripe', icon: <CreditCard className="w-3.5 h-3.5" />, color: 'bg-blue-50 text-blue-700' },
+  paypal: { labelKey: 'adminDash.transactions.methodPaypal', icon: <Wallet className="w-3.5 h-3.5" />, color: 'bg-yellow-50 text-yellow-700' },
+  bank_transfer: { labelKey: 'adminDash.transactions.methodBank', icon: <Building className="w-3.5 h-3.5" />, color: 'bg-green-50 text-green-700' },
+  cash: { labelKey: 'adminDash.transactions.methodCash', icon: <Banknote className="w-3.5 h-3.5" />, color: 'bg-gray-50 text-gray-700' },
 };
 
-const paymentStatusLabels: Record<string, { label: string; color: string }> = {
-  paid: { label: 'Paguar', color: 'bg-green-100 text-green-700' },
-  pending: { label: 'Ne pritje', color: 'bg-yellow-100 text-yellow-700' },
-  failed: { label: 'Deshtuar', color: 'bg-red-100 text-red-700' },
+const paymentStatusMeta: Record<string, PaymentStatusMeta> = {
+  paid: { labelKey: 'adminDash.transactions.statusPaid', color: 'bg-green-100 text-green-700' },
+  pending: { labelKey: 'adminDash.transactions.statusPending', color: 'bg-yellow-100 text-yellow-700' },
+  failed: { labelKey: 'adminDash.transactions.statusFailed', color: 'bg-red-100 text-red-700' },
 };
 
 type BookingWithDetails = Booking & {
@@ -25,6 +30,8 @@ type BookingWithDetails = Booking & {
 };
 
 export default function AdminTransactions() {
+  const { t, i18n } = useTranslation();
+  const dateLocale = localeFromI18n(i18n.language);
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,21 +85,23 @@ export default function AdminTransactions() {
   function handleExportCSV() {
     const data = filtered.map(b => {
       const inv = getInvoiceForBooking(b.id);
+      const methodMeta = b.payment_method ? paymentMethodMeta[b.payment_method] : null;
+      const statusMeta = b.payment_status ? paymentStatusMeta[b.payment_status] : null;
       return {
-        ID: b.id.substring(0, 8),
-        Fatura: inv?.invoice_number || '-',
-        Data: new Date(b.created_at).toLocaleDateString('sq-AL'),
-        Klienti: b.client_name,
-        Email: b.client_email,
-        Kompania: b.company?.name || '-',
-        Automjeti: b.vehicle ? `${b.vehicle.brand} ${b.vehicle.model}` : '-',
-        Dite: b.total_days,
-        Metoda: b.payment_method ? (paymentMethodLabels[b.payment_method]?.label || b.payment_method) : '-',
-        Statusi: b.payment_status ? (paymentStatusLabels[b.payment_status]?.label || b.payment_status) : '-',
-        Shuma: `${b.total_price} EUR`,
+        [t('adminDash.transactions.csvId')]: b.id.substring(0, 8),
+        [t('adminDash.transactions.csvInvoice')]: inv?.invoice_number || '-',
+        [t('adminDash.transactions.csvDate')]: new Date(b.created_at).toLocaleDateString(dateLocale),
+        [t('adminDash.transactions.csvClient')]: b.client_name,
+        [t('adminDash.transactions.csvEmail')]: b.client_email,
+        [t('adminDash.transactions.csvCompany')]: b.company?.name || '-',
+        [t('adminDash.transactions.csvVehicle')]: b.vehicle ? `${b.vehicle.brand} ${b.vehicle.model}` : '-',
+        [t('adminDash.transactions.csvDays')]: b.total_days,
+        [t('adminDash.transactions.csvMethod')]: methodMeta ? t(methodMeta.labelKey) : (b.payment_method || '-'),
+        [t('adminDash.transactions.csvStatus')]: statusMeta ? t(statusMeta.labelKey) : (b.payment_status || '-'),
+        [t('adminDash.transactions.csvAmount')]: `${b.total_price} EUR`,
       };
     });
-    exportToCSV(data, 'transaksionet');
+    exportToCSV(data, t('adminDash.transactions.csvFilename'));
   }
 
   if (loading) {
@@ -108,8 +117,8 @@ export default function AdminTransactions() {
   return (
     <DashboardLayout title="Admin" navItems={adminNavItems} navGroups={adminNavGroups}>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-dark-950">Transaksionet</h1>
-        <p className="text-dark-500 mt-1 text-[15px]">Te gjitha pagesat dhe transaksionet ne platforme</p>
+        <h1 className="text-2xl font-bold text-dark-950">{t('adminDash.transactions.pageTitle')}</h1>
+        <p className="text-dark-500 mt-1 text-[15px]">{t('adminDash.transactions.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -117,84 +126,84 @@ export default function AdminTransactions() {
           icon={<DollarSign className="w-5 h-5 text-white" />}
           bg="bg-white border border-gray-200"
           value={`${totalVolume.toFixed(0)} EUR`}
-          label="Volumet total"
+          label={t('adminDash.transactions.statVolume')}
           gradient
         />
         <StatCard
           icon={<CreditCard className="w-5 h-5 text-white" />}
           bg="bg-white border border-gray-200"
           value={`${successRate.toFixed(1)}%`}
-          label="Success rate"
+          label={t('adminDash.transactions.statSuccessRate')}
           gradient
         />
         <StatCard
           icon={<FileText className="w-5 h-5 text-white" />}
           bg="bg-white border border-gray-200"
           value={`${avgTransaction.toFixed(0)} EUR`}
-          label="Vlera mesatare"
+          label={t('adminDash.transactions.statAvgValue')}
           gradient
         />
         <StatCard
           icon={<Building2 className="w-5 h-5 text-white" />}
           bg="bg-white border border-gray-200"
           value={failedCount.toString()}
-          label="Pagesa te deshtuara"
+          label={t('adminDash.transactions.statFailed')}
           gradient
         />
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 mb-8 p-6">
-        <h2 className="font-semibold text-dark-950 mb-4">Filtra</h2>
+        <h2 className="font-semibold text-dark-950 mb-4">{t('adminDash.transactions.filters')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-xs font-medium text-dark-600 mb-2">Kerko</label>
+            <label className="block text-xs font-medium text-dark-600 mb-2">{t('adminDash.transactions.filterSearchLabel')}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                placeholder="Klienti, email, kompania..."
+                placeholder={t('adminDash.transactions.filterSearchPlaceholder')}
                 className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-dark-600 mb-2">Kompania</label>
+            <label className="block text-xs font-medium text-dark-600 mb-2">{t('adminDash.transactions.filterCompany')}</label>
             <select
               value={filterCompany}
               onChange={e => setFilterCompany(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
             >
-              <option value="">Te gjitha</option>
+              <option value="">{t('adminDash.transactions.filterAll')}</option>
               {companies.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-dark-600 mb-2">Metoda e pageses</label>
+            <label className="block text-xs font-medium text-dark-600 mb-2">{t('adminDash.transactions.filterMethod')}</label>
             <select
               value={filterMethod}
               onChange={e => setFilterMethod(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
             >
-              <option value="">Te gjitha</option>
-              {Object.entries(paymentMethodLabels).map(([key, { label }]) => (
-                <option key={key} value={key}>{label}</option>
+              <option value="">{t('adminDash.transactions.filterAll')}</option>
+              {Object.entries(paymentMethodMeta).map(([key, { labelKey }]) => (
+                <option key={key} value={key}>{t(labelKey)}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-dark-600 mb-2">Statusi i pageses</label>
+            <label className="block text-xs font-medium text-dark-600 mb-2">{t('adminDash.transactions.filterStatus')}</label>
             <select
               value={filterStatus}
               onChange={e => setFilterStatus(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
             >
-              <option value="">Te gjitha</option>
-              {Object.entries(paymentStatusLabels).map(([key, { label }]) => (
-                <option key={key} value={key}>{label}</option>
+              <option value="">{t('adminDash.transactions.filterAll')}</option>
+              {Object.entries(paymentStatusMeta).map(([key, { labelKey }]) => (
+                <option key={key} value={key}>{t(labelKey)}</option>
               ))}
             </select>
           </div>
@@ -203,24 +212,24 @@ export default function AdminTransactions() {
 
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-semibold text-dark-950">Transaksionet ({filtered.length})</h2>
+          <h2 className="font-semibold text-dark-950">{t('adminDash.transactions.transactionsCount', { count: filtered.length })}</h2>
           <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 text-xs font-semibold rounded-lg hover:bg-primary-100 transition-colors">
             <Download className="w-3.5 h-3.5" />
-            Exporto ne CSV
+            {t('adminDash.transactions.exportCsv')}
           </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-50">
-                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">ID & Data</th>
-                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Fatura</th>
-                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Klienti</th>
-                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Kompania</th>
-                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Automjeti</th>
-                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Metoda</th>
-                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Statusi</th>
-                <th className="text-right px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">Shuma</th>
+                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.transactions.thIdDate')}</th>
+                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.transactions.thInvoice')}</th>
+                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.transactions.thClient')}</th>
+                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.transactions.thCompany')}</th>
+                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.transactions.thVehicle')}</th>
+                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.transactions.thMethod')}</th>
+                <th className="text-left px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.transactions.thStatus')}</th>
+                <th className="text-right px-6 py-3 text-[11px] font-semibold text-dark-400 uppercase tracking-wider">{t('adminDash.transactions.thAmount')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -228,23 +237,23 @@ export default function AdminTransactions() {
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center">
                     <FileText className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                    <p className="text-sm text-dark-400">Nuk ka transaksione me keto kritere</p>
+                    <p className="text-sm text-dark-400">{t('adminDash.transactions.emptyState')}</p>
                   </td>
                 </tr>
               ) : (
                 filtered.map(booking => {
-                  const paymentInfo = booking.payment_method ? paymentMethodLabels[booking.payment_method] : null;
-                  const statusInfo = booking.payment_status ? paymentStatusLabels[booking.payment_status] : paymentStatusLabels.pending;
+                  const paymentInfo = booking.payment_method ? paymentMethodMeta[booking.payment_method] : null;
+                  const statusInfo = booking.payment_status ? paymentStatusMeta[booking.payment_status] : paymentStatusMeta.pending;
                   const invoice = getInvoiceForBooking(booking.id);
                   return (
                     <tr key={booking.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-4">
                         <p className="text-xs font-mono text-dark-400 mb-0.5">#{booking.id.substring(0, 8)}</p>
                         <p className="text-sm font-medium text-dark-900">
-                          {new Date(booking.created_at).toLocaleDateString('sq-AL')}
+                          {new Date(booking.created_at).toLocaleDateString(dateLocale)}
                         </p>
                         <p className="text-[11px] text-dark-400">
-                          {new Date(booking.created_at).toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(booking.created_at).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </td>
                       <td className="px-6 py-4">
@@ -287,13 +296,13 @@ export default function AdminTransactions() {
                         <p className="text-sm font-medium text-dark-900">
                           {booking.vehicle ? `${booking.vehicle.brand} ${booking.vehicle.model}` : '-'}
                         </p>
-                        <p className="text-[11px] text-dark-400">{booking.total_days} dite</p>
+                        <p className="text-[11px] text-dark-400">{t('adminDash.transactions.daysLabel', { count: booking.total_days })}</p>
                       </td>
                       <td className="px-6 py-4">
                         {paymentInfo ? (
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${paymentInfo.color}`}>
                             {paymentInfo.icon}
-                            {paymentInfo.label}
+                            {t(paymentInfo.labelKey)}
                           </span>
                         ) : (
                           <span className="text-xs text-dark-400">-</span>
@@ -301,13 +310,13 @@ export default function AdminTransactions() {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
-                          {statusInfo.label}
+                          {t(statusInfo.labelKey)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <p className="text-sm font-bold text-dark-950">{booking.total_price} EUR</p>
                         {booking.deposit_amount && (
-                          <p className="text-[11px] text-dark-400">Depozite: {booking.deposit_amount} EUR</p>
+                          <p className="text-[11px] text-dark-400">{t('adminDash.transactions.depositLabel', { amount: booking.deposit_amount })}</p>
                         )}
                       </td>
                     </tr>

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Shield, Lock, Save, Loader2, CheckCircle, AlertTriangle, Trash2, Eye, EyeOff, Search, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
-import { format } from 'date-fns';
+import { localeFromI18n } from '../../lib/clientDashHelpers';
 
 interface DeleteRequest {
   id: string;
@@ -34,6 +35,7 @@ const defaultPINSettings: PINSettings = {
 };
 
 export default function AdminPINSecurity() {
+  const { t, i18n } = useTranslation();
   const [requests, setRequests] = useState<DeleteRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<PINSettings>(defaultPINSettings);
@@ -57,7 +59,7 @@ export default function AdminPINSecurity() {
       (profiles || []).forEach((p: any) => { profileMap[p.id] = p; });
       setRequests(deleteReqs.map((r: any) => ({
         ...r,
-        user_name: profileMap[r.user_id]?.full_name || 'Pa emer',
+        user_name: profileMap[r.user_id]?.full_name || t('adminDash.pinSecurity.noName'),
         user_email: profileMap[r.user_id]?.email || '',
       })));
     } else {
@@ -93,18 +95,18 @@ export default function AdminPINSecurity() {
   };
 
   return (
-    <DashboardLayout navItems={adminNavItems} navGroups={adminNavGroups} title="Fshirje e Sigurt (PIN)">
+    <DashboardLayout navItems={adminNavItems} navGroups={adminNavGroups} title={t('adminDash.pinSecurity.title')}>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Fshirje e Sigurt (PIN)</h1>
-          <p className="text-gray-500 text-sm mt-1">Menaxho kerkimet per fshirje llogarie dhe cilesimet e sigurise</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('adminDash.pinSecurity.title')}</h1>
+          <p className="text-gray-500 text-sm mt-1">{t('adminDash.pinSecurity.subtitle')}</p>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label: 'Kerkesa ne pritje', value: requests.filter(r => r.status === 'pending').length, color: 'orange' },
-            { label: 'Te aprovuara', value: requests.filter(r => r.status === 'approved').length, color: 'green' },
-            { label: 'Te refuzuara', value: requests.filter(r => r.status === 'rejected').length, color: 'red' },
+            { label: t('adminDash.pinSecurity.statPending'), value: requests.filter(r => r.status === 'pending').length, color: 'orange' },
+            { label: t('adminDash.pinSecurity.statApproved'), value: requests.filter(r => r.status === 'approved').length, color: 'green' },
+            { label: t('adminDash.pinSecurity.statRejected'), value: requests.filter(r => r.status === 'rejected').length, color: 'red' },
           ].map(({ label, value, color }) => (
             <div key={label} className={`bg-${color}-50 border border-${color}-100 rounded-xl p-4 flex items-center gap-4`}>
               <div className={`w-10 h-10 rounded-xl bg-${color}-100 flex items-center justify-center`}>
@@ -119,10 +121,10 @@ export default function AdminPINSecurity() {
         </div>
 
         <div className="flex gap-2">
-          {(['requests', 'settings'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-primary-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}>
-              {t === 'requests' ? 'Kerkesa per Fshirje' : 'Cilesimet PIN'}
+          {(['requests', 'settings'] as const).map(tabKey => (
+            <button key={tabKey} onClick={() => setTab(tabKey)}
+              className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === tabKey ? 'bg-primary-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}>
+              {tabKey === 'requests' ? t('adminDash.pinSecurity.tabRequests') : t('adminDash.pinSecurity.tabSettings')}
             </button>
           ))}
         </div>
@@ -132,7 +134,7 @@ export default function AdminPINSecurity() {
             <div className="p-4 border-b border-gray-100">
               <div className="relative">
                 <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Kerkoni perdorues..."
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('adminDash.pinSecurity.searchPlaceholder')}
                   className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
               </div>
             </div>
@@ -141,7 +143,7 @@ export default function AdminPINSecurity() {
             ) : filtered.length === 0 ? (
               <div className="text-center py-12 text-gray-400">
                 <Trash2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p>Nuk ka kerkesa per fshirje llogarie</p>
+                <p>{t('adminDash.pinSecurity.emptyRequests')}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
@@ -157,20 +159,20 @@ export default function AdminPINSecurity() {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <div className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium mb-1 ${statusColors[req.status]}`}>
-                        {req.status === 'pending' ? 'Ne pritje' : req.status === 'approved' ? 'Aprovuar' : 'Refuzuar'}
+                        {req.status === 'pending' ? t('adminDash.pinSecurity.statusPending') : req.status === 'approved' ? t('adminDash.pinSecurity.statusApproved') : t('adminDash.pinSecurity.statusRejected')}
                       </div>
-                      <div className="text-xs text-gray-400">{format(new Date(req.requested_at), 'dd/MM/yyyy')}</div>
+                      <div className="text-xs text-gray-400">{new Date(req.requested_at).toLocaleDateString(localeFromI18n(i18n.language))}</div>
                     </div>
                     {req.status === 'pending' && (
                       <div className="flex gap-2 flex-shrink-0">
                         <button onClick={() => handleRequest(req.id, 'approved')} disabled={actionLoading === req.id}
                           className="flex items-center gap-1 px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-xs font-medium transition-colors">
                           {actionLoading === req.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
-                          Aprovo
+                          {t('adminDash.pinSecurity.approve')}
                         </button>
                         <button onClick={() => handleRequest(req.id, 'rejected')} disabled={actionLoading === req.id}
                           className="flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-medium transition-colors">
-                          <X className="w-3 h-3" />Refuzo
+                          <X className="w-3 h-3" />{t('adminDash.pinSecurity.reject')}
                         </button>
                       </div>
                     )}
@@ -184,17 +186,17 @@ export default function AdminPINSecurity() {
         {tab === 'settings' && (
           <div className="bg-white rounded-xl border border-gray-100 p-6 space-y-5">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2"><Lock className="w-5 h-5 text-primary-600" />Cilesimet e Sigurise PIN</h3>
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2"><Lock className="w-5 h-5 text-primary-600" />{t('adminDash.pinSecurity.settingsTitle')}</h3>
               <button onClick={saveSettings} disabled={saving}
                 className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                {saved ? 'U ruajt!' : 'Ruaj'}
+                {saved ? t('adminDash.pinSecurity.saved') : t('adminDash.pinSecurity.save')}
               </button>
             </div>
             {[
-              { key: 'require_pin_for_delete', label: 'Kerkoni PIN per fshirje llogarie', desc: 'Perdoruesit duhet te konfirmojne me PIN' },
-              { key: 'notify_admin_on_delete', label: 'Njoftoni admin kur behet kerkesa', desc: 'Dergoni email tek super admin' },
-              { key: 'require_reason', label: 'Kerkoni arsye per fshirje', desc: 'Perdoruesit duhet te japin arsyen' },
+              { key: 'require_pin_for_delete', label: t('adminDash.pinSecurity.requirePinLabel'), desc: t('adminDash.pinSecurity.requirePinDesc') },
+              { key: 'notify_admin_on_delete', label: t('adminDash.pinSecurity.notifyAdminLabel'), desc: t('adminDash.pinSecurity.notifyAdminDesc') },
+              { key: 'require_reason', label: t('adminDash.pinSecurity.requireReasonLabel'), desc: t('adminDash.pinSecurity.requireReasonDesc') },
             ].map(({ key, label, desc }) => (
               <div key={key} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                 <div><div className="text-sm font-medium text-gray-700">{label}</div><div className="text-xs text-gray-500">{desc}</div></div>
@@ -206,9 +208,9 @@ export default function AdminPINSecurity() {
             ))}
             <div className="grid grid-cols-3 gap-4 pt-2">
               {[
-                { key: 'pin_expiry_minutes', label: 'Skadimi PIN (min)', min: 1, max: 60 },
-                { key: 'max_attempts', label: 'Tentativa max', min: 1, max: 10 },
-                { key: 'lockout_minutes', label: 'Bllokimi (min)', min: 5, max: 1440 },
+                { key: 'pin_expiry_minutes', label: t('adminDash.pinSecurity.pinExpiryLabel'), min: 1, max: 60 },
+                { key: 'max_attempts', label: t('adminDash.pinSecurity.maxAttemptsLabel'), min: 1, max: 10 },
+                { key: 'lockout_minutes', label: t('adminDash.pinSecurity.lockoutLabel'), min: 5, max: 1440 },
               ].map(({ key, label, min, max }) => (
                 <div key={key}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>

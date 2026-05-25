@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Tag, Plus, Trash2, CreditCard as Edit3, Search, Copy, CheckCircle, X, Loader2, Calendar, Percent, DollarSign } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
-import { format } from 'date-fns';
+import { localeFromI18n } from '../../lib/clientDashHelpers';
 
 interface DiscountCode {
   id: string;
@@ -25,6 +26,7 @@ const empty: Partial<DiscountCode> = {
 };
 
 export default function AdminDiscountCodes() {
+  const { t, i18n } = useTranslation();
   const [codes, setCodes] = useState<DiscountCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -86,25 +88,25 @@ export default function AdminDiscountCodes() {
   );
 
   return (
-    <DashboardLayout navItems={adminNavItems} navGroups={adminNavGroups} title="Kode Zbritjesh">
+    <DashboardLayout navItems={adminNavItems} navGroups={adminNavGroups} title={t('adminDash.discounts.title')}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Kode Zbritjesh</h1>
-            <p className="text-gray-500 text-sm mt-1">Krijoni dhe menaxhoni kodet e zbritjes per klientet</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('adminDash.discounts.title')}</h1>
+            <p className="text-gray-500 text-sm mt-1">{t('adminDash.discounts.subtitle')}</p>
           </div>
           <button onClick={() => { setForm(empty); setEditing(null); setShowForm(true); }}
             className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg font-medium">
-            <Plus className="w-4 h-4" />Kode i ri
+            <Plus className="w-4 h-4" />{t('adminDash.discounts.newCode')}
           </button>
         </div>
 
         <div className="grid grid-cols-4 gap-4">
           {[
-            { label: 'Total kode', value: codes.length },
-            { label: 'Aktive', value: codes.filter(c => c.is_active).length },
-            { label: 'Te perdorura sot', value: codes.reduce((s, c) => s + c.used_count, 0) },
-            { label: 'Skaduar', value: codes.filter(c => c.expires_at && new Date(c.expires_at) < new Date()).length },
+            { label: t('adminDash.discounts.statTotal'), value: codes.length },
+            { label: t('adminDash.discounts.statActive'), value: codes.filter(c => c.is_active).length },
+            { label: t('adminDash.discounts.statUsedToday'), value: codes.reduce((s, c) => s + c.used_count, 0) },
+            { label: t('adminDash.discounts.statExpired'), value: codes.filter(c => c.expires_at && new Date(c.expires_at) < new Date()).length },
           ].map(({ label, value }) => (
             <div key={label} className="bg-white rounded-xl border border-gray-100 p-4 text-center">
               <div className="text-2xl font-bold text-gray-900">{value}</div>
@@ -116,34 +118,34 @@ export default function AdminDiscountCodes() {
         {showForm && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">{editing ? 'Ndrysho kodin' : 'Kode i ri zbritjeje'}</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">{editing ? t('adminDash.discounts.formEditTitle') : t('adminDash.discounts.formNewTitle')}</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Kodi *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.codeLabel')}</label>
                   <div className="flex gap-2">
                     <input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
-                      placeholder="P.sh. SUMMER20" className="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                      placeholder={t('adminDash.discounts.codePlaceholder')} className="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-primary-500" />
                     <button onClick={generateCode} className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
-                      Gjenero
+                      {t('adminDash.discounts.generate')}
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Pershkrim</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.descLabel')}</label>
                   <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                    placeholder="Pershkrim i shkurter..." className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                    placeholder={t('adminDash.discounts.descPlaceholder')} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Lloji</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.typeLabel')}</label>
                     <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as any }))}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
-                      <option value="percent">Perqindje (%)</option>
-                      <option value="fixed">Shume fikse (€)</option>
+                      <option value="percent">{t('adminDash.discounts.typePercent')}</option>
+                      <option value="fixed">{t('adminDash.discounts.typeFixed')}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Vlera *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.valueLabel')}</label>
                     <div className="relative">
                       <input type="number" value={form.value} onChange={e => setForm(f => ({ ...f, value: parseFloat(e.target.value) }))}
                         min={1} max={form.type === 'percent' ? 100 : undefined}
@@ -152,34 +154,34 @@ export default function AdminDiscountCodes() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Shuma minimale (€)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.minAmountLabel')}</label>
                     <input type="number" value={form.min_amount} onChange={e => setForm(f => ({ ...f, min_amount: parseFloat(e.target.value) }))} min={0}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Perdorime max (0=pa limit)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.maxUsesLabel')}</label>
                     <input type="number" value={form.max_uses || ''} onChange={e => setForm(f => ({ ...f, max_uses: e.target.value ? parseInt(e.target.value) : null }))} min={0}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Skadon me (opsionale)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.expiresLabel')}</label>
                   <input type="date" value={form.expires_at?.split('T')[0] || ''} onChange={e => setForm(f => ({ ...f, expires_at: e.target.value ? e.target.value + 'T23:59:59Z' : null }))}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                 </div>
                 <div className="flex items-center gap-3">
                   <input type="checkbox" id="is_active" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))}
                     className="w-4 h-4 rounded border-gray-300 text-primary-600" />
-                  <label htmlFor="is_active" className="text-sm text-gray-700">Aktiv menjëherë</label>
+                  <label htmlFor="is_active" className="text-sm text-gray-700">{t('adminDash.discounts.activeNow')}</label>
                 </div>
               </div>
               <div className="flex gap-3 mt-6">
                 <button onClick={() => { setShowForm(false); setEditing(null); setForm(empty); }}
-                  className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50">Anulo</button>
+                  className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50">{t('adminDash.discounts.cancel')}</button>
                 <button onClick={save} disabled={saving || !form.code || !form.value}
                   className="flex-1 flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  {editing ? 'Ruaj ndryshimet' : 'Krijo kodin'}
+                  {editing ? t('adminDash.discounts.saveChanges') : t('adminDash.discounts.createCode')}
                 </button>
               </div>
             </div>
@@ -190,7 +192,7 @@ export default function AdminDiscountCodes() {
           <div className="p-4 border-b border-gray-100">
             <div className="relative">
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Kerkoni kode..."
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('adminDash.discounts.searchPlaceholder')}
                 className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
             </div>
           </div>
@@ -199,15 +201,15 @@ export default function AdminDiscountCodes() {
           ) : filtered.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
               <Tag className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p>Nuk ka kode zbritjesh</p>
+              <p>{t('adminDash.discounts.emptyState')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    {['Kodi', 'Zbritja', 'Perdoruar', 'Limiti', 'Skadon', 'Statusi', ''].map(h => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                    {[t('adminDash.discounts.thCode'), t('adminDash.discounts.thDiscount'), t('adminDash.discounts.thUsed'), t('adminDash.discounts.thLimit'), t('adminDash.discounts.thExpires'), t('adminDash.discounts.thStatus'), ''].map((h, idx) => (
+                      <th key={idx} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -230,21 +232,21 @@ export default function AdminDiscountCodes() {
                             {code.type === 'percent' ? <Percent className="w-3.5 h-3.5" /> : <DollarSign className="w-3.5 h-3.5" />}
                             {code.value}{code.type === 'percent' ? '%' : '€'}
                           </span>
-                          {code.min_amount > 0 && <div className="text-xs text-gray-400">min €{code.min_amount}</div>}
+                          {code.min_amount > 0 && <div className="text-xs text-gray-400">{t('adminDash.discounts.minPrefix')} €{code.min_amount}</div>}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{code.used_count} here</td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{code.max_uses ? `${code.used_count}/${code.max_uses}` : 'Pa limit'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{t('adminDash.discounts.usedTimes', { count: code.used_count })}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{code.max_uses ? `${code.used_count}/${code.max_uses}` : t('adminDash.discounts.noLimit')}</td>
                         <td className="px-4 py-3 text-sm">
                           {code.expires_at ? (
                             <span className={expired ? 'text-red-500' : 'text-gray-600'}>
-                              {format(new Date(code.expires_at), 'dd/MM/yyyy')}
+                              {new Date(code.expires_at).toLocaleDateString(localeFromI18n(i18n.language))}
                             </span>
-                          ) : <span className="text-gray-400">Pa skadim</span>}
+                          ) : <span className="text-gray-400">{t('adminDash.discounts.noExpiry')}</span>}
                         </td>
                         <td className="px-4 py-3">
                           <button onClick={() => toggleActive(code.id, !code.is_active)}
                             className={`px-2.5 py-1 rounded-full text-xs font-medium ${code.is_active && !expired ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                            {code.is_active && !expired ? 'Aktiv' : expired ? 'Skaduar' : 'Joaktiv'}
+                            {code.is_active && !expired ? t('adminDash.discounts.statusActive') : expired ? t('adminDash.discounts.statusExpired') : t('adminDash.discounts.statusInactive')}
                           </button>
                         </td>
                         <td className="px-4 py-3">

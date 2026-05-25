@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Send, Users, Building2, User, Bell, CheckCircle, Loader2, MessageSquare } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Send, Users, Building2, User, Bell, CheckCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
@@ -7,6 +8,7 @@ import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
 interface TargetGroup { label: string; value: string; count: number; icon: any; }
 
 export default function AdminSendNotification() {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ title: '', message: '', type: 'info', target: 'all', user_id: '' });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -23,10 +25,10 @@ export default function AdminSendNotification() {
       supabase.from('profiles').select('id').eq('role', 'company_admin').eq('is_active', true),
     ]);
     setGroups([
-      { label: 'Te gjithe perdoruesit', value: 'all', count: (all || []).length, icon: Users },
-      { label: 'Klientet', value: 'clients', count: (clients || []).length, icon: User },
-      { label: 'Firmat', value: 'companies', count: (companies || []).length, icon: Building2 },
-      { label: 'Perdorues specifik', value: 'specific', count: 0, icon: Bell },
+      { label: t('adminDash.sendNotif.groupAll'), value: 'all', count: (all || []).length, icon: Users },
+      { label: t('adminDash.sendNotif.groupClients'), value: 'clients', count: (clients || []).length, icon: User },
+      { label: t('adminDash.sendNotif.groupCompanies'), value: 'companies', count: (companies || []).length, icon: Building2 },
+      { label: t('adminDash.sendNotif.groupSpecific'), value: 'specific', count: 0, icon: Bell },
     ]);
   }
 
@@ -69,60 +71,60 @@ export default function AdminSendNotification() {
 
   const selectedGroup = groups.find(g => g.value === form.target);
   const typeOptions = [
-    { value: 'info', label: 'Informacion', color: 'bg-blue-100 text-blue-700' },
-    { value: 'success', label: 'Sukses', color: 'bg-green-100 text-green-700' },
-    { value: 'warning', label: 'Paralajmerim', color: 'bg-orange-100 text-orange-700' },
-    { value: 'error', label: 'Gabim/Urgjent', color: 'bg-red-100 text-red-700' },
+    { value: 'info', label: t('adminDash.sendNotif.typeInfo'), color: 'bg-blue-100 text-blue-700' },
+    { value: 'success', label: t('adminDash.sendNotif.typeSuccess'), color: 'bg-green-100 text-green-700' },
+    { value: 'warning', label: t('adminDash.sendNotif.typeWarning'), color: 'bg-orange-100 text-orange-700' },
+    { value: 'error', label: t('adminDash.sendNotif.typeError'), color: 'bg-red-100 text-red-700' },
   ];
 
   return (
-    <DashboardLayout navItems={adminNavItems} navGroups={adminNavGroups} title="Dergo Njoftime">
+    <DashboardLayout navItems={adminNavItems} navGroups={adminNavGroups} title={t('adminDash.sendNotif.pageTitle')}>
       <div className="space-y-6 max-w-3xl">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dergo Njoftime</h1>
-          <p className="text-gray-500 text-sm mt-1">Dergo njoftime ne kohe reale tek perdoruesit</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('adminDash.sendNotif.pageTitle')}</h1>
+          <p className="text-gray-500 text-sm mt-1">{t('adminDash.sendNotif.subtitle')}</p>
         </div>
 
         {sent && (
           <div className="flex items-center gap-3 bg-green-50 border border-green-200 text-green-700 px-5 py-4 rounded-xl">
             <CheckCircle className="w-5 h-5" />
-            <span className="font-medium">Njoftimi u dergua me sukses!</span>
+            <span className="font-medium">{t('adminDash.sendNotif.successMessage')}</span>
           </div>
         )}
 
         <div className="bg-white rounded-xl border border-gray-100 p-6 space-y-5">
-          <h2 className="font-semibold text-gray-900 flex items-center gap-2"><Send className="w-5 h-5 text-primary-600" />Compose Njoftimit</h2>
+          <h2 className="font-semibold text-gray-900 flex items-center gap-2"><Send className="w-5 h-5 text-primary-600" />{t('adminDash.sendNotif.composeTitle')}</h2>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Titulli i njoftimit *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.sendNotif.labelTitle')}</label>
             <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-              placeholder="P.sh. Oferte e re, Ndryshim i politikave..." maxLength={100}
+              placeholder={t('adminDash.sendNotif.placeholderTitle')} maxLength={100}
               className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
             <p className="text-xs text-gray-400 mt-1">{form.title.length}/100</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Mesazhi *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.sendNotif.labelMessage')}</label>
             <textarea value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-              rows={5} maxLength={500} placeholder="Shkruani mesazhin e plote te njoftimit..."
+              rows={5} maxLength={500} placeholder={t('adminDash.sendNotif.placeholderMessage')}
               className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
             <p className="text-xs text-gray-400 mt-1">{form.message.length}/500</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Lloji i njoftimit</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminDash.sendNotif.labelType')}</label>
             <div className="flex gap-2 flex-wrap">
-              {typeOptions.map(t => (
-                <button key={t.value} onClick={() => setForm(f => ({ ...f, type: t.value }))}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border-2 ${form.type === t.value ? `${t.color} border-current` : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-                  {t.label}
+              {typeOptions.map(tp => (
+                <button key={tp.value} onClick={() => setForm(f => ({ ...f, type: tp.value }))}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border-2 ${form.type === tp.value ? `${tp.color} border-current` : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                  {tp.label}
                 </button>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Destinataret</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('adminDash.sendNotif.labelRecipients')}</label>
             <div className="grid grid-cols-2 gap-3">
               {groups.map(g => {
                 const Icon = g.icon;
@@ -134,7 +136,7 @@ export default function AdminSendNotification() {
                     </div>
                     <div>
                       <div className="font-medium text-sm text-gray-900">{g.label}</div>
-                      {g.value !== 'specific' && <div className="text-xs text-gray-500">{g.count} perdorues</div>}
+                      {g.value !== 'specific' && <div className="text-xs text-gray-500">{t('adminDash.sendNotif.usersCount', { count: g.count })}</div>}
                     </div>
                   </button>
                 );
@@ -144,9 +146,9 @@ export default function AdminSendNotification() {
 
           {form.target === 'specific' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Kerko perdorues</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.sendNotif.searchUsersLabel')}</label>
               <input value={userSearch} onChange={e => { setUserSearch(e.target.value); loadUsers(e.target.value); }}
-                placeholder="Emri ose email..." className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                placeholder={t('adminDash.sendNotif.searchUsersPlaceholder')} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
               {users.length > 0 && (
                 <div className="mt-2 border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-48 overflow-y-auto">
                   {users.map(u => (
@@ -156,7 +158,7 @@ export default function AdminSendNotification() {
                         {(u.full_name || u.email)[0]?.toUpperCase()}
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-gray-800">{u.full_name || '(pa emer)'}</div>
+                        <div className="text-sm font-medium text-gray-800">{u.full_name || t('adminDash.sendNotif.noName')}</div>
                         <div className="text-xs text-gray-500">{u.email} · {u.role}</div>
                       </div>
                     </button>
@@ -169,15 +171,15 @@ export default function AdminSendNotification() {
           <div className="pt-2 border-t border-gray-100">
             <div className="flex items-center justify-between mb-4">
               <div className="text-sm text-gray-500">
-                Do te dergohet tek: <span className="font-semibold text-gray-800">
-                  {form.target === 'specific' ? (form.user_id ? '1 perdorues' : '— zgjidhni perdoruesin') : `${selectedGroup?.count || 0} perdorues`}
+                {t('adminDash.sendNotif.sendingTo')} <span className="font-semibold text-gray-800">
+                  {form.target === 'specific' ? (form.user_id ? t('adminDash.sendNotif.oneUser') : t('adminDash.sendNotif.pickUserPrompt')) : t('adminDash.sendNotif.usersCount', { count: selectedGroup?.count || 0 })}
                 </span>
               </div>
             </div>
             <button onClick={send} disabled={sending || !form.title || !form.message || (form.target === 'specific' && !form.user_id)}
               className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
               {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-              {sending ? 'Duke derguar...' : 'Dergo Njoftimin'}
+              {sending ? t('adminDash.sendNotif.sending') : t('adminDash.sendNotif.send')}
             </button>
           </div>
         </div>

@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Plus, CreditCard as Edit3, Trash2, ExternalLink, Eye, EyeOff, Check, Loader2, Megaphone, MousePointerClick, BarChart2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import type { PlatformAd } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
+import { localeFromI18n } from '../../lib/clientDashHelpers';
 import ImageUploader from '../../components/common/ImageUploader';
 
-const positions = [
-  { value: 'homepage_banner', label: 'Baneri kryesor' },
-  { value: 'homepage_middle', label: 'Mes te faqes' },
-  { value: 'sidebar', label: 'Sidebar' },
-  { value: 'vehicle_list', label: 'Lista automjeteve' },
-  { value: 'booking_confirm', label: 'Konfirmim rezervimi' },
-];
+const POSITION_VALUES = ['homepage_banner', 'homepage_middle', 'sidebar', 'vehicle_list', 'booking_confirm'] as const;
+const positionLabelKey: Record<string, string> = {
+  homepage_banner: 'adminDash.ads.posHomepageBanner',
+  homepage_middle: 'adminDash.ads.posHomepageMiddle',
+  sidebar: 'adminDash.ads.posSidebar',
+  vehicle_list: 'adminDash.ads.posVehicleList',
+  booking_confirm: 'adminDash.ads.posBookingConfirm',
+};
 
 const emptyAd = {
   title: '',
@@ -26,6 +29,8 @@ const emptyAd = {
 };
 
 export default function AdminAds() {
+  const { t, i18n } = useTranslation();
+  const positions = POSITION_VALUES.map(value => ({ value, label: t(positionLabelKey[value]) }));
   const [ads, setAds] = useState<PlatformAd[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
@@ -92,7 +97,7 @@ export default function AdminAds() {
   }
 
   async function deleteAd(id: string) {
-    if (!confirm('Fshij kete reklame?')) return;
+    if (!confirm(t('adminDash.ads.confirmDelete'))) return;
     await supabase.from('platform_ads').delete().eq('id', id);
     loadAds();
   }
@@ -122,46 +127,46 @@ export default function AdminAds() {
     <DashboardLayout title="Admin" navItems={adminNavItems} navGroups={adminNavGroups}>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-dark-950">Menaxhimi i reklamave</h1>
-          <p className="text-dark-500 mt-1 text-[15px]">Krijoni dhe menaxhoni reklamat ne platforme</p>
+          <h1 className="text-2xl font-bold text-dark-950">{t('adminDash.ads.pageTitle')}</h1>
+          <p className="text-dark-500 mt-1 text-[15px]">{t('adminDash.ads.pageSubtitle')}</p>
         </div>
         <button onClick={startCreate} className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-all shadow-sm">
           <Plus className="w-4 h-4" />
-          Reklame e re
+          {t('adminDash.ads.newAd')}
         </button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-xl border border-gray-100 p-5 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center"><BarChart2 className="w-5 h-5 text-blue-600" /></div>
-          <div><p className="text-xl font-bold text-dark-950">{totalViews}</p><p className="text-xs text-dark-500">Shikime gjithsej</p></div>
+          <div><p className="text-xl font-bold text-dark-950">{totalViews}</p><p className="text-xs text-dark-500">{t('adminDash.ads.statTotalViews')}</p></div>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-5 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center"><MousePointerClick className="w-5 h-5 text-green-600" /></div>
-          <div><p className="text-xl font-bold text-dark-950">{totalClicks}</p><p className="text-xs text-dark-500">Klikime gjithsej</p></div>
+          <div><p className="text-xl font-bold text-dark-950">{totalClicks}</p><p className="text-xs text-dark-500">{t('adminDash.ads.statTotalClicks')}</p></div>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-5 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center"><Megaphone className="w-5 h-5 text-amber-600" /></div>
-          <div><p className="text-xl font-bold text-dark-950">{ctr}%</p><p className="text-xs text-dark-500">CTR mesatar</p></div>
+          <div><p className="text-xl font-bold text-dark-950">{ctr}%</p><p className="text-xs text-dark-500">{t('adminDash.ads.statAvgCtr')}</p></div>
         </div>
       </div>
 
       {(creating || editing) && (
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-dark-950 mb-5">{creating ? 'Reklame e re' : 'Ndrysho reklamen'}</h2>
+          <h2 className="text-lg font-semibold text-dark-950 mb-5">{creating ? t('adminDash.ads.newAdTitle') : t('adminDash.ads.editAdTitle')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-xs font-medium text-dark-600 mb-1.5">Titulli</label>
-              <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className={inputClass} placeholder="p.sh. Oferte speciale vere 2026" />
+              <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.ads.title')}</label>
+              <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className={inputClass} placeholder={t('adminDash.ads.titlePlaceholder')} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-dark-600 mb-1.5">Pozicioni</label>
+              <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.ads.position')}</label>
               <select value={form.position} onChange={e => setForm(f => ({ ...f, position: e.target.value }))} className={inputClass}>
                 {positions.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-dark-600 mb-1.5">Pershkrimi</label>
+              <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.ads.description')}</label>
               <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} className={`${inputClass} resize-none`} />
             </div>
             <div className="md:col-span-2">
@@ -171,20 +176,20 @@ export default function AdminAds() {
                 bucket="ad-images"
                 pathPrefix="ads"
                 aspectRatio="aspect-[16/9]"
-                label="Imazhi i reklames"
-                emptyText="Ngarko imazhin"
+                label={t('adminDash.ads.imageLabel')}
+                emptyText={t('adminDash.ads.uploadImage')}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-dark-600 mb-1.5">Link URL</label>
+              <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.ads.linkUrl')}</label>
               <input value={form.link_url} onChange={e => setForm(f => ({ ...f, link_url: e.target.value }))} className={inputClass} placeholder="https://..." />
             </div>
             <div>
-              <label className="block text-xs font-medium text-dark-600 mb-1.5">Data e fillimit</label>
+              <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.ads.startDate')}</label>
               <input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} className={inputClass} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-dark-600 mb-1.5">Data e perfundimit</label>
+              <label className="block text-xs font-medium text-dark-600 mb-1.5">{t('adminDash.ads.endDate')}</label>
               <input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} className={inputClass} />
             </div>
           </div>
@@ -193,14 +198,14 @@ export default function AdminAds() {
               <input type="checkbox" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} className="sr-only peer" />
               <div className="w-10 h-5 bg-gray-200 peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600" />
             </label>
-            <span className="text-sm text-dark-700">Aktive</span>
+            <span className="text-sm text-dark-700">{t('adminDash.ads.active')}</span>
           </div>
           <div className="flex gap-3">
             <button onClick={saveAd} disabled={saving || !form.title} className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              Ruaj
+              {t('adminDash.ads.save')}
             </button>
-            <button onClick={cancelEdit} className="px-5 py-2.5 bg-gray-100 text-dark-700 text-sm font-medium rounded-xl hover:bg-gray-200 transition-colors">Anulo</button>
+            <button onClick={cancelEdit} className="px-5 py-2.5 bg-gray-100 text-dark-700 text-sm font-medium rounded-xl hover:bg-gray-200 transition-colors">{t('adminDash.ads.cancel')}</button>
           </div>
         </div>
       )}
@@ -213,7 +218,7 @@ export default function AdminAds() {
                 <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover" />
                 {!ad.is_active && (
                   <div className="absolute inset-0 bg-dark-950/40 flex items-center justify-center">
-                    <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full">JOAKTIVE</span>
+                    <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full">{t('adminDash.ads.inactiveBadge')}</span>
                   </div>
                 )}
               </div>
@@ -234,14 +239,14 @@ export default function AdminAds() {
               </div>
               {ad.description && <p className="text-xs text-dark-500 mb-3 line-clamp-2">{ad.description}</p>}
               <div className="flex items-center gap-4 text-[11px] text-dark-400 mb-3">
-                <span>{ad.view_count} shikime</span>
-                <span>{ad.click_count} klikime</span>
-                {ad.start_date && <span>Nga: {new Date(ad.start_date).toLocaleDateString('sq')}</span>}
+                <span>{t('adminDash.ads.viewsShort', { count: ad.view_count })}</span>
+                <span>{t('adminDash.ads.clicksShort', { count: ad.click_count })}</span>
+                {ad.start_date && <span>{t('adminDash.ads.fromDate', { date: new Date(ad.start_date).toLocaleDateString(localeFromI18n(i18n.language)) })}</span>}
               </div>
               <div className="flex gap-2">
                 <button onClick={() => toggleAd(ad.id, ad.is_active)} className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-lg transition-colors ${ad.is_active ? 'bg-green-50 text-green-700 hover:bg-green-100' : 'bg-gray-50 text-dark-500 hover:bg-gray-100'}`}>
                   {ad.is_active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                  {ad.is_active ? 'Aktive' : 'Joaktive'}
+                  {ad.is_active ? t('adminDash.ads.active') : t('adminDash.ads.inactive')}
                 </button>
                 <button onClick={() => startEdit(ad)} className="flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-50 text-dark-600 text-xs font-medium rounded-lg hover:bg-gray-100 transition-colors">
                   <Edit3 className="w-3.5 h-3.5" />
@@ -256,7 +261,7 @@ export default function AdminAds() {
         {ads.length === 0 && (
           <div className="md:col-span-2 bg-white rounded-lg border border-gray-200 p-12 text-center">
             <Megaphone className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-sm text-dark-500">Nuk ka reklama. Klikoni "Reklame e re" per te filluar.</p>
+            <p className="text-sm text-dark-500">{t('adminDash.ads.emptyState')}</p>
           </div>
         )}
       </div>

@@ -54,17 +54,17 @@ function mergeLocalized<T extends Record<string, unknown>>(
 
 type Tab = 'hero' | 'logo' | 'navbar' | 'sections' | 'categories';
 
-const tabs: { id: Tab; label: string; icon: React.ReactNode; desc: string }[] = [
-  { id: 'hero', label: 'Hero / Balline', icon: <Image className="w-4 h-4" />, desc: 'Imazhi, titulli, butoni i kerkimit' },
-  { id: 'logo', label: 'Logo & Emri', icon: <Car className="w-4 h-4" />, desc: 'Logo e platformes ne te gjitha vendet' },
-  { id: 'navbar', label: 'Shiriti Kryesor', icon: <Monitor className="w-4 h-4" />, desc: 'Lidhjet dhe butonat e navigimit' },
-  { id: 'sections', label: 'Seksionet', icon: <LayoutGrid className="w-4 h-4" />, desc: 'Visibility dhe titujt e seksioneve' },
-  { id: 'categories', label: 'Kategorite e Automjeteve', icon: <Tag className="w-4 h-4" />, desc: 'Menaxho kategorite qe shfaqen ne homepage' },
-];
-
 export default function AdminHomepage() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentLang = (i18n.language || 'sq').slice(0, 2);
+
+  const tabs: { id: Tab; label: string; icon: React.ReactNode; desc: string }[] = [
+    { id: 'hero', label: t('adminDash.homepage.tabHero'), icon: <Image className="w-4 h-4" />, desc: t('adminDash.homepage.tabHeroDesc') },
+    { id: 'logo', label: t('adminDash.homepage.tabLogo'), icon: <Car className="w-4 h-4" />, desc: t('adminDash.homepage.tabLogoDesc') },
+    { id: 'navbar', label: t('adminDash.homepage.tabNavbar'), icon: <Monitor className="w-4 h-4" />, desc: t('adminDash.homepage.tabNavbarDesc') },
+    { id: 'sections', label: t('adminDash.homepage.tabSections'), icon: <LayoutGrid className="w-4 h-4" />, desc: t('adminDash.homepage.tabSectionsDesc') },
+    { id: 'categories', label: t('adminDash.homepage.tabCategories'), icon: <Tag className="w-4 h-4" />, desc: t('adminDash.homepage.tabCategoriesDesc') },
+  ];
 
   const [activeTab, setActiveTab] = useState<Tab>('hero');
   const [hero, setHero] = useState<HeroSettings>(defaultHero);
@@ -196,15 +196,16 @@ export default function AdminHomepage() {
     <DashboardLayout title="Admin" navItems={adminNavItems} navGroups={adminNavGroups}>
       <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-dark-950">Menaxhimi i Ballines</h1>
+          <h1 className="text-2xl font-bold text-dark-950">{t('adminDash.homepage.title')}</h1>
           <p className="text-dark-500 mt-1 text-[15px]">
-            Kontrollo komplet Homepage-in, logon, navigimin dhe seksionet
+            {t('adminDash.homepage.subtitle')}
           </p>
           <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
             <Globe className="w-3.5 h-3.5 text-amber-700" />
-            <span className="text-xs text-amber-800">
-              Po editon ne gjuhen: <strong>{currentLang.toUpperCase()}</strong>. Ndrysho gjuhen nga Navbar per te edituar gjuhe tjeter.
-            </span>
+            <span
+              className="text-xs text-amber-800"
+              dangerouslySetInnerHTML={{ __html: t('adminDash.homepage.editingLanguage', { lang: currentLang.toUpperCase() }) }}
+            />
           </div>
         </div>
         {activeTab !== 'categories' && (
@@ -215,10 +216,10 @@ export default function AdminHomepage() {
               className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all text-sm"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-              {saving ? 'Duke ruajtur...' : saved ? 'U ruajt!' : 'Ruaj ndryshimet'}
+              {saving ? t('adminDash.homepage.saving') : saved ? t('adminDash.homepage.savedShort') : t('adminDash.homepage.saveChanges')}
             </button>
             {saveError && (
-              <p className="text-xs text-red-600 max-w-xs text-right">Gabim: {saveError}</p>
+              <p className="text-xs text-red-600 max-w-xs text-right">{t('adminDash.homepage.saveError', { msg: saveError })}</p>
             )}
           </div>
         )}
@@ -228,7 +229,7 @@ export default function AdminHomepage() {
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden sticky top-[88px]">
             <div className="p-4 border-b border-gray-100">
-              <p className="text-xs font-semibold text-dark-500 uppercase tracking-wide">Seksionet</p>
+              <p className="text-xs font-semibold text-dark-500 uppercase tracking-wide">{t('adminDash.homepage.sectionsLabel')}</p>
             </div>
             <div className="p-2 space-y-1">
               {tabs.map(tab => (
@@ -352,6 +353,7 @@ interface HeroEditorProps {
 }
 
 function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploadingHeroMobile, heroMobileFileRef, onUploadMobile, inputClass, labelClass }: HeroEditorProps) {
+  const { t } = useTranslation();
   function set(field: keyof HeroSettings) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const val = e.target.type === 'range' || e.target.type === 'number' ? Number(e.target.value) : e.target.value;
@@ -361,7 +363,7 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
 
   return (
     <div className="space-y-5">
-      <SectionCard title="Imazhi i Sfondit" icon={<Image className="w-4 h-4" />}>
+      <SectionCard title={t('adminDash.homepage.heroBackgroundImage')} icon={<Image className="w-4 h-4" />}>
         <div className="space-y-4">
           {hero.image_url ? (
             <div className="relative rounded-xl overflow-hidden bg-gray-100 mb-3" style={{ aspectRatio: '21/9' }}>
@@ -372,7 +374,7 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
                   className="flex items-center gap-2 px-4 py-2 bg-white text-dark-900 rounded-xl text-sm font-semibold"
                 >
                   <Upload className="w-4 h-4" />
-                  Ndrysho imazhin
+                  {t('adminDash.homepage.changeImage')}
                 </button>
               </div>
               <button
@@ -385,7 +387,7 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
           ) : (
             <div className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center bg-gray-50 mb-3">
               <Image className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-dark-500">Nuk ka imazh te ngarkuar</p>
+              <p className="text-sm text-dark-500">{t('adminDash.homepage.noImageUploaded')}</p>
             </div>
           )}
           <div className="flex gap-2">
@@ -395,19 +397,19 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
               className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all shrink-0"
             >
               {uploadingHero ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              {uploadingHero ? 'Duke ngarkuar...' : 'Ngarko foto'}
+              {uploadingHero ? t('adminDash.homepage.uploading') : t('adminDash.homepage.uploadPhoto')}
             </button>
             <input ref={heroFileRef as React.LegacyRef<HTMLInputElement>} type="file" accept="image/*" className="hidden" onChange={onUpload} />
             <input
               type="text"
               value={hero.image_url}
               onChange={set('image_url')}
-              placeholder="ose vendos URL te imazhit..."
+              placeholder={t('adminDash.homepage.orEnterImageUrl')}
               className={inputClass}
             />
           </div>
           <div>
-            <label className={labelClass}>Errësia e sfondit: {hero.overlay_opacity}%</label>
+            <label className={labelClass}>{t('adminDash.homepage.overlayOpacity', { value: hero.overlay_opacity })}</label>
             <input
               type="range"
               min={0}
@@ -417,32 +419,32 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
               className="w-full accent-primary-600"
             />
             <div className="flex justify-between text-xs text-dark-400 mt-1">
-              <span>0% (transparent)</span>
-              <span>95% (shume i errët)</span>
+              <span>{t('adminDash.homepage.overlayMin')}</span>
+              <span>{t('adminDash.homepage.overlayMax')}</span>
             </div>
           </div>
           <div>
-            <label className={labelClass}>Pozicioni i imazhit (Desktop)</label>
+            <label className={labelClass}>{t('adminDash.homepage.imagePositionDesktop')}</label>
             <select
               value={hero.image_position_desktop || 'center'}
               onChange={(e) => setHero(h => ({ ...h, image_position_desktop: e.target.value }))}
               className={inputClass}
             >
-              <option value="center">Qendër</option>
-              <option value="left">Majtas</option>
-              <option value="right">Djathtas</option>
-              <option value="top">Lart</option>
-              <option value="bottom">Poshtë</option>
-              <option value="30% center">30% nga e majta</option>
-              <option value="70% center">70% nga e majta</option>
+              <option value="center">{t('adminDash.homepage.posCenter')}</option>
+              <option value="left">{t('adminDash.homepage.posLeft')}</option>
+              <option value="right">{t('adminDash.homepage.posRight')}</option>
+              <option value="top">{t('adminDash.homepage.posTop')}</option>
+              <option value="bottom">{t('adminDash.homepage.posBottom')}</option>
+              <option value="30% center">{t('adminDash.homepage.pos30Left')}</option>
+              <option value="70% center">{t('adminDash.homepage.pos70Left')}</option>
             </select>
           </div>
         </div>
       </SectionCard>
 
-      <SectionCard title="Imazhi për Mobile / Tablet" icon={<Image className="w-4 h-4" />}>
+      <SectionCard title={t('adminDash.homepage.mobileImageTitle')} icon={<Image className="w-4 h-4" />}>
         <div className="space-y-4">
-          <p className="text-xs text-dark-500 -mt-1">Ngarko një foto të dedikuar për ekrane më të vogla (vertikale ose katror funksionon më mirë). Nëse e lë bosh, do të përdoret foto kryesore me pozicionim të rregulluar.</p>
+          <p className="text-xs text-dark-500 -mt-1">{t('adminDash.homepage.mobileImageDesc')}</p>
           {hero.image_url_mobile ? (
             <div className="relative rounded-xl overflow-hidden bg-gray-100 mb-3 mx-auto" style={{ aspectRatio: '9/16', maxWidth: '220px' }}>
               <img src={hero.image_url_mobile} alt="Hero Mobile" className="w-full h-full object-cover" style={{ objectPosition: hero.image_position_mobile || '70% center' }} />
@@ -452,7 +454,7 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
                   className="flex items-center gap-2 px-3 py-1.5 bg-white text-dark-900 rounded-xl text-xs font-semibold"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  Ndrysho
+                  {t('adminDash.homepage.change')}
                 </button>
               </div>
               <button
@@ -465,8 +467,8 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
           ) : (
             <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center bg-gray-50 mb-3">
               <Image className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-dark-500">Nuk ka foto mobile</p>
-              <p className="text-xs text-dark-400 mt-1">Do të përdoret foto kryesore me pozicionin e rregulluar</p>
+              <p className="text-sm text-dark-500">{t('adminDash.homepage.noMobilePhoto')}</p>
+              <p className="text-xs text-dark-400 mt-1">{t('adminDash.homepage.noMobilePhotoDesc')}</p>
             </div>
           )}
           <div className="flex gap-2">
@@ -476,107 +478,107 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
               className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all shrink-0"
             >
               {uploadingHeroMobile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              {uploadingHeroMobile ? 'Duke ngarkuar...' : 'Ngarko foto mobile'}
+              {uploadingHeroMobile ? t('adminDash.homepage.uploading') : t('adminDash.homepage.uploadMobilePhoto')}
             </button>
             <input ref={heroMobileFileRef as React.LegacyRef<HTMLInputElement>} type="file" accept="image/*" className="hidden" onChange={onUploadMobile} />
             <input
               type="text"
               value={hero.image_url_mobile || ''}
               onChange={(e) => setHero(h => ({ ...h, image_url_mobile: e.target.value }))}
-              placeholder="ose vendos URL te imazhit..."
+              placeholder={t('adminDash.homepage.orEnterImageUrl')}
               className={inputClass}
             />
           </div>
           <div>
-            <label className={labelClass}>Pozicioni i imazhit (Mobile / Tablet)</label>
+            <label className={labelClass}>{t('adminDash.homepage.imagePositionMobile')}</label>
             <select
               value={hero.image_position_mobile || '70% center'}
               onChange={(e) => setHero(h => ({ ...h, image_position_mobile: e.target.value }))}
               className={inputClass}
             >
-              <option value="center">Qendër</option>
-              <option value="left">Majtas</option>
-              <option value="right">Djathtas</option>
-              <option value="top">Lart</option>
-              <option value="bottom">Poshtë</option>
-              <option value="30% center">30% nga e majta</option>
-              <option value="50% center">Qendër (50%)</option>
-              <option value="70% center">70% nga e majta (rekomandohet)</option>
-              <option value="center top">Qendër lart</option>
-              <option value="center bottom">Qendër poshtë</option>
+              <option value="center">{t('adminDash.homepage.posCenter')}</option>
+              <option value="left">{t('adminDash.homepage.posLeft')}</option>
+              <option value="right">{t('adminDash.homepage.posRight')}</option>
+              <option value="top">{t('adminDash.homepage.posTop')}</option>
+              <option value="bottom">{t('adminDash.homepage.posBottom')}</option>
+              <option value="30% center">{t('adminDash.homepage.pos30Left')}</option>
+              <option value="50% center">{t('adminDash.homepage.pos50Center')}</option>
+              <option value="70% center">{t('adminDash.homepage.pos70LeftRecommended')}</option>
+              <option value="center top">{t('adminDash.homepage.posCenterTop')}</option>
+              <option value="center bottom">{t('adminDash.homepage.posCenterBottom')}</option>
             </select>
-            <p className="text-xs text-dark-400 mt-1.5">Përcakton se cila pjesë e fotos qëndron e dukshme në ekrane të vogla.</p>
+            <p className="text-xs text-dark-400 mt-1.5">{t('adminDash.homepage.mobilePositionHelp')}</p>
           </div>
         </div>
       </SectionCard>
 
-      <SectionCard title="Titulli dhe Nëntitulli" icon={<Type className="w-4 h-4" />}>
+      <SectionCard title={t('adminDash.homepage.titleSubtitleSection')} icon={<Type className="w-4 h-4" />}>
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Titulli - Rreshti 1</label>
-              <input type="text" value={hero.title_line1} onChange={set('title_line1')} className={inputClass} placeholder="Udhetoni me stil," />
+              <label className={labelClass}>{t('adminDash.homepage.titleLine1')}</label>
+              <input type="text" value={hero.title_line1} onChange={set('title_line1')} className={inputClass} placeholder={t('adminDash.homepage.titleLine1Placeholder')} />
             </div>
             <div>
-              <label className={labelClass}>Titulli - Rreshti 2 (gradient)</label>
-              <input type="text" value={hero.title_line2} onChange={set('title_line2')} className={inputClass} placeholder="rezervoni me lehte." />
+              <label className={labelClass}>{t('adminDash.homepage.titleLine2')}</label>
+              <input type="text" value={hero.title_line2} onChange={set('title_line2')} className={inputClass} placeholder={t('adminDash.homepage.titleLine2Placeholder')} />
             </div>
           </div>
           <div>
-            <label className={labelClass}>Nëntitulli</label>
+            <label className={labelClass}>{t('adminDash.homepage.subtitleLabel')}</label>
             <textarea value={hero.subtitle} onChange={set('subtitle')} rows={3} className={inputClass + ' resize-none'} />
           </div>
           <div>
-            <label className={labelClass}>Badge text (opsional, shfaqet mbi titull)</label>
-            <input type="text" value={hero.badge_text} onChange={set('badge_text')} className={inputClass} placeholder="p.sh: #1 Platforma ne Kosove" />
+            <label className={labelClass}>{t('adminDash.homepage.badgeTextLabel')}</label>
+            <input type="text" value={hero.badge_text} onChange={set('badge_text')} className={inputClass} placeholder={t('adminDash.homepage.badgePlaceholder')} />
           </div>
         </div>
       </SectionCard>
 
-      <SectionCard title="Forma e Kerkimit" icon={<AlignLeft className="w-4 h-4" />}>
+      <SectionCard title={t('adminDash.homepage.searchFormSection')} icon={<AlignLeft className="w-4 h-4" />}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Placeholder - Qyteti</label>
+            <label className={labelClass}>{t('adminDash.homepage.placeholderCity')}</label>
             <input type="text" value={hero.search_label_city} onChange={set('search_label_city')} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>Label - Data e marrjes</label>
+            <label className={labelClass}>{t('adminDash.homepage.labelPickupDate')}</label>
             <input type="text" value={hero.search_label_pickup} onChange={set('search_label_pickup')} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>Label - Data e kthimit</label>
+            <label className={labelClass}>{t('adminDash.homepage.labelReturnDate')}</label>
             <input type="text" value={hero.search_label_return} onChange={set('search_label_return')} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>Teksti i butonit Kerko</label>
+            <label className={labelClass}>{t('adminDash.homepage.searchButtonText')}</label>
             <input type="text" value={hero.search_button_text} onChange={set('search_button_text')} className={inputClass} />
           </div>
         </div>
       </SectionCard>
 
-      <SectionCard title="Trust Badges" icon={<Globe className="w-4 h-4" />}>
+      <SectionCard title={t('adminDash.homepage.trustBadgesSection')} icon={<Globe className="w-4 h-4" />}>
         <div className="space-y-4">
           <Toggle
             checked={hero.show_trust_badges}
             onChange={v => setHero(h => ({ ...h, show_trust_badges: v }))}
-            label="Shfaq buxhetat e besimit nen formen e kerkimit"
+            label={t('adminDash.homepage.showTrustBadges')}
           />
           {hero.show_trust_badges && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               <div>
-                <label className={labelClass}>Badge 1 (Checkmark)</label>
+                <label className={labelClass}>{t('adminDash.homepage.badge1Checkmark')}</label>
                 <input type="text" value={hero.trust_badge_1} onChange={set('trust_badge_1')} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Badge 2 (Shield)</label>
+                <label className={labelClass}>{t('adminDash.homepage.badge2Shield')}</label>
                 <input type="text" value={hero.trust_badge_2} onChange={set('trust_badge_2')} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Badge 3 (Clock)</label>
+                <label className={labelClass}>{t('adminDash.homepage.badge3Clock')}</label>
                 <input type="text" value={hero.trust_badge_3} onChange={set('trust_badge_3')} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Badge 4 (Heart)</label>
+                <label className={labelClass}>{t('adminDash.homepage.badge4Heart')}</label>
                 <input type="text" value={hero.trust_badge_4} onChange={set('trust_badge_4')} className={inputClass} />
               </div>
             </div>
@@ -586,7 +588,7 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
 
       <div className="bg-dark-950 rounded-2xl overflow-hidden">
         <div className="px-5 py-3 border-b border-white/10">
-          <p className="text-xs font-semibold text-white/50 uppercase tracking-wide">Parashikim Hero</p>
+          <p className="text-xs font-semibold text-white/50 uppercase tracking-wide">{t('adminDash.homepage.heroPreviewLabel')}</p>
         </div>
         <div className="relative" style={{ height: '220px' }}>
           {hero.image_url && (
@@ -600,9 +602,9 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
               </span>
             )}
             <h1 className="text-2xl font-extrabold text-white leading-tight">
-              {hero.title_line1 || 'Titulli i rreshtit 1'}
+              {hero.title_line1 || t('adminDash.homepage.previewTitleLine1')}
               <br />
-              <span className="gradient-text">{hero.title_line2 || 'Titulli i rreshtit 2'}</span>
+              <span className="gradient-text">{hero.title_line2 || t('adminDash.homepage.previewTitleLine2')}</span>
             </h1>
             <p className="text-white/70 text-sm mt-2 max-w-sm">{hero.subtitle}</p>
           </div>
@@ -623,13 +625,14 @@ interface LogoEditorProps {
 }
 
 function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, inputClass, labelClass }: LogoEditorProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-5">
-      <SectionCard title="Logo e Platformes" icon={<Car className="w-4 h-4" />}>
+      <SectionCard title={t('adminDash.homepage.logoSectionTitle')} icon={<Car className="w-4 h-4" />}>
         <div className="space-y-5">
           <div className="flex items-start gap-6 flex-wrap sm:flex-nowrap">
             <div className="shrink-0">
-              <p className={labelClass}>Logo aktuale</p>
+              <p className={labelClass}>{t('adminDash.homepage.currentLogo')}</p>
               <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden relative group">
                 {logo.logo_url ? (
                   <>
@@ -644,7 +647,7 @@ function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, input
                 ) : (
                   <div className="text-center p-4">
                     <Car className="w-8 h-8 text-gray-300 mx-auto mb-1.5" />
-                    <p className="text-xs text-gray-400">Pa logo</p>
+                    <p className="text-xs text-gray-400">{t('adminDash.homepage.noLogo')}</p>
                   </div>
                 )}
               </div>
@@ -657,13 +660,13 @@ function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, input
                   className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all"
                 >
                   {uploadingLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  {uploadingLogo ? 'Duke ngarkuar...' : 'Ngarko logon'}
+                  {uploadingLogo ? t('adminDash.homepage.uploading') : t('adminDash.homepage.uploadLogo')}
                 </button>
                 <input ref={logoFileRef as React.LegacyRef<HTMLInputElement>} type="file" accept="image/*" className="hidden" onChange={onUpload} />
-                <p className="text-xs text-dark-400 mt-1.5">PNG me sfond transparent rekomandohet. Maks: 5MB</p>
+                <p className="text-xs text-dark-400 mt-1.5">{t('adminDash.homepage.logoUploadHint')}</p>
               </div>
               <div>
-                <label className={labelClass}>ose URL e logos</label>
+                <label className={labelClass}>{t('adminDash.homepage.orLogoUrl')}</label>
                 <input
                   type="text"
                   value={logo.logo_url}
@@ -676,7 +679,7 @@ function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, input
           </div>
 
           <div>
-            <label className={labelClass}>Emri i platformes (shfaqet prane logos)</label>
+            <label className={labelClass}>{t('adminDash.homepage.siteNameLabel')}</label>
             <input
               type="text"
               value={logo.site_name}
@@ -690,22 +693,22 @@ function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, input
             <Toggle
               checked={logo.show_icon}
               onChange={v => setLogo(l => ({ ...l, show_icon: v }))}
-              label="Shfaq ikonën / logon e ngarkuar"
+              label={t('adminDash.homepage.showIcon')}
             />
             <Toggle
               checked={logo.show_text}
               onChange={v => setLogo(l => ({ ...l, show_text: v }))}
-              label="Shfaq emrin e platformes prane logos"
+              label={t('adminDash.homepage.showText')}
             />
           </div>
         </div>
       </SectionCard>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <p className="text-xs font-semibold text-dark-600 uppercase tracking-wide mb-4">Parashikim ne Navbar</p>
+        <p className="text-xs font-semibold text-dark-600 uppercase tracking-wide mb-4">{t('adminDash.homepage.navbarPreview')}</p>
         <div className="space-y-3">
           <div>
-            <p className="text-xs text-dark-400 mb-1.5">Transparent (mbi Hero)</p>
+            <p className="text-xs text-dark-400 mb-1.5">{t('adminDash.homepage.previewTransparent')}</p>
             <div className="bg-dark-950 rounded-xl px-5 py-3 flex items-center gap-2.5">
               {logo.show_icon && (
                 logo.logo_url ? (
@@ -722,7 +725,7 @@ function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, input
             </div>
           </div>
           <div>
-            <p className="text-xs text-dark-400 mb-1.5">E bardhe (scroll)</p>
+            <p className="text-xs text-dark-400 mb-1.5">{t('adminDash.homepage.previewWhite')}</p>
             <div className="bg-white border border-gray-200 rounded-xl px-5 py-3 flex items-center gap-2.5">
               {logo.show_icon && (
                 logo.logo_url ? (
@@ -739,7 +742,7 @@ function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, input
             </div>
           </div>
           <div>
-            <p className="text-xs text-dark-400 mb-1.5">Footer</p>
+            <p className="text-xs text-dark-400 mb-1.5">{t('adminDash.homepage.previewFooter')}</p>
             <div className="bg-dark-950 rounded-xl px-5 py-3 flex items-center gap-2.5">
               {logo.show_icon && (
                 logo.logo_url ? (
@@ -769,25 +772,26 @@ interface NavbarEditorProps {
 }
 
 function NavbarEditor({ navbar, setNavbar, inputClass, labelClass }: NavbarEditorProps) {
+  const { t } = useTranslation();
   const btnColors: { value: string; label: string; cls: string }[] = [
-    { value: 'primary', label: 'Kaltërt (Primary)', cls: 'bg-primary-600 text-white' },
-    { value: 'dark', label: 'E zezë (Dark)', cls: 'bg-dark-950 text-white' },
-    { value: 'accent', label: 'Portokalli (Accent)', cls: 'bg-accent-600 text-white' },
-    { value: 'green', label: 'Gjelbërt', cls: 'bg-green-600 text-white' },
+    { value: 'primary', label: t('adminDash.homepage.colorPrimary'), cls: 'bg-primary-600 text-white' },
+    { value: 'dark', label: t('adminDash.homepage.colorDark'), cls: 'bg-dark-950 text-white' },
+    { value: 'accent', label: t('adminDash.homepage.colorAccent'), cls: 'bg-accent-600 text-white' },
+    { value: 'green', label: t('adminDash.homepage.colorGreen'), cls: 'bg-green-600 text-white' },
   ];
 
   return (
     <div className="space-y-5">
-      <SectionCard title="Lidhjet e Navigimit" icon={<LinkIcon className="w-4 h-4" />}>
+      <SectionCard title={t('adminDash.homepage.navLinksSection')} icon={<LinkIcon className="w-4 h-4" />}>
         <div className="space-y-4">
           <Toggle
             checked={navbar.show_vehicles_link}
             onChange={v => setNavbar(n => ({ ...n, show_vehicles_link: v }))}
-            label="Shfaq linkun 'Automjetet'"
+            label={t('adminDash.homepage.showVehiclesLink')}
           />
           {navbar.show_vehicles_link && (
             <div>
-              <label className={labelClass}>Teksti i linkut</label>
+              <label className={labelClass}>{t('adminDash.homepage.linkText')}</label>
               <input
                 type="text"
                 value={navbar.vehicles_link_text}
@@ -799,11 +803,11 @@ function NavbarEditor({ navbar, setNavbar, inputClass, labelClass }: NavbarEdito
         </div>
       </SectionCard>
 
-      <SectionCard title="Butonat e Hyrjes" icon={<Palette className="w-4 h-4" />}>
+      <SectionCard title={t('adminDash.homepage.authButtonsSection')} icon={<Palette className="w-4 h-4" />}>
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Teksti "Kycu"</label>
+              <label className={labelClass}>{t('adminDash.homepage.loginButtonText')}</label>
               <input
                 type="text"
                 value={navbar.login_button_text}
@@ -812,7 +816,7 @@ function NavbarEditor({ navbar, setNavbar, inputClass, labelClass }: NavbarEdito
               />
             </div>
             <div>
-              <label className={labelClass}>Teksti "Regjistrohu"</label>
+              <label className={labelClass}>{t('adminDash.homepage.registerButtonText')}</label>
               <input
                 type="text"
                 value={navbar.register_button_text}
@@ -822,7 +826,7 @@ function NavbarEditor({ navbar, setNavbar, inputClass, labelClass }: NavbarEdito
             </div>
           </div>
           <div>
-            <label className={labelClass}>Ngjyra e butonit Regjistrohu</label>
+            <label className={labelClass}>{t('adminDash.homepage.registerButtonColor')}</label>
             <div className="flex flex-wrap gap-2 mt-1">
               {btnColors.map(c => (
                 <button
@@ -840,7 +844,7 @@ function NavbarEditor({ navbar, setNavbar, inputClass, labelClass }: NavbarEdito
       </SectionCard>
 
       <div className="bg-dark-950 rounded-2xl p-5">
-        <p className="text-xs font-semibold text-white/50 uppercase tracking-wide mb-3">Parashikim Navbar</p>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wide mb-3">{t('adminDash.homepage.navbarPreviewLabel')}</p>
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2.5">
             <div className="p-1.5 rounded-lg bg-white/10">
@@ -879,34 +883,35 @@ interface SectionsEditorProps {
   labelClass: string;
 }
 
-const sectionItems = [
-  { key: 'show_categories' as const, label: 'Kategorite e automjeteve', titleKey: 'categories_title' as const, subtitleKey: 'categories_subtitle' as const },
-  { key: 'show_featured' as const, label: 'Automjetet e zgjedhura', titleKey: 'featured_title' as const, subtitleKey: 'featured_subtitle' as const },
-  { key: 'show_how_it_works' as const, label: 'Si funksionon' },
-  { key: 'show_testimonials' as const, label: 'Pershtypjet e klienteve' },
-  { key: 'show_company_cta' as const, label: 'Thirrja per kompanite (CTA)' },
-  { key: 'show_trust_banner' as const, label: 'Baneri i Besimit (fund ballina)' },
-];
+function SectionsEditor({ sections, setSections, inputClass }: SectionsEditorProps) {
+  const { t } = useTranslation();
+  const sectionItems: { key: keyof SectionsSettings; label: string; titleKey?: keyof SectionsSettings; subtitleKey?: keyof SectionsSettings }[] = [
+    { key: 'show_categories', label: t('adminDash.homepage.sectionCategories'), titleKey: 'categories_title', subtitleKey: 'categories_subtitle' },
+    { key: 'show_featured', label: t('adminDash.homepage.sectionFeatured'), titleKey: 'featured_title', subtitleKey: 'featured_subtitle' },
+    { key: 'show_how_it_works', label: t('adminDash.homepage.sectionHowItWorks') },
+    { key: 'show_testimonials', label: t('adminDash.homepage.sectionTestimonials') },
+    { key: 'show_company_cta', label: t('adminDash.homepage.sectionCompanyCta') },
+    { key: 'show_trust_banner', label: t('adminDash.homepage.sectionTrustBanner') },
+  ];
 
-function SectionsEditor({ sections, setSections, inputClass, labelClass }: SectionsEditorProps) {
   return (
     <div className="space-y-5">
-      <SectionCard title="Visibility dhe Titujt e Seksioneve" icon={<Eye className="w-4 h-4" />}>
+      <SectionCard title={t('adminDash.homepage.sectionsVisibility')} icon={<Eye className="w-4 h-4" />}>
         <div className="space-y-3">
           {sectionItems.map(item => (
             <div key={item.key} className="bg-gray-50 rounded-xl p-4">
               <Toggle
-                checked={sections[item.key]}
+                checked={sections[item.key] as boolean}
                 onChange={v => setSections(s => ({ ...s, [item.key]: v }))}
                 label={item.label}
               />
-              {'titleKey' in item && 'subtitleKey' in item && sections[item.key] && (() => {
+              {item.titleKey && item.subtitleKey && sections[item.key] && (() => {
                 const titleKey = item.titleKey as keyof SectionsSettings;
                 const subtitleKey = item.subtitleKey as keyof SectionsSettings;
                 return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 ml-12">
                   <div>
-                    <label className="block text-xs font-medium text-dark-500 mb-1">Titulli kryesor</label>
+                    <label className="block text-xs font-medium text-dark-500 mb-1">{t('adminDash.homepage.mainTitle')}</label>
                     <input
                       type="text"
                       value={String(sections[titleKey] ?? '')}
@@ -915,7 +920,7 @@ function SectionsEditor({ sections, setSections, inputClass, labelClass }: Secti
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-dark-500 mb-1">Nëntitulli (badge sipër)</label>
+                    <label className="block text-xs font-medium text-dark-500 mb-1">{t('adminDash.homepage.subtitleBadge')}</label>
                     <input
                       type="text"
                       value={String(sections[subtitleKey] ?? '')}
@@ -935,8 +940,8 @@ function SectionsEditor({ sections, setSections, inputClass, labelClass }: Secti
         <div className="flex items-start gap-3">
           <RefreshCw className="w-4 h-4 text-primary-600 mt-0.5 shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-primary-800">Ndryshimet hyjnë menjëherë pas ruajtjes</p>
-            <p className="text-xs text-primary-700 mt-1">Seksionet e çaktivizuara fshihen nga Homepage. Titujt e perditesuar shfaqen menjëherë per vizituesit e rinj.</p>
+            <p className="text-sm font-semibold text-primary-800">{t('adminDash.homepage.changesNoticeTitle')}</p>
+            <p className="text-xs text-primary-700 mt-1">{t('adminDash.homepage.changesNoticeDesc')}</p>
           </div>
         </div>
       </div>
@@ -957,6 +962,7 @@ type CategoryRow = {
 };
 
 function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labelClass: string }) {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
@@ -1007,7 +1013,7 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
       return;
     }
     if (!data || data.length === 0) {
-      setError('Nuk u perditesua asnje rresht. Kontrollo lejet (RLS) ose nese je i kyqur si super admin.');
+      setError(t('adminDash.homepage.noRowUpdated'));
       return;
     }
     setSavedKey(row.key);
@@ -1032,7 +1038,7 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
   }
 
   async function deleteRow(key: string) {
-    if (!confirm(`Fshi kategorine "${key}"?`)) return;
+    if (!confirm(t('adminDash.homepage.confirmDeleteCategory', { key }))) return;
     setError(null);
     const { error: err } = await supabase.from('vehicle_categories').delete().eq('key', key);
     if (err) setError(err.message);
@@ -1042,7 +1048,7 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
   async function addRow() {
     const key = newRow.key.trim().toLowerCase();
     if (!key || !/^[a-z0-9_]+$/.test(key)) {
-      setError('Celesi duhet vetem shkronja te vogla, numra ose underscore.');
+      setError(t('adminDash.homepage.keyValidationError'));
       return;
     }
     setError(null);
@@ -1078,15 +1084,15 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-start justify-between gap-4 mb-2">
           <div>
-            <h2 className="text-lg font-bold text-dark-950">Kategorite e Automjeteve</h2>
-            <p className="text-sm text-dark-500 mt-1">Cdo kategori e aktivizuar shfaqet ne homepage me numrin e automjeteve te publikuara dhe cmimin minimal te llogaritur automatikisht.</p>
+            <h2 className="text-lg font-bold text-dark-950">{t('adminDash.homepage.categoriesTitle')}</h2>
+            <p className="text-sm text-dark-500 mt-1">{t('adminDash.homepage.categoriesSubtitle')}</p>
           </div>
           <button
             onClick={() => setShowAdd(true)}
             className="flex items-center gap-1.5 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors shrink-0"
           >
             <Plus className="w-4 h-4" />
-            Shto kategori
+            {t('adminDash.homepage.addCategory')}
           </button>
         </div>
         {error && (
@@ -1096,36 +1102,36 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
 
       {showAdd && (
         <div className="bg-white rounded-2xl border border-primary-200 p-6 space-y-4">
-          <h3 className="text-sm font-bold text-dark-950">Kategori e re</h3>
+          <h3 className="text-sm font-bold text-dark-950">{t('adminDash.homepage.newCategory')}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Celesi (lowercase, pa hapesira)</label>
-              <input className={inputClass} value={newRow.key} onChange={e => setNewRow({ ...newRow, key: e.target.value })} placeholder="p.sh. cabriolet" />
+              <label className={labelClass}>{t('adminDash.homepage.keyLabel')}</label>
+              <input className={inputClass} value={newRow.key} onChange={e => setNewRow({ ...newRow, key: e.target.value })} placeholder={t('adminDash.homepage.keyPlaceholder')} />
             </div>
             <div>
-              <label className={labelClass}>URL e imazhit</label>
+              <label className={labelClass}>{t('adminDash.homepage.imageUrl')}</label>
               <input className={inputClass} value={newRow.image_url} onChange={e => setNewRow({ ...newRow, image_url: e.target.value })} placeholder="https://" />
             </div>
             <div>
-              <label className={labelClass}>Emri (Shqip)</label>
+              <label className={labelClass}>{t('adminDash.homepage.nameSq')}</label>
               <input className={inputClass} value={newRow.label_sq} onChange={e => setNewRow({ ...newRow, label_sq: e.target.value })} />
             </div>
             <div>
-              <label className={labelClass}>Emri (English)</label>
+              <label className={labelClass}>{t('adminDash.homepage.nameEn')}</label>
               <input className={inputClass} value={newRow.label_en} onChange={e => setNewRow({ ...newRow, label_en: e.target.value })} />
             </div>
             <div>
-              <label className={labelClass}>Emri (Deutsch)</label>
+              <label className={labelClass}>{t('adminDash.homepage.nameDe')}</label>
               <input className={inputClass} value={newRow.label_de} onChange={e => setNewRow({ ...newRow, label_de: e.target.value })} />
             </div>
             <div>
-              <label className={labelClass}>Cmimi minimal default (EUR/dite)</label>
+              <label className={labelClass}>{t('adminDash.homepage.defaultMinPrice')}</label>
               <input type="number" className={inputClass} value={newRow.default_min_price} onChange={e => setNewRow({ ...newRow, default_min_price: Number(e.target.value) })} />
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={addRow} className="px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700">Ruaj</button>
-            <button onClick={() => setShowAdd(false)} className="px-4 py-2 bg-gray-100 text-dark-700 text-sm font-semibold rounded-xl hover:bg-gray-200">Anulo</button>
+            <button onClick={addRow} className="px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700">{t('adminDash.homepage.saveBtn')}</button>
+            <button onClick={() => setShowAdd(false)} className="px-4 py-2 bg-gray-100 text-dark-700 text-sm font-semibold rounded-xl hover:bg-gray-200">{t('adminDash.homepage.cancelBtn')}</button>
           </div>
         </div>
       )}
@@ -1140,7 +1146,7 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1 flex-wrap">
                   <code className="text-xs font-mono px-2 py-0.5 bg-gray-100 text-dark-700 rounded">{row.key}</code>
-                  <span className="text-xs text-dark-500">{row.vehicle_count || 0} automjete te publikuara</span>
+                  <span className="text-xs text-dark-500">{t('adminDash.homepage.publishedVehiclesCount', { count: row.vehicle_count || 0 })}</span>
                   <label className="flex items-center gap-1.5 cursor-pointer text-xs text-dark-700">
                     <input
                       type="checkbox"
@@ -1148,30 +1154,30 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
                       onChange={e => update(idx, { is_active: e.target.checked })}
                       className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
-                    Aktive
+                    {t('adminDash.homepage.activeLabel')}
                   </label>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                   <div>
-                    <label className={labelClass}>Shqip</label>
+                    <label className={labelClass}>{t('adminDash.homepage.langSq')}</label>
                     <input className={inputClass} value={row.label_sq} onChange={e => update(idx, { label_sq: e.target.value })} />
                   </div>
                   <div>
-                    <label className={labelClass}>English</label>
+                    <label className={labelClass}>{t('adminDash.homepage.langEn')}</label>
                     <input className={inputClass} value={row.label_en} onChange={e => update(idx, { label_en: e.target.value })} />
                   </div>
                   <div>
-                    <label className={labelClass}>Deutsch</label>
+                    <label className={labelClass}>{t('adminDash.homepage.langDe')}</label>
                     <input className={inputClass} value={row.label_de} onChange={e => update(idx, { label_de: e.target.value })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                   <div>
-                    <label className={labelClass}>URL e imazhit</label>
+                    <label className={labelClass}>{t('adminDash.homepage.imageUrl')}</label>
                     <input className={inputClass} value={row.image_url} onChange={e => update(idx, { image_url: e.target.value })} />
                   </div>
                   <div>
-                    <label className={labelClass}>Cmimi minimal default (EUR)</label>
+                    <label className={labelClass}>{t('adminDash.homepage.defaultMinPriceShort')}</label>
                     <input type="number" className={inputClass} value={row.default_min_price} onChange={e => update(idx, { default_min_price: Number(e.target.value) })} />
                   </div>
                 </div>
@@ -1181,7 +1187,7 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
                   onClick={() => moveRow(idx, -1)}
                   disabled={idx === 0}
                   className="p-2 rounded-lg bg-gray-50 text-dark-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Lart"
+                  title={t('adminDash.homepage.moveUp')}
                 >
                   <ArrowUp className="w-4 h-4" />
                 </button>
@@ -1189,14 +1195,14 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
                   onClick={() => moveRow(idx, 1)}
                   disabled={idx === rows.length - 1}
                   className="p-2 rounded-lg bg-gray-50 text-dark-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Posht"
+                  title={t('adminDash.homepage.moveDown')}
                 >
                   <ArrowDown className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => deleteRow(row.key)}
                   className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
-                  title="Fshi"
+                  title={t('adminDash.homepage.deleteTooltip')}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -1209,7 +1215,7 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
                 className="flex items-center gap-1.5 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50"
               >
                 {saving === row.key ? <Loader2 className="w-4 h-4 animate-spin" /> : savedKey === row.key ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                {savedKey === row.key ? 'U ruajt' : 'Ruaj kategorine'}
+                {savedKey === row.key ? t('adminDash.homepage.savedBtn') : t('adminDash.homepage.saveCategory')}
               </button>
             </div>
           </div>
