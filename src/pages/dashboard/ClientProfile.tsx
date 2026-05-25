@@ -200,9 +200,9 @@ export default function ClientProfile() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <form onSubmit={handleSave} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.email')}</label>
+              <label htmlFor="profile-email" className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.email')}</label>
               <div className="flex items-center gap-2">
-                <input type="email" value={profile?.email || ''} disabled className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-400 cursor-not-allowed" />
+                <input id="profile-email" name="email" type="email" autoComplete="email" value={profile?.email || ''} disabled className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-400 cursor-not-allowed" />
                 <button
                   type="button"
                   onClick={() => { setShowEmailChange(v => !v); setNewEmail(''); setEmailMessage(null); }}
@@ -214,10 +214,13 @@ export default function ClientProfile() {
               </div>
               {showEmailChange && (
                 <div className="mt-3 p-4 border border-primary-100 bg-primary-50/40 rounded-xl">
-                  <p className="text-xs text-dark-600 mb-2">{t('clientDash.profile.emailChangeHelp')}</p>
+                  <label htmlFor="profile-new-email" className="block text-xs text-dark-600 mb-2">{t('clientDash.profile.emailChangeHelp')}</label>
                   <div className="flex items-center gap-2">
                     <input
+                      id="profile-new-email"
+                      name="newEmail"
                       type="email"
+                      autoComplete="email"
                       value={newEmail}
                       onChange={e => setNewEmail(e.target.value)}
                       placeholder={t('clientDash.profile.newEmailPlaceholder')}
@@ -242,17 +245,17 @@ export default function ClientProfile() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.fullName')}</label>
-              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required className={inputClass} />
+              <label htmlFor="profile-fullname" className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.fullName')}</label>
+              <input id="profile-fullname" name="fullName" type="text" autoComplete="name" value={fullName} onChange={e => setFullName(e.target.value)} required className={inputClass} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.phone')}</label>
-              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder={t('clientDash.profile.phonePlaceholder')} className={`${inputClass} placeholder:text-dark-300`} />
+              <label htmlFor="profile-phone" className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.phone')}</label>
+              <input id="profile-phone" name="phone" type="tel" autoComplete="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder={t('clientDash.profile.phonePlaceholder')} className={`${inputClass} placeholder:text-dark-300`} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.country')}</label>
-                <select value={selectedCountryId} onChange={e => setSelectedCountryId(e.target.value)} className={inputClass}>
+                <label htmlFor="profile-country" className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.country')}</label>
+                <select id="profile-country" name="country" autoComplete="country" value={selectedCountryId} onChange={e => setSelectedCountryId(e.target.value)} className={inputClass}>
                   <option value="">{t('clientDash.profile.selectCountry')}</option>
                   {countries.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -260,8 +263,8 @@ export default function ClientProfile() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.city')}</label>
-                <select value={selectedCityId} onChange={e => setSelectedCityId(e.target.value)} className={inputClass} disabled={!selectedCountryId || filteredCities.length === 0}>
+                <label htmlFor="profile-city" className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.city')}</label>
+                <select id="profile-city" name="city" autoComplete="address-level2" value={selectedCityId} onChange={e => setSelectedCityId(e.target.value)} className={inputClass} disabled={!selectedCountryId || filteredCities.length === 0}>
                   <option value="">{t('clientDash.profile.selectCity')}</option>
                   {filteredCities.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -297,10 +300,13 @@ export default function ClientProfile() {
           <p className="text-dark-500 text-sm mb-5">{t('clientDash.profile.changePasswordSubtitle')}</p>
           <form onSubmit={handlePasswordChange} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.newPassword')}</label>
+              <label htmlFor="profile-new-password" className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.newPassword')}</label>
               <div className="relative">
                 <input
+                  id="profile-new-password"
+                  name="newPassword"
                   type={showNewPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
                   required
@@ -310,6 +316,7 @@ export default function ClientProfile() {
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
+                  aria-label={showNewPassword ? t('auth.hidePassword', 'Fshih fjalekalimin') : t('auth.showPassword', 'Shfaq fjalekalimin')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-600 transition-colors"
                 >
                   {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -335,10 +342,13 @@ export default function ClientProfile() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.confirmPassword')}</label>
+              <label htmlFor="profile-confirm-password" className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.confirmPassword')}</label>
               <div className="relative">
                 <input
+                  id="profile-confirm-password"
+                  name="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   required
@@ -348,6 +358,7 @@ export default function ClientProfile() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? t('auth.hidePassword', 'Fshih fjalekalimin') : t('auth.showPassword', 'Shfaq fjalekalimin')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-600 transition-colors"
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

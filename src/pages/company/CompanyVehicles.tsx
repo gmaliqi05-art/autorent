@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useId } from 'react';
 import { Car, Plus, Pencil, Loader2, Eye, EyeOff, Trash2, Upload, X, ChevronLeft, ChevronRight, AlertTriangle, ArrowUpRight, Copy, Search, Image as ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -742,19 +742,21 @@ export default function CompanyVehicles() {
 }
 
 function Input({ label, value, onChange, type = 'text', required = false }: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean }) {
+  const id = useId();
   return (
     <div>
-      <label className="block text-xs font-medium text-dark-600 mb-1.5">{label}</label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} required={required} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" />
+      <label htmlFor={id} className="block text-xs font-medium text-dark-600 mb-1.5">{label}</label>
+      <input id={id} type={type} value={value} onChange={e => onChange(e.target.value)} required={required} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" />
     </div>
   );
 }
 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
+  const id = useId();
   return (
     <div>
-      <label className="block text-xs font-medium text-dark-600 mb-1.5">{label}</label>
-      <select value={value} onChange={e => onChange(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all">
+      <label htmlFor={id} className="block text-xs font-medium text-dark-600 mb-1.5">{label}</label>
+      <select id={id} value={value} onChange={e => onChange(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all">
         {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
     </div>
