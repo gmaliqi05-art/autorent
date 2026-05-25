@@ -11,7 +11,7 @@
  *  - Preview menjëherë
  *  - RLS i Supabase mbron uploads
  */
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { Upload, X, Loader2, ImagePlus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
@@ -52,6 +52,7 @@ export default function ImageUploader({
   emptyText,
 }: ImageUploaderProps) {
   const { t } = useTranslation();
+  const inputId = useId();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,15 +118,17 @@ export default function ImageUploader({
   return (
     <div>
       {label && (
-        <label className="block text-xs font-semibold text-dark-600 uppercase tracking-wide mb-1.5">
+        <label htmlFor={inputId} className="block text-xs font-semibold text-dark-600 uppercase tracking-wide mb-1.5">
           {label}
         </label>
       )}
       <input
+        id={inputId}
         ref={fileRef}
         type="file"
         accept={accept}
         onChange={handleFile}
+        aria-label={label || t('uploader.uploadImage', 'Ngarko imazh')}
         className="hidden"
       />
 
