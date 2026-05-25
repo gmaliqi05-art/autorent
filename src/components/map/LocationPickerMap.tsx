@@ -19,6 +19,10 @@ export default function LocationPickerMap({ lat, lng, onChange, height = '320px'
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Ref ne onChange te fresket per te shmangur stale closure pa shkaktuar
+  // re-create te map-it ne cdo render te parent-it.
+  const onChangeRef = useRef(onChange);
+  useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
 
   const defaultLat = lat ?? 42.6629;
   const defaultLng = lng ?? 21.1655;
@@ -40,7 +44,7 @@ export default function LocationPickerMap({ lat, lng, onChange, height = '320px'
       const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
       marker.on('dragend', () => {
         const pos = marker.getLatLng();
-        onChange(pos.lat, pos.lng);
+        onChangeRef.current(pos.lat, pos.lng);
       });
       markerRef.current = marker;
     }
@@ -53,11 +57,11 @@ export default function LocationPickerMap({ lat, lng, onChange, height = '320px'
         const m = L.marker([clickLat, clickLng], { draggable: true }).addTo(map);
         m.on('dragend', () => {
           const pos = m.getLatLng();
-          onChange(pos.lat, pos.lng);
+          onChangeRef.current(pos.lat, pos.lng);
         });
         markerRef.current = m;
       }
-      onChange(clickLat, clickLng);
+      onChangeRef.current(clickLat, clickLng);
     });
 
     mapRef.current = map;
@@ -67,6 +71,8 @@ export default function LocationPickerMap({ lat, lng, onChange, height = '320px'
       mapRef.current = null;
       markerRef.current = null;
     };
+    // Init i njehereshem; onChangeRef mban thirrjet aktualizuara.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -79,7 +85,7 @@ export default function LocationPickerMap({ lat, lng, onChange, height = '320px'
         const m = L.marker([lat, lng], { draggable: true }).addTo(mapRef.current);
         m.on('dragend', () => {
           const pos = m.getLatLng();
-          onChange(pos.lat, pos.lng);
+          onChangeRef.current(pos.lat, pos.lng);
         });
         markerRef.current = m;
       }
