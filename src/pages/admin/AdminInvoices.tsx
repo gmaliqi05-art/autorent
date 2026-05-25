@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Search, Filter, Download, Eye, CheckCircle, XCircle, Clock, ArrowUpDown, Loader2 } from 'lucide-react';
+import { FileText, Search, Download, Eye, CheckCircle, XCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import type { Invoice } from '../../lib/types';
@@ -10,6 +10,8 @@ import { sq as sqLocale, enUS as enLocale, de as deLocale } from 'date-fns/local
 import { exportToCSV } from '../../lib/csvExport';
 
 type StatusFilter = 'all' | 'draft' | 'issued' | 'paid' | 'cancelled';
+
+const PAGE_SIZE = 50;
 
 const STATUS_COLOR: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-600',
@@ -32,39 +34,84 @@ export default function AdminInvoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selected, setSelected] = useState<Invoice | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [statusCounts, setStatusCounts] = useState({ all: 0, draft: 0, issued: 0, paid: 0, cancelled: 0 });
+  const [totalRevenue, setTotalRevenue] = useState(0);
 
-  useEffect(() => { loadInvoices(); }, []);
+  // Debounce search 300ms
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset page kur filter/search ndryshojne
+  useEffect(() => { setPage(1); }, [statusFilter, debouncedSearch, sortDir]);
+
+  useEffect(() => { void loadInvoices(); }, [page, statusFilter, debouncedSearch, sortDir]);
+  useEffect(() => { void loadCounts(); }, []);
+
+  async function loadCounts() {
+    // Count per status (5 thirrje paralele) + total revenue
+    const [allRes, draftRes, issuedRes, paidRes, cancelledRes, revRes] = await Promise.all([
+      supabase.from('invoices').select('id', { count: 'exact', head: true }),
+      supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('status', 'draft'),
+      supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('status', 'issued'),
+      supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
+      supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('status', 'cancelled'),
+      supabase.from('invoices').select('total_price').eq('status', 'paid'),
+    ]);
+    setStatusCounts({
+      all: allRes.count ?? 0,
+      draft: draftRes.count ?? 0,
+      issued: issuedRes.count ?? 0,
+      paid: paidRes.count ?? 0,
+      cancelled: cancelledRes.count ?? 0,
+    });
+    const revenue = (revRes.data || []).reduce((s, i) => s + ((i as { total_price?: number }).total_price || 0), 0);
+    setTotalRevenue(revenue);
+  }
 
   async function loadInvoices() {
-    const { data } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
-    setInvoices(data || []);
+    setLoading(true);
+    const from = (page - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    let query = supabase
+      .from('invoices')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: sortDir === 'asc' })
+      .range(from, to);
+
+    if (statusFilter !== 'all') {
+      query = query.eq('status', statusFilter);
+    }
+
+    if (debouncedSearch.trim()) {
+      const s = `%${debouncedSearch.trim()}%`;
+      query = query.or(`invoice_number.ilike.${s},client_name.ilike.${s},company_name.ilike.${s}`);
+    }
+
+    const { data, count } = await query;
+    setInvoices((data || []) as Invoice[]);
+    setTotalCount(count ?? 0);
     setLoading(false);
   }
 
   async function updateStatus(id: string, status: string) {
     await supabase.from('invoices').update({ status, paid_at: status === 'paid' ? new Date().toISOString() : null }).eq('id', id);
-    setInvoices(inv => inv.map(i => i.id === id ? { ...i, status: status as any, paid_at: status === 'paid' ? new Date().toISOString() : null } : i));
-    if (selected?.id === id) setSelected(s => s ? { ...s, status: status as any } : null);
+    setInvoices(inv => inv.map(i => i.id === id ? { ...i, status: status as Invoice['status'], paid_at: status === 'paid' ? new Date().toISOString() : null } : i));
+    if (selected?.id === id) setSelected(s => s ? { ...s, status: status as Invoice['status'] } : null);
+    // Refresh counts (status changed)
+    void loadCounts();
   }
 
-  const filtered = invoices
-    .filter(i => statusFilter === 'all' || i.status === statusFilter)
-    .filter(i => i.invoice_number?.toLowerCase().includes(search.toLowerCase()) ||
-      i.client_name?.toLowerCase().includes(search.toLowerCase()) ||
-      i.company_name?.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => sortDir === 'desc' ? new Date(b.created_at).getTime() - new Date(a.created_at).getTime() : new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-
-  const totals = {
-    all: invoices.length,
-    draft: invoices.filter(i => i.status === 'draft').length,
-    issued: invoices.filter(i => i.status === 'issued').length,
-    paid: invoices.filter(i => i.status === 'paid').length,
-    cancelled: invoices.filter(i => i.status === 'cancelled').length,
-  };
-  const totalRevenue = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + (i.total_price || 0), 0);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const filtered = invoices; // Server-side filtered already
+  const totals = statusCounts;
 
   return (
     <DashboardLayout navItems={adminNavItems} navGroups={adminNavGroups} title={t('adminDash.invoices.title')}>
@@ -178,6 +225,36 @@ export default function AdminInvoices() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!loading && totalCount > 0 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+              <p className="text-xs text-gray-500">
+                {t('adminDash.invoices.pagination', { from: (page - 1) * PAGE_SIZE + 1, to: Math.min(page * PAGE_SIZE, totalCount), total: totalCount, defaultValue: `{{from}}-{{to}} nga {{total}}` })}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={page === 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm disabled:opacity-50 hover:bg-gray-50"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="px-3 py-1.5 text-sm text-gray-600">
+                  {page} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm disabled:opacity-50 hover:bg-gray-50"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
         </div>
