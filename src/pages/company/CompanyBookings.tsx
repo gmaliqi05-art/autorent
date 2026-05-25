@@ -300,6 +300,48 @@ export default function CompanyBookings() {
     }
   }
 
+  async function handleConfirmBankTransfer(id: string) {
+    const booking = bookings.find(b => b.id === id);
+    if (!booking || !company) return;
+    if (!confirm(t('companyDash.bookings.confirmBankTransferPrompt', 'Konfirmoji qe e keni pranuar transferin bankar per kete rezervim?'))) return;
+
+    try {
+      setActionLoading(id);
+      setError(null);
+
+      const { error: updateErr } = await supabase
+        .from('bookings')
+        .update({ payment_status: 'paid', paid_at: new Date().toISOString() })
+        .eq('id', id);
+      if (updateErr) throw updateErr;
+
+      // Update invoice nese ekziston
+      await supabase
+        .from('invoices')
+        .update({ payment_status: 'paid', status: 'paid', paid_at: new Date().toISOString() })
+        .eq('booking_id', id);
+
+      const vehicleName = booking.vehicle ? `${booking.vehicle.brand} ${booking.vehicle.model}` : t('companyDash.common.vehicleFallback');
+      await createNotification({
+        userId: booking.client_id,
+        title: t('companyDash.bookings.bankPaymentConfirmedTitle', 'Pagesa u konfirmua'),
+        message: t('companyDash.bookings.bankPaymentConfirmedMsg', { vehicle: vehicleName, amount: booking.total_price }),
+        type: 'payment_received',
+        referenceId: booking.id,
+        referenceType: 'booking',
+        templateKey: 'payment_received',
+        templateVars: { vehicle: vehicleName, amount: String(booking.total_price) },
+      });
+
+      await loadData();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : t('companyDash.common.saveError');
+      setError(message);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   async function updateStatus(id: string, status: string) {
     const booking = bookings.find(b => b.id === id);
     if (!booking || !company) return;
@@ -607,6 +649,18 @@ export default function CompanyBookings() {
                             <X className="w-4 h-4" />
                           </button>
                         </div>
+                      )}
+
+                      {b.payment_method === 'bank_transfer' && b.payment_status === 'pending' && b.status !== 'cancelled' && (
+                        <button
+                          onClick={() => handleConfirmBankTransfer(b.id)}
+                          disabled={isActioning}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                          title={t('companyDash.bookings.confirmBankPaymentTooltip', 'Shenoji qe pagesa per kete rezervim eshte pranuar ne llogarine bankare')}
+                        >
+                          {isActioning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building className="w-4 h-4" />}
+                          {t('companyDash.bookings.confirmBankPayment', 'Konfirmo pagesen')}
+                        </button>
                       )}
                       {b.status === 'confirmed' && (
                         <button
