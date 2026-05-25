@@ -272,22 +272,28 @@ export default function VehicleDetailPage() {
       status: 'draft',
     });
 
+    const vehicleName = `${vehicle.brand} ${vehicle.model}`;
+
     await createNotification({
       userId: user.id,
       title: t('vehicleDetail.notifBookingCreatedTitle'),
-      message: t('vehicleDetail.notifBookingCreatedClient', { vehicle: `${vehicle.brand} ${vehicle.model}` }),
+      message: t('vehicleDetail.notifBookingCreatedClient', { vehicle: vehicleName }),
       type: 'booking_created',
       referenceId: bookingData.id,
       referenceType: 'booking',
+      templateKey: 'booking_created_client',
+      templateVars: { vehicle: vehicleName },
     });
 
     await createNotification({
       userId: company.owner_id,
       title: t('vehicleDetail.notifBookingCreatedCompany'),
-      message: t('vehicleDetail.notifBookingCreatedCompanyMsg', { name: profile.full_name, vehicle: `${vehicle.brand} ${vehicle.model}` }),
+      message: t('vehicleDetail.notifBookingCreatedCompanyMsg', { name: profile.full_name, vehicle: vehicleName }),
       type: 'booking_created',
       referenceId: bookingData.id,
       referenceType: 'booking',
+      templateKey: 'booking_created_company',
+      templateVars: { clientName: profile.full_name, vehicle: vehicleName },
     });
 
     // Per pagese me karte, ridrejto ne Stripe Checkout.
