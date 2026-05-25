@@ -124,7 +124,7 @@ export default function AdminBusinessPlan() {
                   </div>
                 ))}
               </div>
-              <div className="bg-white border border-gray-200 rounded-xl p-6 text-white">
+              <div className="bg-gradient-to-br from-primary-600 to-purple-700 rounded-xl p-6 text-white">
                 <h3 className="font-semibold mb-4 flex items-center gap-2"><Target className="w-5 h-5" />{t('adminDash.businessPlan.projections')}</h3>
                 <div className="space-y-4">
                   <div>
