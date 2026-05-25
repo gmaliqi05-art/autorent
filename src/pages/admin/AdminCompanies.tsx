@@ -88,33 +88,43 @@ export default function AdminCompanies() {
 
   async function loadAll() {
     setLoading(true);
-    const [cRes, bRes, vRes, pRes] = await Promise.all([
+    // company_stats VIEW agregon ne DB — eliminoji fetch te te gjitha bookings/vehicles
+    const [cRes, sRes, pRes] = await Promise.all([
       supabase.from('companies').select('*').order('created_at', { ascending: false }),
-      supabase.from('bookings').select('company_id, total_price, status, payment_status'),
-      supabase.from('vehicles').select('company_id, is_published, is_available'),
+      supabase.from('company_stats').select('*'),
       supabase.from('subscription_plans').select('*').eq('is_active', true),
     ]);
 
     const comps = (cRes.data || []) as Company[];
-    const bookings = (bRes.data || []) as Booking[];
-    const vehicles = (vRes.data || []) as Vehicle[];
+    const stats = (sRes.data || []) as Array<{
+      company_id: string;
+      bookings_count: number;
+      completed_bookings: number;
+      cancelled_bookings: number;
+      active_bookings: number;
+      revenue: number | string;
+      pending_revenue: number | string;
+      vehicles_count: number;
+      published_vehicles: number;
+    }>;
     const plansData = (pRes.data || []) as SubscriptionPlan[];
     setPlans(plansData);
 
+    const statsMap = new Map(stats.map(s => [s.company_id, s]));
+
     const enriched: CompanyReport[] = comps.map(c => {
-      const cb = bookings.filter(b => b.company_id === c.id);
-      const cv = vehicles.filter(v => v.company_id === c.id);
+      const s = statsMap.get(c.id);
       const plan = plansData.find(p => p.id === c.subscription_plan_id) || null;
       return {
         ...c,
-        bookingsCount: cb.length,
-        vehiclesCount: cv.length,
-        publishedVehicles: cv.filter(v => v.is_published).length,
-        revenue: cb.filter(b => b.status === 'completed' || b.payment_status === 'paid').reduce((s, b) => s + Number(b.total_price), 0),
-        pendingRevenue: cb.filter(b => b.status === 'confirmed' || b.status === 'active').reduce((s, b) => s + Number(b.total_price), 0),
-        completedBookings: cb.filter(b => b.status === 'completed').length,
-        cancelledBookings: cb.filter(b => b.status === 'cancelled').length,
-        activeBookings: cb.filter(b => b.status === 'active' || b.status === 'confirmed').length,
+        bookingsCount: s?.bookings_count ?? 0,
+        vehiclesCount: s?.vehicles_count ?? 0,
+        publishedVehicles: s?.published_vehicles ?? 0,
+        revenue: Number(s?.revenue ?? 0),
+        pendingRevenue: Number(s?.pending_revenue ?? 0),
+        completedBookings: s?.completed_bookings ?? 0,
+        cancelledBookings: s?.cancelled_bookings ?? 0,
+        activeBookings: s?.active_bookings ?? 0,
         planName: plan?.name || 'Free',
         plan,
       };
