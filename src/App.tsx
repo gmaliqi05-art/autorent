@@ -70,6 +70,7 @@ const LegalNoticePage = lazy(() => import('./pages/LegalNoticePage'));
 const GDPRRightsPage = lazy(() => import('./pages/GDPRRightsPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const ErrorPage = lazy(() => import('./pages/ErrorPage'));
 
 function PageLoader() {
   return (
@@ -173,6 +174,8 @@ export default function App() {
             <Route path="/politika-cookie" element={<PublicLayout><CookiePolicyPage /></PublicLayout>} />
             <Route path="/njoftim-ligjor" element={<PublicLayout><LegalNoticePage /></PublicLayout>} />
             <Route path="/te-drejtat-gdpr" element={<PublicLayout><GDPRRightsPage /></PublicLayout>} />
+            <Route path="/500" element={<ErrorPage statusCode={500} />} />
+            <Route path="/503" element={<ErrorPage statusCode={503} />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
