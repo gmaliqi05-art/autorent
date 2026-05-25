@@ -487,11 +487,14 @@ export default function RegisterPage() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-dark-700 mb-1.5">
+                  <label htmlFor="reg-fullname" className="block text-sm font-medium text-dark-700 mb-1.5">
                     {activeTab === 'company' ? t('auth.ownerName') : t('auth.fullName')}
                   </label>
                   <input
+                    id="reg-fullname"
+                    name="fullName"
                     type="text"
+                    autoComplete="name"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
@@ -502,10 +505,13 @@ export default function RegisterPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-dark-700 mb-1.5">
+                    <label htmlFor="reg-country" className="block text-sm font-medium text-dark-700 mb-1.5">
                       {t('vehicles.country', 'Shteti')}
                     </label>
                     <select
+                      id="reg-country"
+                      name="country"
+                      autoComplete="country"
                       value={selectedCountryId}
                       onChange={(e) => setSelectedCountryId(e.target.value)}
                       className={inputClass}
@@ -520,10 +526,13 @@ export default function RegisterPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-dark-700 mb-1.5">
+                    <label htmlFor="reg-city" className="block text-sm font-medium text-dark-700 mb-1.5">
                       {t('vehicles.city', 'Qyteti')}
                     </label>
                     <select
+                      id="reg-city"
+                      name="city"
+                      autoComplete="address-level2"
                       value={selectedCityId}
                       onChange={(e) => setSelectedCityId(e.target.value)}
                       className={inputClass}
@@ -543,11 +552,14 @@ export default function RegisterPage() {
                 {activeTab === 'company' && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-1.5">
+                      <label htmlFor="reg-company-name" className="block text-sm font-medium text-dark-700 mb-1.5">
                         {t('auth.companyName')}
                       </label>
                       <input
+                        id="reg-company-name"
+                        name="companyName"
                         type="text"
+                        autoComplete="organization"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         required
@@ -556,11 +568,14 @@ export default function RegisterPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-1.5">
+                      <label htmlFor="reg-phone" className="block text-sm font-medium text-dark-700 mb-1.5">
                         {t('auth.phone')}
                       </label>
                       <input
+                        id="reg-phone"
+                        name="phone"
                         type="tel"
+                        autoComplete="tel"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         required
@@ -572,9 +587,12 @@ export default function RegisterPage() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-dark-700 mb-1.5">{t('auth.email')}</label>
+                  <label htmlFor="reg-email" className="block text-sm font-medium text-dark-700 mb-1.5">{t('auth.email')}</label>
                   <input
+                    id="reg-email"
+                    name="email"
                     type="email"
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -584,12 +602,15 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-dark-700 mb-1.5">
+                  <label htmlFor="reg-password" className="block text-sm font-medium text-dark-700 mb-1.5">
                     {t('auth.password')}
                   </label>
                   <div className="relative">
                     <input
+                      id="reg-password"
+                      name="password"
                       type={showPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -600,6 +621,7 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? t('auth.hidePassword', 'Fshih fjalekalimin') : t('auth.showPassword', 'Shfaq fjalekalimin')}
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                     >
                       {showPassword ? (
