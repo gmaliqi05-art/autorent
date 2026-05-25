@@ -648,6 +648,12 @@
     "backHome": "Back to home",
     "browseVehicles": "Browse vehicles"
   },
+  "errorPage": {
+    "title": "Something went wrong",
+    "desc": "An unexpected server error occurred. Our team has been notified — please try again shortly.",
+    "retry": "Reload page",
+    "backHome": "Back to home"
+  },
   "chat": {
     "title": "Chat with us",
     "placeholder": "Type your message...",

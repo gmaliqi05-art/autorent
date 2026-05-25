@@ -648,6 +648,12 @@
     "backHome": "Zurück zur Startseite",
     "browseVehicles": "Fahrzeuge durchsuchen"
   },
+  "errorPage": {
+    "title": "Etwas ist schiefgelaufen",
+    "desc": "Ein unerwarteter Serverfehler ist aufgetreten. Unser Team wurde benachrichtigt — bitte versuche es gleich noch einmal.",
+    "retry": "Seite neu laden",
+    "backHome": "Zurück zur Startseite"
+  },
   "chat": {
     "title": "Chatten Sie mit uns",
     "placeholder": "Geben Sie Ihre Nachricht ein...",

@@ -648,6 +648,12 @@
     "backHome": "Kthehu ne Ballina",
     "browseVehicles": "Shfleto automjetet"
   },
+  "errorPage": {
+    "title": "Dicka shkoi keq",
+    "desc": "Ndodhi nje gabim i papritur ne server. Ekipi yne u njoftua automatikisht — provo perseri pas pak.",
+    "retry": "Rifresko faqen",
+    "backHome": "Kthehu ne Ballina"
+  },
   "chat": {
     "title": "Bisedo me ne",
     "placeholder": "Shkruani mesazhin tuaj...",
