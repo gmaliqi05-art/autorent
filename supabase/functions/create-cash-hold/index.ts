@@ -108,6 +108,9 @@ Deno.serve(async (req: Request) => {
         client_id: userId,
         kind: "cash_hold",
       },
+    }, {
+      // Parandalon double-create kur clienti riprovon ne network failure
+      idempotencyKey: `cash-hold-${booking.id}`,
     });
 
     // Ruaj intent.id ne booking
