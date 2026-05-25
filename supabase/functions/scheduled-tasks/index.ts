@@ -83,6 +83,7 @@ Deno.serve(async (req: Request) => {
     auto_cancelled: 0,
     activated: 0,
     completed: 0,
+    identity_stale_failed: 0,
     errors: [] as string[],
   };
 
@@ -210,6 +211,48 @@ Deno.serve(async (req: Request) => {
     results.activated = activating?.length || 0;
   } catch (e) {
     results.errors.push(`activate block: ${(e as Error).message}`);
+  }
+
+  // ===== 3.5. Auto-fail Stripe Identity verifications stuck > 24h =====
+  // Risk #1 nga audit: useri ngec ne 'processing' nese webhook humb event-in
+  // perfundimtar. Auto-fail i jep mundesi te riprovoje pa kontakt support.
+  try {
+    const cutoff = new Date(now);
+    cutoff.setHours(cutoff.getHours() - 24);
+    const cutoffIso = cutoff.toISOString();
+
+    const { data: staleDocs, error: staleErr } = await supabase
+      .from("client_documents")
+      .update({
+        stripe_verification_status: "requires_action",
+        rejection_reason: "Verifikimi ngeci ne procesim — provoni perseri.",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("stripe_verification_status", "processing")
+      .eq("verified", false)
+      .lt("updated_at", cutoffIso)
+      .select("client_id");
+
+    if (staleErr) throw staleErr;
+    results.identity_stale_failed = staleDocs?.length || 0;
+
+    // Notification per cdo user te prekur (push + bell)
+    for (const doc of staleDocs || []) {
+      try {
+        await supabase.from("notifications").insert({
+          user_id: doc.client_id,
+          title: "Verifikimi i identitetit",
+          message: "Verifikimi i patentes ngeci ne procesim. Provoni perseri nga seksioni i profilit.",
+          type: "identity_verification_stale",
+          template_key: "identity_stale",
+          template_vars: {},
+        });
+      } catch (e) {
+        results.errors.push(`identity-notif ${doc.client_id}: ${(e as Error).message}`);
+      }
+    }
+  } catch (e) {
+    results.errors.push(`identity stale block: ${(e as Error).message}`);
   }
 
   // ===== 4. Complete active bookings after return date =====
