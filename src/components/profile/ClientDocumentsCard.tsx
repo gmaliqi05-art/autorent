@@ -44,18 +44,42 @@ export default function ClientDocumentsCard({ userId }: { userId: string }) {
   // Trajto callback nga Stripe Identity (returnUrl)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('identity_verification') === 'complete') {
-      setMessage({ type: 'success', text: t('clientDash.profile.docs.stripeReturnMsg', 'Verifikimi po procesohet. Statusi do perditesohet automatikisht ne disa sekonda.') });
-      // Hiq query param
-      const url = new URL(window.location.href);
-      url.searchParams.delete('identity_verification');
-      window.history.replaceState({}, '', url.toString());
-      // Reload status pas 3 sekondash (webhook duhet te kete mberritur)
-      const t1 = setTimeout(() => loadDoc(), 3000);
-      const t2 = setTimeout(() => loadDoc(), 8000);
-      return () => { clearTimeout(t1); clearTimeout(t2); };
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (params.get('identity_verification') !== 'complete') return;
+
+    setMessage({ type: 'success', text: t('clientDash.profile.docs.stripeReturnMsg', 'Verifikimi po procesohet. Statusi do perditesohet automatikisht ne disa sekonda.') });
+    // Hiq query param
+    const url = new URL(window.location.href);
+    url.searchParams.delete('identity_verification');
+    window.history.replaceState({}, '', url.toString());
+
+    // Poll cdo 2s deri ne 16s, ndal ne terminal state
+    const TERMINAL_STATES = new Set(['verified', 'requires_action', 'canceled']);
+    let attempt = 0;
+    const maxAttempts = 8;
+    let cancelled = false;
+
+    const poll = async () => {
+      if (cancelled || attempt >= maxAttempts) return;
+      attempt++;
+      const { data } = await supabase
+        .from('client_documents')
+        .select('stripe_verification_status, verified')
+        .eq('client_id', userId)
+        .maybeSingle();
+      if (cancelled) return;
+      const status = data?.stripe_verification_status;
+      const isTerminal = data?.verified || (status && TERMINAL_STATES.has(status));
+      // Refresh UI me te dhenat e fundit
+      loadDoc();
+      if (isTerminal || attempt >= maxAttempts) return;
+      setTimeout(poll, 2000);
+    };
+    const initialTimer = setTimeout(poll, 2000);
+    return () => {
+      cancelled = true;
+      clearTimeout(initialTimer);
+    };
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadDoc() {
     setLoading(true);
