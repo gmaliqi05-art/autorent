@@ -43,6 +43,34 @@ Deno.serve(async (req: Request) => {
 
   const admin = createClient(supabaseUrl, serviceKey);
 
+  // Idempotency: INSERT event.id me ON CONFLICT DO NOTHING. Nese eshte
+  // procesuar tashme, kthej 200 OK pa re-procesim — Stripe e konsideron
+  // dergesen e suksesshme dhe nuk ri-dergon.
+  const { data: insertedEvent, error: insertErr } = await admin
+    .from("stripe_webhook_events")
+    .insert({
+      event_id: event.id,
+      event_type: event.type,
+      payload_summary: { livemode: event.livemode, created: event.created },
+    })
+    .select("event_id")
+    .maybeSingle();
+
+  if (insertErr && insertErr.code !== "23505") {
+    // Gabim tjeter perveç duplicate — log dhe kthe 500 qe Stripe te ri-dergoje
+    console.error("Failed to record webhook event:", insertErr);
+    return new Response(`DB error: ${insertErr.message}`, { status: 500 });
+  }
+
+  if (!insertedEvent) {
+    // event_id ekzistonte tashme — duplicate, skip processing
+    console.log(`Stripe webhook event ${event.id} (${event.type}) tashme i procesuar, skipohet`);
+    return new Response(
+      JSON.stringify({ received: true, duplicate: true, event_id: event.id }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {
