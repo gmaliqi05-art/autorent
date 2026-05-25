@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
+import { Toaster } from 'sonner';
 import App from './App.tsx';
 import ErrorPage from './pages/ErrorPage';
 import { initSentry, SentryErrorBoundary } from './lib/sentry';
@@ -16,6 +17,15 @@ createRoot(document.getElementById('root')!).render(
     <SentryErrorBoundary fallback={<ErrorPage statusCode={500} />}>
       <HelmetProvider>
         <App />
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          toastOptions={{
+            duration: 4000,
+            className: 'text-sm',
+          }}
+        />
       </HelmetProvider>
     </SentryErrorBoundary>
   </StrictMode>

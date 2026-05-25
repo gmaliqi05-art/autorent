@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff, Trash2, Mail, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
+import { showSuccess, showError } from '../../lib/toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { clientNavItems } from '../../lib/clientNav';
 import type { Country, City } from '../../lib/types';
@@ -43,7 +44,6 @@ export default function ClientProfile() {
   const [cities, setCities] = useState<City[]>([]);
   const [filteredCities, setFilteredCities] = useState<City[]>([]);
   const [saving, setSaving] = useState(false);
-  const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -98,7 +98,6 @@ export default function ClientProfile() {
     e.preventDefault();
     if (!user) return;
     setSaving(true);
-    setProfileMessage(null);
     const { error } = await supabase.from('profiles').update({
       full_name: fullName,
       phone,
@@ -107,13 +106,12 @@ export default function ClientProfile() {
       updated_at: new Date().toISOString(),
     }).eq('id', user.id);
     if (error) {
-      setProfileMessage({ type: 'error', text: t('clientDash.profile.saveError') });
+      showError(t('clientDash.profile.saveError'), { description: error.message });
     } else {
       await refreshProfile();
-      setProfileMessage({ type: 'success', text: t('clientDash.profile.saveSuccess') });
+      showSuccess(t('clientDash.profile.saveSuccess'));
     }
     setSaving(false);
-    setTimeout(() => setProfileMessage(null), 3000);
   }
 
   async function handlePasswordChange(e: React.FormEvent) {
@@ -277,12 +275,6 @@ export default function ClientProfile() {
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {saving ? t('clientDash.profile.saving') : t('clientDash.profile.save')}
               </button>
-              {profileMessage && (
-                <span className={`flex items-center gap-1.5 text-sm font-medium ${profileMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                  {profileMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                  {profileMessage.text}
-                </span>
-              )}
             </div>
           </form>
         </div>
