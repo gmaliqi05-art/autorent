@@ -4,6 +4,7 @@ import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, Ch
 import { useTranslation } from 'react-i18next';
 import FeaturedVehicles from '../components/home/FeaturedVehicles';
 import { useHomepageSettings } from '../lib/useHomepageSettings';
+import { useStandaloneMode } from '../lib/useStandaloneMode';
 import { supabase } from '../lib/supabase';
 import { Helmet } from 'react-helmet-async';
 
@@ -22,6 +23,7 @@ type HeroCity = { id: string; name: string };
  */
 export default function HomePage() {
   const settings = useHomepageSettings();
+  const { isAppMode } = useStandaloneMode();
 
   return (
     <div className="overflow-hidden">
@@ -32,7 +34,7 @@ export default function HomePage() {
         <meta property="og:title" content="RentaKar - Qira automjetesh ne Ballkan" />
         <meta property="og:url" content="https://rentcars.life/" />
       </Helmet>
-      <HeroSection settings={settings} />
+      <HeroSection settings={settings} isAppMode={isAppMode} />
       {settings.sections.show_categories && <CategoriesSection settings={settings} />}
       {settings.sections.show_featured && <FeaturedVehicles settings={settings} />}
       <MapSection />
@@ -72,7 +74,7 @@ function MapSection() {
   );
 }
 
-function HeroSection({ settings }: { settings: ReturnType<typeof useHomepageSettings> }) {
+function HeroSection({ settings, isAppMode }: { settings: ReturnType<typeof useHomepageSettings>; isAppMode: boolean }) {
   const navigate = useNavigate();
   const [cityId, setCityId] = useState('');
   const [cities, setCities] = useState<HeroCity[]>([]);
@@ -103,7 +105,7 @@ function HeroSection({ settings }: { settings: ReturnType<typeof useHomepageSett
   const opacity = hero.overlay_opacity ?? 70;
 
   return (
-    <section className="relative min-h-[100svh] flex items-center">
+    <section className={`relative flex items-center ${isAppMode ? 'min-h-[80svh]' : 'min-h-[100svh]'}`}>
       <div className="absolute inset-0">
         <picture>
           {hero.image_url_mobile && (
@@ -122,7 +124,7 @@ function HeroSection({ settings }: { settings: ReturnType<typeof useHomepageSett
         <div className="absolute inset-0 bg-dark-950" style={{ opacity: Math.max((opacity / 100) - 0.15, 0.35) }} />
         <div className="absolute inset-0 hero-gradient" />
       </div>
-      <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-16 sm:pb-24">
+      <div className={`relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24 ${isAppMode ? 'pt-8' : 'pt-24 sm:pt-32'}`}>
         <div className="max-w-3xl">
           {hero.badge_text && (
             <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-white/10 backdrop-blur-sm rounded-full text-white text-xs sm:text-sm font-medium mb-4 sm:mb-6 animate-slide-up">
