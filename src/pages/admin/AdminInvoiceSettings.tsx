@@ -111,15 +111,15 @@ export default function AdminInvoiceSettings() {
                       { key: 'company_website', label: t('adminDash.invoiceSettings.companyWebsite'), placeholder: 'https://example.com' },
                     ].map(({ key, label, placeholder }) => (
                       <div key={key}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-                        <input value={(settings as any)[key]} onChange={e => f(key as any, e.target.value)} placeholder={placeholder}
+                        <label htmlFor={`inv-${key}`} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                        <input id={`inv-${key}`} value={(settings as any)[key]} onChange={e => f(key as any, e.target.value)} placeholder={placeholder}
                           className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                       </div>
                     ))}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.companyAddress')}</label>
-                    <textarea value={settings.company_address} onChange={e => f('company_address', e.target.value)} rows={2}
+                    <label htmlFor="inv-company_address" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.companyAddress')}</label>
+                    <textarea id="inv-company_address" value={settings.company_address} onChange={e => f('company_address', e.target.value)} rows={2}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                 </div>
@@ -130,13 +130,13 @@ export default function AdminInvoiceSettings() {
                   <h3 className="font-semibold text-gray-900 flex items-center gap-2"><Hash className="w-5 h-5 text-primary-600" />{t('adminDash.invoiceSettings.numberingTitle')}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.prefix')}</label>
-                      <input value={settings.invoice_prefix} onChange={e => f('invoice_prefix', e.target.value)} placeholder="INV"
+                      <label htmlFor="inv-prefix" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.prefix')}</label>
+                      <input id="inv-prefix" value={settings.invoice_prefix} onChange={e => f('invoice_prefix', e.target.value)} placeholder="INV"
                         className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.startNumber')}</label>
-                      <input type="number" value={settings.invoice_start_number} onChange={e => f('invoice_start_number', parseInt(e.target.value))}
+                      <label htmlFor="inv-start-number" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.startNumber')}</label>
+                      <input id="inv-start-number" type="number" value={settings.invoice_start_number} onChange={e => f('invoice_start_number', parseInt(e.target.value))}
                         className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                     </div>
                   </div>
@@ -161,8 +161,8 @@ export default function AdminInvoiceSettings() {
                   <h3 className="font-semibold text-gray-900 flex items-center gap-2"><Settings className="w-5 h-5 text-primary-600" />{t('adminDash.invoiceSettings.paymentTitle')}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.currency')}</label>
-                      <select value={settings.currency} onChange={e => f('currency', e.target.value)}
+                      <label htmlFor="inv-currency" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.currency')}</label>
+                      <select id="inv-currency" value={settings.currency} onChange={e => f('currency', e.target.value)}
                         className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
                         <option value="EUR">EUR (€)</option>
                         <option value="ALL">ALL (Lek)</option>
@@ -170,8 +170,8 @@ export default function AdminInvoiceSettings() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.paymentTermsDays')}</label>
-                      <input type="number" value={settings.payment_terms_days} onChange={e => f('payment_terms_days', parseInt(e.target.value))}
+                      <label htmlFor="inv-payment-terms" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.paymentTermsDays')}</label>
+                      <input id="inv-payment-terms" type="number" value={settings.payment_terms_days} onChange={e => f('payment_terms_days', parseInt(e.target.value))}
                         className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                     </div>
                   </div>
@@ -187,8 +187,8 @@ export default function AdminInvoiceSettings() {
                   </div>
                   {settings.show_vat && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.vatRate')}</label>
-                      <input type="number" value={settings.vat_rate} onChange={e => f('vat_rate', parseInt(e.target.value))} min={0} max={50}
+                      <label htmlFor="inv-vat-rate" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.vatRate')}</label>
+                      <input id="inv-vat-rate" type="number" value={settings.vat_rate} onChange={e => f('vat_rate', parseInt(e.target.value))} min={0} max={50}
                         className="w-32 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                     </div>
                   )}
@@ -200,8 +200,8 @@ export default function AdminInvoiceSettings() {
                       { key: 'bank_swift', label: t('adminDash.invoiceSettings.swift'), placeholder: 'CDISALTRXXX' },
                     ].map(({ key, label, placeholder }) => (
                       <div key={key}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-                        <input value={(settings as any)[key]} onChange={e => f(key as any, e.target.value)} placeholder={placeholder}
+                        <label htmlFor={`inv-${key}`} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                        <input id={`inv-${key}`} value={(settings as any)[key]} onChange={e => f(key as any, e.target.value)} placeholder={placeholder}
                           className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-500" />
                       </div>
                     ))}
@@ -213,14 +213,14 @@ export default function AdminInvoiceSettings() {
                 <div className="space-y-5">
                   <h3 className="font-semibold text-gray-900 flex items-center gap-2"><FileText className="w-5 h-5 text-primary-600" />{t('adminDash.invoiceSettings.appearanceTitle')}</h3>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.logoUrl')}</label>
-                    <input value={settings.logo_url} onChange={e => f('logo_url', e.target.value)} placeholder="https://..."
+                    <label htmlFor="inv-logo-url" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.logoUrl')}</label>
+                    <input id="inv-logo-url" value={settings.logo_url} onChange={e => f('logo_url', e.target.value)} placeholder="https://..."
                       className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                     {settings.logo_url && <img src={settings.logo_url} alt="Logo" className="mt-2 h-12 object-contain border border-gray-200 rounded-lg p-1" />}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.footerText')}</label>
-                    <textarea value={settings.footer_text} onChange={e => f('footer_text', e.target.value)} rows={3}
+                    <label htmlFor="inv-footer-text" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.invoiceSettings.footerText')}</label>
+                    <textarea id="inv-footer-text" value={settings.footer_text} onChange={e => f('footer_text', e.target.value)} rows={3}
                       placeholder={t('adminDash.invoiceSettings.footerPlaceholder')} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                 </div>

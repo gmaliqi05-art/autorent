@@ -158,15 +158,15 @@ export default function AdminBankDetails() {
                         { key: 'swift', label: 'SWIFT/BIC', placeholder: 'CDISALTRXXX' },
                       ].map(({ key, label, placeholder }) => (
                         <div key={key}>
-                          <label className="block text-xs font-medium text-blue-800 mb-1">{label}</label>
-                          <input value={(newAccount as any)[key] || ''} onChange={e => setNewAccount(a => ({ ...a, [key]: e.target.value }))}
+                          <label htmlFor={`bank-${key}`} className="block text-xs font-medium text-blue-800 mb-1">{label}</label>
+                          <input id={`bank-${key}`} value={(newAccount as any)[key] || ''} onChange={e => setNewAccount(a => ({ ...a, [key]: e.target.value }))}
                             placeholder={placeholder} className="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
                         </div>
                       ))}
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-blue-800 mb-1">Valuta</label>
-                      <select value={newAccount.currency || 'EUR'} onChange={e => setNewAccount(a => ({ ...a, currency: e.target.value }))}
+                      <label htmlFor="bank-currency" className="block text-xs font-medium text-blue-800 mb-1">Valuta</label>
+                      <select id="bank-currency" value={newAccount.currency || 'EUR'} onChange={e => setNewAccount(a => ({ ...a, currency: e.target.value }))}
                         className="border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
                         <option value="EUR">EUR</option><option value="ALL">ALL</option><option value="USD">USD</option>
                       </select>
@@ -217,14 +217,14 @@ export default function AdminBankDetails() {
                 {config.stripe_enabled && (
                   <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Public Key</label>
-                      <input value={config.stripe_public_key} onChange={e => f('stripe_public_key', e.target.value)}
+                      <label htmlFor="stripe-public-key" className="block text-xs font-medium text-gray-600 mb-1">Public Key</label>
+                      <input id="stripe-public-key" value={config.stripe_public_key} onChange={e => f('stripe_public_key', e.target.value)}
                         placeholder="pk_..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-500" />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Secret Key</label>
+                      <label htmlFor="stripe-secret-key" className="block text-xs font-medium text-gray-600 mb-1">Secret Key</label>
                       <div className="relative">
-                        <input type={showSecrets.stripe_secret ? 'text' : 'password'} value={config.stripe_secret_key} onChange={e => f('stripe_secret_key', e.target.value)}
+                        <input id="stripe-secret-key" type={showSecrets.stripe_secret ? 'text' : 'password'} value={config.stripe_secret_key} onChange={e => f('stripe_secret_key', e.target.value)}
                           placeholder="sk_..." className="w-full border border-gray-200 rounded-lg px-3 py-2 pr-10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-500" />
                         <button onClick={() => setShowSecrets(s => ({ ...s, stripe_secret: !s.stripe_secret }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                           {showSecrets.stripe_secret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -240,13 +240,13 @@ export default function AdminBankDetails() {
               <h3 className="font-semibold text-gray-900 mb-4">Komisionet & Limitet</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Komisioni i platformes (%)</label>
-                  <input type="number" value={config.commission_rate} onChange={e => f('commission_rate', parseFloat(e.target.value))} min={0} max={50} step={0.5}
+                  <label htmlFor="commission-rate" className="block text-sm font-medium text-gray-700 mb-1">Komisioni i platformes (%)</label>
+                  <input id="commission-rate" type="number" value={config.commission_rate} onChange={e => f('commission_rate', parseFloat(e.target.value))} min={0} max={50} step={0.5}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Pagesa minimale (€)</label>
-                  <input type="number" value={config.minimum_payment_amount} onChange={e => f('minimum_payment_amount', parseFloat(e.target.value))} min={1}
+                  <label htmlFor="min-payment" className="block text-sm font-medium text-gray-700 mb-1">Pagesa minimale (€)</label>
+                  <input id="min-payment" type="number" value={config.minimum_payment_amount} onChange={e => f('minimum_payment_amount', parseFloat(e.target.value))} min={1}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                 </div>
               </div>
