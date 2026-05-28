@@ -121,9 +121,9 @@ export default function AdminDiscountCodes() {
               <h2 className="text-lg font-bold text-gray-900 mb-4">{editing ? t('adminDash.discounts.formEditTitle') : t('adminDash.discounts.formNewTitle')}</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.codeLabel')}</label>
+                  <label htmlFor="dc-code" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.codeLabel')}</label>
                   <div className="flex gap-2">
-                    <input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                    <input id="dc-code" value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
                       placeholder={t('adminDash.discounts.codePlaceholder')} className="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-primary-500" />
                     <button onClick={generateCode} className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
                       {t('adminDash.discounts.generate')}
@@ -131,42 +131,42 @@ export default function AdminDiscountCodes() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.descLabel')}</label>
-                  <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  <label htmlFor="dc-desc" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.descLabel')}</label>
+                  <input id="dc-desc" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                     placeholder={t('adminDash.discounts.descPlaceholder')} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.typeLabel')}</label>
-                    <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as any }))}
+                    <label htmlFor="dc-type" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.typeLabel')}</label>
+                    <select id="dc-type" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as any }))}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
                       <option value="percent">{t('adminDash.discounts.typePercent')}</option>
                       <option value="fixed">{t('adminDash.discounts.typeFixed')}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.valueLabel')}</label>
+                    <label htmlFor="dc-value" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.valueLabel')}</label>
                     <div className="relative">
-                      <input type="number" value={form.value} onChange={e => setForm(f => ({ ...f, value: parseFloat(e.target.value) }))}
+                      <input id="dc-value" type="number" value={form.value} onChange={e => setForm(f => ({ ...f, value: parseFloat(e.target.value) }))}
                         min={1} max={form.type === 'percent' ? 100 : undefined}
                         className="w-full border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{form.type === 'percent' ? '%' : '€'}</span>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.minAmountLabel')}</label>
-                    <input type="number" value={form.min_amount} onChange={e => setForm(f => ({ ...f, min_amount: parseFloat(e.target.value) }))} min={0}
+                    <label htmlFor="dc-min-amount" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.minAmountLabel')}</label>
+                    <input id="dc-min-amount" type="number" value={form.min_amount} onChange={e => setForm(f => ({ ...f, min_amount: parseFloat(e.target.value) }))} min={0}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.maxUsesLabel')}</label>
-                    <input type="number" value={form.max_uses || ''} onChange={e => setForm(f => ({ ...f, max_uses: e.target.value ? parseInt(e.target.value) : null }))} min={0}
+                    <label htmlFor="dc-max-uses" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.maxUsesLabel')}</label>
+                    <input id="dc-max-uses" type="number" value={form.max_uses || ''} onChange={e => setForm(f => ({ ...f, max_uses: e.target.value ? parseInt(e.target.value) : null }))} min={0}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.expiresLabel')}</label>
-                  <input type="date" value={form.expires_at?.split('T')[0] || ''} onChange={e => setForm(f => ({ ...f, expires_at: e.target.value ? e.target.value + 'T23:59:59Z' : null }))}
+                  <label htmlFor="dc-expires" className="block text-sm font-medium text-gray-700 mb-1">{t('adminDash.discounts.expiresLabel')}</label>
+                  <input id="dc-expires" type="date" value={form.expires_at?.split('T')[0] || ''} onChange={e => setForm(f => ({ ...f, expires_at: e.target.value ? e.target.value + 'T23:59:59Z' : null }))}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                 </div>
                 <div className="flex items-center gap-3">
