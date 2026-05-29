@@ -1,9 +1,15 @@
 import { useState, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Car, MapPin, Phone, Mail, Eye, EyeOff, Loader2, X, Shield } from 'lucide-react';
+import { Car, MapPin, Phone, Mail, Eye, EyeOff, Loader2, X, Shield, Facebook, Instagram, Linkedin, CreditCard, Wallet, Banknote, Building } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useHomepageSettings } from '../../lib/useHomepageSettings';
 import { useTranslation } from 'react-i18next';
+
+const SOCIAL_LINKS: { icon: typeof Facebook; label: string; href: string }[] = [
+  { icon: Facebook, label: 'Facebook', href: 'https://facebook.com/rentakar' },
+  { icon: Instagram, label: 'Instagram', href: 'https://instagram.com/rentakar' },
+  { icon: Linkedin, label: 'LinkedIn', href: 'https://linkedin.com/company/rentakar' },
+];
 
 export default function Footer() {
   const { logo } = useHomepageSettings();
@@ -46,6 +52,22 @@ export default function Footer() {
               <p className="text-sm leading-relaxed">
                 {t('footer.tagline')}
               </p>
+
+              {/* Social media — kontakto kompanine ne kanalet kryesore */}
+              <div className="flex items-center gap-2 mt-5">
+                {SOCIAL_LINKS.map(({ icon: Icon, label, href }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className="w-9 h-9 rounded-lg bg-white/5 hover:bg-primary-600 text-gray-400 hover:text-white flex items-center justify-center transition-colors"
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -127,7 +149,16 @@ export default function Footer() {
             </div>
           </div>
 
-          <hr className="border-gray-800 mt-12 mb-6" />
+          <hr className="border-gray-800 mt-12 mb-8" />
+
+          {/* Payment methods strip — buton-i Visa/Mastercard/etj. ngjall besim */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+            <span className="text-xs text-gray-500 mr-2">{t('footer.paymentMethods', 'Metodat e pagese:')}</span>
+            <PaymentBadge icon={<CreditCard className="w-3.5 h-3.5" />} label="Visa / Mastercard" />
+            <PaymentBadge icon={<Wallet className="w-3.5 h-3.5" />} label="PayPal" />
+            <PaymentBadge icon={<Building className="w-3.5 h-3.5" />} label={t('footer.bankTransfer', 'Transfer bankar')} />
+            <PaymentBadge icon={<Banknote className="w-3.5 h-3.5" />} label={t('footer.cash', 'Kesh')} />
+          </div>
 
           <div className="text-center space-y-3">
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
@@ -159,6 +190,15 @@ export default function Footer() {
 
       {showAdminModal && <AdminLoginModal onClose={() => setShowAdminModal(false)} />}
     </>
+  );
+}
+
+function PaymentBadge({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-gray-300">
+      <span className="text-gray-400">{icon}</span>
+      {label}
+    </div>
   );
 }
 
@@ -217,9 +257,12 @@ function AdminLoginModal({ onClose }: { onClose: () => void }) {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-dark-700 mb-1.5">{t('auth.email')}</label>
+              <label htmlFor="admin-login-email" className="block text-xs font-medium text-dark-700 mb-1.5">{t('auth.email')}</label>
               <input
+                id="admin-login-email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -229,10 +272,13 @@ function AdminLoginModal({ onClose }: { onClose: () => void }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-dark-700 mb-1.5">{t('auth.password')}</label>
+              <label htmlFor="admin-login-password" className="block text-xs font-medium text-dark-700 mb-1.5">{t('auth.password')}</label>
               <div className="relative">
                 <input
+                  id="admin-login-password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -242,6 +288,7 @@ function AdminLoginModal({ onClose }: { onClose: () => void }) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? t('auth.hidePassword', 'Fshih fjalekalimin') : t('auth.showPassword', 'Shfaq fjalekalimin')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? (
