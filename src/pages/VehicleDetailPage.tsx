@@ -19,6 +19,7 @@ import { createNotification } from '../lib/notificationService';
 import { startStripeCheckout } from '../lib/stripeService';
 import { startPaypalCheckout } from '../lib/paypalService';
 import { calculateBookingPrice, type ExtraSelection } from '../lib/bookingCalculator';
+import { useInvoiceSettings, getEffectiveTaxPercent } from '../lib/useInvoiceSettings';
 import { formatCurrency } from '../lib/currency';
 import CashHoldForm from '../components/booking/CashHoldForm';
 
@@ -29,6 +30,8 @@ export default function VehicleDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const invoiceSettings = useInvoiceSettings();
+  const taxPercent = getEffectiveTaxPercent(invoiceSettings);
   const localeMap: Record<string, string> = { sq: 'sq-AL', en: 'en-US', de: 'de-DE' };
   const dateLocale = localeMap[i18n.language?.split('-')[0]] || 'sq-AL';
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -157,6 +160,7 @@ export default function VehicleDetailPage() {
       days,
       insurance: selectedInsurance,
       extras: extrasSelections,
+      taxPercent,
     });
 
     const { data: bookingData, error } = await supabase.from('bookings').insert({
@@ -369,6 +373,7 @@ export default function VehicleDetailPage() {
     days: totalDays,
     insurance: selectedInsurance,
     extras: extrasSelections,
+    taxPercent,
   });
   const totalPrice = liveBreakdown.total;
   const features = Array.isArray(vehicle.features) ? vehicle.features : [];
