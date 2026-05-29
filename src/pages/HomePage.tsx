@@ -1,6 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, CheckCircle, Building2, Car as CarIcon, Users, Globe2, MousePointerClick, CreditCard, Key } from 'lucide-react';
+import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, CheckCircle, Building2, Car as CarIcon, Users, Globe2, MousePointerClick, CreditCard, Key, Lock, BadgeCheck, Headphones, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FeaturedVehicles from '../components/home/FeaturedVehicles';
 import { useHomepageSettings } from '../lib/useHomepageSettings';
@@ -39,8 +39,131 @@ export default function HomePage() {
       {settings.sections.show_categories && <CategoriesSection settings={settings} />}
       {settings.sections.show_featured && <FeaturedVehicles settings={settings} />}
       <HowItWorksSection />
+      <TrustSection />
       <MapSection />
+      <B2BSection />
     </div>
+  );
+}
+
+function TrustSection() {
+  const { t } = useTranslation();
+  const items = [
+    {
+      icon: Shield,
+      title: t('home.trustSecureTitle', 'Pagesa te sigurta'),
+      desc: t('home.trustSecureDesc', 'SSL 256-bit, Stripe PCI DSS Level 1. Te dhenat tuaja te kartes nuk shkojne kurre ne serverat tane.'),
+      color: 'bg-green-50 text-green-600',
+    },
+    {
+      icon: BadgeCheck,
+      title: t('home.trustVerifiedTitle', 'Kompani te verifikuara'),
+      desc: t('home.trustVerifiedDesc', 'Cdo kompani partnere kalon nje proces aprovimi. Patentat verifikohen me Stripe Identity (OCR + match fotos).'),
+      color: 'bg-primary-50 text-primary-600',
+    },
+    {
+      icon: Lock,
+      title: t('home.trustPrivacyTitle', 'Privatesi GDPR'),
+      desc: t('home.trustPrivacyDesc', 'I plote i pajtueshem me GDPR. Mund te fshini llogarine + te gjitha te dhenat ne nje klik.'),
+      color: 'bg-purple-50 text-purple-600',
+    },
+    {
+      icon: Headphones,
+      title: t('home.trustSupportTitle', 'Mbeshtetje 7 dite/jave'),
+      desc: t('home.trustSupportDesc', 'Asistent virtual 24/7 + ekip njerezor te diten. Pergjigje brenda 2 oresh ne dite pune.'),
+      color: 'bg-amber-50 text-amber-600',
+    },
+  ];
+
+  return (
+    <section className="py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <p className="text-primary-600 font-semibold text-sm tracking-wide uppercase mb-2">
+            {t('home.trustSubtitle', 'Pse RentaKar')}
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-dark-950 leading-tight max-w-2xl mx-auto">
+            {t('home.trustTitle', 'Garanci dhe transparence ne çdo hap')}
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {items.map((it) => (
+            <div key={it.title} className="bg-gray-50/60 rounded-2xl border border-gray-100 p-6 hover:border-gray-200 hover:shadow-sm transition-all">
+              <div className={`inline-flex items-center justify-center w-11 h-11 rounded-xl mb-4 ${it.color}`}>
+                <it.icon className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-dark-950 mb-2 text-base">{it.title}</h3>
+              <p className="text-sm text-dark-500 leading-relaxed">{it.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function B2BSection() {
+  const { t } = useTranslation();
+  return (
+    <section className="py-20 bg-gradient-to-br from-dark-950 via-dark-900 to-primary-950 relative overflow-hidden">
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary-500 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-purple-500 rounded-full blur-[140px]" />
+      </div>
+
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full text-white/90 text-xs font-medium mb-6">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            {t('home.b2bBadge', 'Per kompanite e qirase')}
+          </div>
+
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-white mb-5 leading-tight">
+            {t('home.b2bTitle', 'A keni vetura per qira?')}
+            <br />
+            <span className="bg-gradient-to-r from-primary-300 to-purple-300 bg-clip-text text-transparent">
+              {t('home.b2bTitle2', 'Listoji falas ne RentaKar.')}
+            </span>
+          </h2>
+
+          <p className="text-base sm:text-lg text-white/70 max-w-2xl mx-auto mb-8 leading-relaxed">
+            {t('home.b2bDesc', 'Bashkohuni me dhjetera kompani ne Kosove, Shqiperi dhe Maqedoni. Pa kosto fillestare, dashboard i plote, pagesa direkt ne llogarine tuaj.')}
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+            <Link
+              to="/regjistrohu?role=company"
+              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white text-dark-950 font-semibold rounded-xl hover:bg-gray-100 active:scale-[0.98] transition-all shadow-lg"
+            >
+              {t('home.b2bCtaPrimary', 'Regjistroj kompanine')}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              to="/per-platformen"
+              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-semibold rounded-xl hover:bg-white/15 active:scale-[0.98] transition-all"
+            >
+              {t('home.b2bCtaSecondary', 'Mesoji me shume')}
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-3 gap-6 sm:gap-12 max-w-2xl mx-auto pt-6 border-t border-white/10">
+            <div>
+              <div className="text-2xl sm:text-3xl font-bold text-white mb-1">0€</div>
+              <p className="text-xs sm:text-sm text-white/60">{t('home.b2bStat1', 'Kosto fillestare')}</p>
+            </div>
+            <div>
+              <div className="text-2xl sm:text-3xl font-bold text-white mb-1">24h</div>
+              <p className="text-xs sm:text-sm text-white/60">{t('home.b2bStat2', 'Aprovim i kompanise')}</p>
+            </div>
+            <div>
+              <div className="text-2xl sm:text-3xl font-bold text-white mb-1">100%</div>
+              <p className="text-xs sm:text-sm text-white/60">{t('home.b2bStat3', 'Te ardhura per ju')}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
