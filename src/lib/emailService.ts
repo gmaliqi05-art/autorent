@@ -79,7 +79,7 @@ export async function sendBookingConfirmationToClient(
     status: string;
   }
 ) {
-  const dashboardUrl = `${window.location.origin}/dashboard/bookings`;
+  const dashboardUrl = `${window.location.origin}/dashboard/rezervimet`;
   const supportEmail = 'info@rentakar.com';
 
   return sendEmail({
@@ -112,7 +112,7 @@ export async function sendBookingNotificationToCompany(
     paymentMethod: string;
   }
 ) {
-  const dashboardUrl = `${window.location.origin}/company/bookings`;
+  const dashboardUrl = `${window.location.origin}/kompania/rezervimet`;
 
   return sendEmail({
     recipientEmail: companyEmail,
@@ -142,7 +142,7 @@ export async function sendBookingApprovedEmail(
     totalPrice: number;
   }
 ) {
-  const dashboardUrl = `${window.location.origin}/dashboard/bookings`;
+  const dashboardUrl = `${window.location.origin}/dashboard/rezervimet`;
   const supportEmail = 'info@rentakar.com';
 
   return sendEmail({
@@ -170,7 +170,7 @@ export async function sendBookingRejectedEmail(
     rejectionReason: string;
   }
 ) {
-  const searchUrl = `${window.location.origin}/vehicles`;
+  const searchUrl = `${window.location.origin}/automjetet`;
   const supportEmail = 'info@rentakar.com';
 
   return sendEmail({
@@ -197,8 +197,8 @@ export async function sendBookingCompletedEmail(
     returnDate: string;
   }
 ) {
-  const reviewUrl = `${window.location.origin}/dashboard/bookings?review=${bookingData.bookingId}`;
-  const searchUrl = `${window.location.origin}/vehicles`;
+  const reviewUrl = `${window.location.origin}/dashboard/rezervimet?review=${bookingData.bookingId}`;
+  const searchUrl = `${window.location.origin}/automjetet`;
 
   return sendEmail({
     recipientEmail: clientEmail,
@@ -223,7 +223,7 @@ export async function sendBookingCancelledEmail(
     cancelDate: string;
   }
 ) {
-  const searchUrl = `${window.location.origin}/vehicles`;
+  const searchUrl = `${window.location.origin}/automjetet`;
 
   return sendEmail({
     recipientEmail: clientEmail,
@@ -252,7 +252,7 @@ export async function sendPickupReminderEmail(
     deposit: number;
   }
 ) {
-  const dashboardUrl = `${window.location.origin}/dashboard/bookings`;
+  const dashboardUrl = `${window.location.origin}/dashboard/rezervimet`;
 
   return sendEmail({
     recipientEmail: clientEmail,
@@ -275,7 +275,7 @@ export async function sendReviewRequestEmail(
     vehicleName: string;
   }
 ) {
-  const reviewUrl = `${window.location.origin}/dashboard/bookings?review=${bookingData.bookingId}`;
+  const reviewUrl = `${window.location.origin}/dashboard/rezervimet?review=${bookingData.bookingId}`;
 
   return sendEmail({
     recipientEmail: clientEmail,
@@ -295,7 +295,7 @@ export async function sendCompanyApprovedEmail(
   companyName: string,
   companyId: string
 ) {
-  const dashboardUrl = `${window.location.origin}/company/dashboard`;
+  const dashboardUrl = `${window.location.origin}/kompania`;
   const supportEmail = 'info@rentakar.com';
   const supportPhone = '+383 49 400 006';
 
@@ -367,7 +367,7 @@ export async function sendWelcomeClientEmail(
   clientName: string,
   userId: string
 ) {
-  const searchUrl = `${window.location.origin}/vehicles`;
+  const searchUrl = `${window.location.origin}/automjetet`;
   const supportEmail = 'info@rentakar.com';
 
   return sendEmail({
@@ -389,7 +389,7 @@ export async function sendWelcomeCompanyEmail(
   companyName: string,
   companyId: string
 ) {
-  const dashboardUrl = `${window.location.origin}/company/dashboard`;
+  const dashboardUrl = `${window.location.origin}/kompania`;
   const supportEmail = 'info@rentakar.com';
   const supportPhone = '+383 49 400 006';
 
@@ -429,7 +429,7 @@ export async function sendBookingInvoiceEmail(
     totalPrice: number;
   }
 ) {
-  const invoiceUrl = `${window.location.origin}/dashboard/bookings/invoice/${invoiceData.bookingId}`;
+  const invoiceUrl = `${window.location.origin}/dashboard/pagesat`;
   const supportEmail = 'info@rentakar.com';
   const supportPhone = '+383 49 400 006';
 
