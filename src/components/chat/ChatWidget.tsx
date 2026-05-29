@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageSquare, X, Send, Loader2, Car, ChevronRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { findBestMatch, getSuggestedQuestions } from '../../lib/chatMatcher';
+import { useStandaloneMode } from '../../lib/useStandaloneMode';
 import type { ChatResponse } from '../../lib/types';
 
 interface Message {
@@ -11,7 +12,26 @@ interface Message {
   timestamp: Date;
 }
 
+const BTN_SIZE = 56; // w-14 h-14
+const POS_STORAGE_KEY = 'chat_btn_pos';
+// Lartesia e bottom nav (64px) + buffer kur jemi ne app mode, qe butoni
+// te mos mbuloje nav-in ne pozicionin default.
+const APP_NAV_OFFSET = 84;
+
+interface Pos { x: number; y: number }
+
+function clampToViewport(x: number, y: number): Pos {
+  if (typeof window === 'undefined') return { x, y };
+  const maxX = window.innerWidth - BTN_SIZE - 8;
+  const maxY = window.innerHeight - BTN_SIZE - 8;
+  return {
+    x: Math.min(Math.max(8, x), Math.max(8, maxX)),
+    y: Math.min(Math.max(8, y), Math.max(8, maxY)),
+  };
+}
+
 export default function ChatWidget() {
+  const { isAppMode } = useStandaloneMode();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -20,6 +40,73 @@ export default function ChatWidget() {
   const [suggestions, setSuggestions] = useState<ChatResponse[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   const messagesEnd = useRef<HTMLDivElement>(null);
+
+  // Pozicioni i butonit fluturues — i ruajtur ne localStorage, draggable.
+  const [pos, setPos] = useState<Pos | null>(null);
+  const draggingRef = useRef(false);
+  const movedRef = useRef(false);
+  const offsetRef = useRef({ x: 0, y: 0 });
+
+  // Pozicioni default (poshte-djathtas), me offset mbi nav ne app mode.
+  const defaultPos = useCallback((): Pos => {
+    if (typeof window === 'undefined') return { x: 0, y: 0 };
+    const bottomGap = (isAppMode ? APP_NAV_OFFSET : 24);
+    return clampToViewport(
+      window.innerWidth - BTN_SIZE - 24,
+      window.innerHeight - BTN_SIZE - bottomGap,
+    );
+  }, [isAppMode]);
+
+  useEffect(() => {
+    // Rikuperoji pozicionin e ruajtur ose vendos default-in.
+    try {
+      const saved = localStorage.getItem(POS_STORAGE_KEY);
+      if (saved) {
+        const p = JSON.parse(saved) as Pos;
+        setPos(clampToViewport(p.x, p.y));
+        return;
+      }
+    } catch { /* ignore */ }
+    setPos(defaultPos());
+  }, [defaultPos]);
+
+  // Re-clamp kur ndryshon madhesia e dritares (rrotullim, resize).
+  useEffect(() => {
+    function onResize() {
+      setPos(prev => prev ? clampToViewport(prev.x, prev.y) : prev);
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  function handlePointerDown(e: React.PointerEvent) {
+    draggingRef.current = true;
+    movedRef.current = false;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    offsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function handlePointerMove(e: React.PointerEvent) {
+    if (!draggingRef.current) return;
+    const nx = e.clientX - offsetRef.current.x;
+    const ny = e.clientY - offsetRef.current.y;
+    // Konsidero "moved" vetem mbi nje threshold te vogel (qe click te punoje).
+    if (Math.abs(e.movementX) + Math.abs(e.movementY) > 2) movedRef.current = true;
+    setPos(clampToViewport(nx, ny));
+  }
+
+  function handlePointerUp(e: React.PointerEvent) {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    if (movedRef.current && pos) {
+      try { localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(pos)); } catch { /* ignore */ }
+    } else {
+      // Click i paster — hap chat-in.
+      setOpen(true);
+    }
+  }
 
   useEffect(() => {
     if (open && !hasLoaded) {
@@ -87,18 +174,26 @@ export default function ChatWidget() {
 
   return (
     <>
-      {!open && (
+      {!open && pos && (
         <button
-          onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg shadow-primary-600/30 flex items-center justify-center hover:bg-primary-700 hover:scale-105 active:scale-95 transition-all"
+          aria-label="Hap chat-in me asistentin"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          style={{ left: pos.x, top: pos.y, touchAction: 'none' }}
+          className="fixed z-50 w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg shadow-primary-600/30 flex items-center justify-center hover:bg-primary-700 active:scale-95 transition-colors cursor-grab active:cursor-grabbing select-none"
         >
-          <MessageSquare className="w-6 h-6" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
+          <MessageSquare className="w-6 h-6 pointer-events-none" />
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white pointer-events-none" />
         </button>
       )}
 
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-3rem)] bg-white rounded-2xl shadow-2xl shadow-dark-950/15 border border-gray-100 flex flex-col overflow-hidden animate-scale-in">
+        <div
+          className={`fixed right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100svh-3rem)] bg-white rounded-2xl shadow-2xl shadow-dark-950/15 border border-gray-100 flex flex-col overflow-hidden animate-scale-in ${
+            isAppMode ? 'bottom-[88px]' : 'bottom-6'
+          }`}
+        >
           <div className="bg-dark-950 px-5 py-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center">

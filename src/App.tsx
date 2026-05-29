@@ -6,6 +6,7 @@ import Footer from './components/layout/Footer';
 import MobileBottomNav from './components/layout/MobileBottomNav';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import CookieConsent from './components/CookieConsent';
+import ChatWidget from './components/chat/ChatWidget';
 import { useStandaloneMode } from './lib/useStandaloneMode';
 
 // Eager pages (used on initial load — homepage + listings + auth)
@@ -181,6 +182,7 @@ export default function App() {
         </Suspense>
 
         <CookieConsent />
+        <ChatWidget />
         <AppModeBottomNav />
       </AuthProvider>
     </BrowserRouter>
