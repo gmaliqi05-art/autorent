@@ -1,6 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, CheckCircle, Building2, Car as CarIcon, Users, Globe2, MousePointerClick, CreditCard, Key, Lock, BadgeCheck, Headphones, Sparkles, Star, Quote } from 'lucide-react';
+import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, CheckCircle, Building2, Car as CarIcon, Users, Globe2, MousePointerClick, CreditCard, Key, Lock, BadgeCheck, Headphones, Sparkles, Star, Quote, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FeaturedVehicles from '../components/home/FeaturedVehicles';
 import { useHomepageSettings } from '../lib/useHomepageSettings';
@@ -42,8 +42,102 @@ export default function HomePage() {
       <TrustSection />
       <TestimonialsSection />
       <MapSection />
+      <FAQSection />
       <B2BSection />
     </div>
+  );
+}
+
+function FAQSection() {
+  const { t } = useTranslation();
+  const [openIdx, setOpenIdx] = useState<number | null>(0);
+
+  // Lista e pyetjeve me i18n + fallback. Per te shtuar pyetje te reja:
+  // shto entry ne array + perktheji ne sq/en/de.
+  const faqs = [
+    { q: t('home.faqQ1', 'Sa kohe me parë duhet të bëj rezervimin?'), a: t('home.faqA1', 'Mund të rezervosh deri 2 orë para marrjes, por për disponueshmëri më të mirë rekomandojmë 24-48 orë para.') },
+    { q: t('home.faqQ2', 'Cilat dokumente më duhen për të marrë veturën?'), a: t('home.faqA2', 'Patentë e vlefshme (minimum 2 vjet), letërnjoftim ose pasaportë, dhe kartë krediti për garanci (kur paguash me kesh).') },
+    { q: t('home.faqQ3', 'A ka kosto fshehur ose komision shtesë?'), a: t('home.faqA3', 'Jo. Çmimi që sheh në kërkim është çmimi që paguan — taksat, asistenca dhe sigurimi bazë janë të përfshira.') },
+    { q: t('home.faqQ4', 'A mund ta anuloj rezervimin?'), a: t('home.faqA4', 'Po. Anulim falas deri 24h para marrjes. Pas kësaj kohe vlen politika e kompanisë (zakonisht 50% e shumës).') },
+    { q: t('home.faqQ5', 'Si paguaj — me kartë apo në lokal?'), a: t('home.faqA5', 'Të dyja: kartë (Stripe), PayPal, transfer bankar, ose kesh me garanci në lokal. Ti zgjedh në çek-aut.') },
+    { q: t('home.faqQ6', 'A mbulohem nga sigurimi nëse më ndodh aksident?'), a: t('home.faqA6', 'Po — me planin Bazë mbulohen pjesa më e madhe e dëmeve. Për mbrojtje 100% zgjidh planin Super Cover gjatë rezervimit.') },
+  ];
+
+  // Schema.org FAQPage JSON-LD per SEO (Google rich snippets).
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  };
+
+  return (
+    <section className="py-24 bg-white">
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
+      </Helmet>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <p className="text-primary-600 font-semibold text-sm tracking-wide uppercase mb-2">
+            {t('home.faqSubtitle', 'Pyetje te shpeshta')}
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-dark-950 leading-tight">
+            {t('home.faqTitle', 'Cdo gje qe duhet te dish')}
+          </h2>
+        </div>
+
+        <div className="space-y-3">
+          {faqs.map((f, idx) => {
+            const isOpen = openIdx === idx;
+            return (
+              <div
+                key={idx}
+                className={`bg-gray-50/60 border rounded-2xl overflow-hidden transition-colors ${
+                  isOpen ? 'border-primary-200 bg-white' : 'border-gray-100 hover:border-gray-200'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenIdx(isOpen ? null : idx)}
+                  aria-expanded={isOpen}
+                  className="w-full flex items-center justify-between gap-4 px-5 sm:px-6 py-4 sm:py-5 text-left"
+                >
+                  <span className="font-semibold text-dark-900 text-sm sm:text-base leading-snug">
+                    {f.q}
+                  </span>
+                  <ChevronDown
+                    className={`w-5 h-5 text-dark-400 shrink-0 transition-transform duration-200 ${
+                      isOpen ? 'rotate-180 text-primary-600' : ''
+                    }`}
+                  />
+                </button>
+                <div
+                  className={`grid transition-all duration-200 ease-out ${
+                    isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                  }`}
+                >
+                  <div className="overflow-hidden">
+                    <p className="px-5 sm:px-6 pb-5 sm:pb-6 text-sm text-dark-600 leading-relaxed">
+                      {f.a}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="text-center text-sm text-dark-500 mt-8">
+          {t('home.faqMore', 'Ke pyetje tjeter?')}{' '}
+          <Link to="/per-platformen" className="text-primary-600 font-semibold hover:text-primary-700 transition-colors">
+            {t('home.faqContactCta', 'Na kontakto')}
+          </Link>
+        </p>
+      </div>
+    </section>
   );
 }
 
