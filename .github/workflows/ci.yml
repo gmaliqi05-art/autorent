@@ -95,10 +95,44 @@ jobs:
           VITE_SUPABASE_ANON_KEY: placeholder-anon-key
           VITE_SITE_URL: http://localhost:4173
 
+      - name: Pre-flight — verify dist served properly
+        run: |
+          echo "## Dist contents:" >> $GITHUB_STEP_SUMMARY
+          ls -la dist/assets/ | head -20 >> $GITHUB_STEP_SUMMARY || true
+          # Start preview server in background
+          (npx vite preview --port 4174 --host 127.0.0.1 --strictPort &) > /tmp/preview.log 2>&1
+          sleep 4
+          echo "## Curl homepage HTML (first 1500 chars):" >> $GITHUB_STEP_SUMMARY
+          echo '```html' >> $GITHUB_STEP_SUMMARY
+          curl -s http://127.0.0.1:4174/ | head -c 1500 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          # Extract main JS path and check it
+          JS=$(curl -s http://127.0.0.1:4174/ | grep -oP 'src="\K/assets/index-[A-Za-z0-9_-]+\.js' | head -1)
+          echo "## Main JS path: $JS" >> $GITHUB_STEP_SUMMARY
+          echo "## First 500 chars of main JS:" >> $GITHUB_STEP_SUMMARY
+          echo '```js' >> $GITHUB_STEP_SUMMARY
+          curl -s "http://127.0.0.1:4174${JS}" | head -c 500 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          # Cleanup
+          pkill -f "vite preview" || true
+          sleep 1
+
       - name: Run Playwright smoke tests
-        run: npm run test:e2e -- --project=chromium
+        run: npm run test:e2e -- --project=chromium --reporter=list
         env:
           CI: 'true'
+
+      - name: Dump failure artifacts to log
+        if: failure()
+        run: |
+          echo "===== test-results contents ====="
+          find test-results/ -type f 2>/dev/null | head -50 || true
+          echo ""
+          echo "===== error-context.md files ====="
+          find test-results/ -name "error-context.md" -exec echo "--- {} ---" \; -exec cat {} \; 2>/dev/null || true
+          echo ""
+          echo "===== Test stderr (if recorded) ====="
+          find test-results/ -name "*.txt" -exec echo "--- {} ---" \; -exec cat {} \; 2>/dev/null | head -200 || true
 
       - name: Upload Playwright report
         if: always()
