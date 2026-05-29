@@ -1380,10 +1380,11 @@
   },
   "uploader": {
     "emptyText": "Kliko për të ngarkuar një imazh",
-    "sizeTooLarge": "Imazhi tejkalon {{max}} MB",
+    "sizeTooLarge": "Imazhi tejkalon {{size}} MB",
     "invalidType": "Lloj i palejuar (vetëm JPG/PNG/WebP)",
     "change": "Ndrysho",
-    "sizeNote": "JPG / PNG / WebP, max {{max}} MB"
+    "sizeNote": "JPG / PNG / WebP, max {{size}} MB",
+    "uploadImage": "Ngarko imazh"
   },
   "cashHold": {
     "creationFailed": "Nuk u krijua hold-i",
@@ -2611,8 +2612,5 @@
     "perDay": "/ dite",
     "add": "Shto",
     "requiresLicense": "Kerkohet patente shtese gjate marrjes."
-  },
-  "uploader": {
-    "uploadImage": "Ngarko imazh"
   }
 }

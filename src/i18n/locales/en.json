@@ -1380,10 +1380,11 @@
   },
   "uploader": {
     "emptyText": "Click to upload an image",
-    "sizeTooLarge": "Image exceeds {{max}} MB",
+    "sizeTooLarge": "Image exceeds {{size}} MB",
     "invalidType": "Invalid type (only JPG/PNG/WebP)",
     "change": "Change",
-    "sizeNote": "JPG / PNG / WebP, max {{max}} MB"
+    "sizeNote": "JPG / PNG / WebP, max {{size}} MB",
+    "uploadImage": "Upload image"
   },
   "cashHold": {
     "creationFailed": "Hold creation failed",
@@ -2611,8 +2612,5 @@
     "perDay": "/ day",
     "add": "Add",
     "requiresLicense": "Requires additional license at pickup."
-  },
-  "uploader": {
-    "uploadImage": "Upload image"
   }
 }

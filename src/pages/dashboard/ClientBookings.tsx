@@ -201,7 +201,6 @@ export default function ClientBookings() {
       setCancellationPreview(null);
       return;
     }
-    const fee = computeCancellationFee(booking);
     setCancelling(true);
 
     // Thirr edge function-in qe handluje Stripe refund + DB update atomically
@@ -220,7 +219,7 @@ export default function ClientBookings() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ bookingId: id, cancellationFee: fee }),
+        body: JSON.stringify({ bookingId: id }),
       });
       const data = await resp.json();
       setCancelling(false);

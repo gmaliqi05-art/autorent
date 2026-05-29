@@ -22,7 +22,7 @@ import { handleCorsPreflight, jsonResponse } from "../_shared/cors.ts";
 
 interface CancelRequest {
   bookingId: string;
-  cancellationFee?: number; // ne EUR, default 0
+  // cancellationFee NUK lexohet nga klienti (security): llogaritet server-side.
 }
 
 Deno.serve(async (req: Request) => {
@@ -47,7 +47,7 @@ Deno.serve(async (req: Request) => {
     const userId = userData.user.id;
     const isSuperAdmin = userData.user.app_metadata?.role === "super_admin";
 
-    const { bookingId, cancellationFee = 0 } = (await req.json()) as CancelRequest;
+    const { bookingId } = (await req.json()) as CancelRequest;
     if (!bookingId) return jsonResponse(req, { error: "Missing bookingId" }, 400);
 
     const admin = createClient(supabaseUrl, serviceKey);
@@ -56,7 +56,7 @@ Deno.serve(async (req: Request) => {
       .from("bookings")
       .select(
         "id, client_id, payment_method, payment_status, status, total_price, currency, " +
-        "stripe_payment_intent_id, stripe_refund_id, refund_amount",
+        "pickup_date, stripe_payment_intent_id, stripe_refund_id, refund_amount",
       )
       .eq("id", bookingId)
       .maybeSingle();
@@ -76,11 +76,24 @@ Deno.serve(async (req: Request) => {
       return jsonResponse(req, { error: "Cannot cancel an active or completed booking" }, 400);
     }
 
-    // Llogaritja e refund-it: total - cancellation_fee, kufizuar ne 0
+    // Llogaritja e tarifes se anulimit — SERVER-SIDE (mos beso vlerave nga klienti):
+    //  - > 48h para pickup-it: 0% fee
+    //  - 24-48h para pickup-it: 25%
+    //  - 0-24h para pickup-it: 50%
+    //  - Pas pickup-it: 100% (cancel s'lejohet sidoqofte ne flow normal)
+    // Per super_admin override (refund i plote pa fee), s'aplikohet automatikisht — admin
+    // mund te perdore Stripe Dashboard direkt nese ka rast specifik.
     const totalCents = Math.round(Number(booking.total_price) * 100);
-    const feeCents = Math.max(0, Math.round(Number(cancellationFee || 0) * 100));
+    const pickupTs = new Date(booking.pickup_date as string).getTime();
+    const hoursUntilPickup = (pickupTs - Date.now()) / (1000 * 60 * 60);
+    let feePercent = 0;
+    if (hoursUntilPickup < 0) feePercent = 100;
+    else if (hoursUntilPickup < 24) feePercent = 50;
+    else if (hoursUntilPickup < 48) feePercent = 25;
+    const feeCents = Math.round((totalCents * feePercent) / 100);
     const refundCents = Math.max(0, totalCents - feeCents);
     const refundAmountEur = refundCents / 100;
+    const cancellationFee = feeCents / 100;
 
     // Result envelope qe kthehet ne UI per tregimin e te dhenave
     const result: Record<string, unknown> = {
@@ -93,9 +106,13 @@ Deno.serve(async (req: Request) => {
     // 1. Idempotency check — nese tashme ka refund_id, kthej success direkt
     if (booking.stripe_refund_id) {
       result.refundedVia = "stripe";
-      result.alreadyRefunded = true;
-      result.stripeRefundId = booking.stripe_refund_id;
-      return jsonResponse(req, { success: true, ...result }, 200);
+      // Idempotent reply pa stripe_refund_id (e ndjeshme — leak prevention)
+      return jsonResponse(req, {
+        success: true,
+        bookingId,
+        alreadyRefunded: true,
+        refundedVia: "stripe",
+      }, 200);
     }
 
     // 2. Refund vetem nese booking eshte paguar realisht
@@ -156,17 +173,26 @@ Deno.serve(async (req: Request) => {
       updatePayload.payment_status = refundCents >= totalCents ? "refunded" : "paid";
     }
 
-    const { error: updateErr } = await admin
-      .from("bookings")
-      .update(updatePayload)
-      .eq("id", bookingId);
+    // Conditional update: vetem nese stripe_refund_id eshte ende NULL
+    // (race protection — nese dy thirrjet paralele kapen kete pike, vetem
+    // i pari update-ohet; i dyti percepton se kushti i tij s'permbushet
+    // dhe ben skip — duke u mbeshtetur ne idempotency check te Stripe).
+    let query = admin.from("bookings").update(updatePayload).eq("id", bookingId);
+    if (result.stripeRefundId) {
+      query = query.is("stripe_refund_id", null);
+    }
+    const { error: updateErr, count } = await query.select("id", { count: "exact" });
 
     if (updateErr) {
       console.error("DB update failed:", updateErr);
       return jsonResponse(req, {
-        error: "Refund processed but DB update failed",
-        ...result,
+        error: "Refund processed but DB update failed — please contact support",
       }, 500);
+    }
+
+    if (count === 0 && result.stripeRefundId) {
+      // Race: nje thirrje tjeter parallele e fitoi update-in
+      console.warn(`Race detected on refund for booking ${bookingId} — Stripe idempotency mbron nga duplikim`);
     }
 
     // 4. Notification + push (template_key per i18n proper)
@@ -181,7 +207,17 @@ Deno.serve(async (req: Request) => {
       reference_type: "booking",
     });
 
-    return jsonResponse(req, { success: true, ...result }, 200);
+    // Heq stripe_refund_id nga response — id e ndjeshme qe s'duhet te
+    // dale ne JS te klientit. Klienti merr vetem flag-et qe i duhen per UI.
+    const safeResult = {
+      bookingId: result.bookingId,
+      cancellationFee: result.cancellationFee,
+      refundAmount: result.refundAmount,
+      refundedVia: result.refundedVia,
+      refundProcessed: result.refundedVia === "stripe" && !!result.stripeRefundId,
+      ...(result.note ? { note: result.note } : {}),
+    };
+    return jsonResponse(req, { success: true, ...safeResult }, 200);
   } catch (err) {
     console.error("Error:", err);
     return jsonResponse(req, {
