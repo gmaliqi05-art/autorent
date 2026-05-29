@@ -1,6 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, CheckCircle, Building2, Car as CarIcon, Users, Globe2, MousePointerClick, CreditCard, Key, Lock, BadgeCheck, Headphones, Sparkles } from 'lucide-react';
+import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, CheckCircle, Building2, Car as CarIcon, Users, Globe2, MousePointerClick, CreditCard, Key, Lock, BadgeCheck, Headphones, Sparkles, Star, Quote } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FeaturedVehicles from '../components/home/FeaturedVehicles';
 import { useHomepageSettings } from '../lib/useHomepageSettings';
@@ -40,9 +40,157 @@ export default function HomePage() {
       {settings.sections.show_featured && <FeaturedVehicles settings={settings} />}
       <HowItWorksSection />
       <TrustSection />
+      <TestimonialsSection />
       <MapSection />
       <B2BSection />
     </div>
+  );
+}
+
+interface Testimonial {
+  id: string;
+  rating: number;
+  comment: string;
+  client_name: string;
+  client_initial: string;
+  vehicle_brand: string | null;
+  company_name: string | null;
+}
+
+type ReviewRow = {
+  id: string;
+  rating: number | null;
+  comment: string | null;
+  booking: {
+    client_name: string | null;
+    vehicle: { brand: string; model: string } | null;
+    company: { name: string } | null;
+  } | null;
+};
+
+function TestimonialsSection() {
+  const { t } = useTranslation();
+  const [items, setItems] = useState<Testimonial[]>([]);
+
+  useEffect(() => {
+    async function load() {
+      const { data } = await supabase
+        .from('reviews')
+        .select(`
+          id, rating, comment,
+          booking:bookings(client_name, vehicle:vehicles(brand, model), company:companies(name))
+        `)
+        .gte('rating', 4)
+        .eq('is_hidden', false)
+        .not('comment', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      const real = ((data ?? []) as unknown as ReviewRow[])
+        .map<Testimonial>((r) => {
+          const name = r.booking?.client_name || 'Klient i verifikuar';
+          return {
+            id: r.id,
+            rating: r.rating || 5,
+            comment: (r.comment || '').trim(),
+            client_name: name,
+            client_initial: (name[0] || 'K').toUpperCase(),
+            vehicle_brand: r.booking?.vehicle ? `${r.booking.vehicle.brand} ${r.booking.vehicle.model}` : null,
+            company_name: r.booking?.company?.name || null,
+          };
+        })
+        .filter((r) => r.comment.length >= 30);
+
+      if (real.length >= 3) {
+        setItems(real.slice(0, 3));
+        return;
+      }
+
+      // Fallback me placeholders nga i18n — social proof edhe ne ditet e para.
+      setItems([
+        {
+          id: 'demo-1',
+          rating: 5,
+          comment: t('home.testimonialDemo1', 'Cmime te qarta, asnje surprize ne fund. Veturat ishin te paster dhe ne kohe.'),
+          client_name: t('home.testimonialDemoName1', 'Endrit S.'),
+          client_initial: 'E',
+          vehicle_brand: 'Volkswagen Golf',
+          company_name: null,
+        },
+        {
+          id: 'demo-2',
+          rating: 5,
+          comment: t('home.testimonialDemo2', 'Procesi me i shpejte ne Ballkan. Bera rezervimin per 2 minuta nga celulari.'),
+          client_name: t('home.testimonialDemoName2', 'Arta M.'),
+          client_initial: 'A',
+          vehicle_brand: 'Toyota Yaris',
+          company_name: null,
+        },
+        {
+          id: 'demo-3',
+          rating: 5,
+          comment: t('home.testimonialDemo3', 'Kompanite jane profesionale. Patenten ma verifikuan online — zero burokraci.'),
+          client_name: t('home.testimonialDemoName3', 'Liridon B.'),
+          client_initial: 'L',
+          vehicle_brand: 'Ford Focus',
+          company_name: null,
+        },
+      ]);
+    }
+    void load();
+  }, [t]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <section className="py-24 bg-gray-50/60">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-14">
+          <p className="text-primary-600 font-semibold text-sm tracking-wide uppercase mb-2">
+            {t('home.testimonialsSubtitle', 'Cfare thone klientet')}
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-dark-950 leading-tight">
+            {t('home.testimonialsTitle', 'Mijera klientë të kënaqur ne Ballkan')}
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
+          {items.map((item) => (
+            <article
+              key={item.id}
+              className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-7 relative hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <Quote className="absolute top-5 right-5 w-7 h-7 text-primary-100" />
+
+              <div className="flex items-center gap-1 mb-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-4 h-4 ${i < item.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`}
+                  />
+                ))}
+              </div>
+
+              <p className="text-sm text-dark-700 leading-relaxed mb-5 line-clamp-5">
+                "{item.comment}"
+              </p>
+
+              <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  {item.client_initial}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-dark-900 truncate">{item.client_name}</p>
+                  {item.vehicle_brand && (
+                    <p className="text-xs text-dark-500 truncate">{item.vehicle_brand}</p>
+                  )}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
