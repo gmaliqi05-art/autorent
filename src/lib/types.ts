@@ -12,8 +12,48 @@ export interface Profile {
   is_active: boolean;
   date_of_birth: string | null;
   preferred_language?: 'sq' | 'en' | 'de' | 'it' | 'fr' | 'nl' | 'pl';
+  referral_code?: string | null;
+  referred_by?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export type LoyaltyTransactionType =
+  | 'booking_earned'
+  | 'referral_bonus'
+  | 'welcome_bonus'
+  | 'redeemed'
+  | 'admin_adjustment'
+  | 'expired';
+
+export interface LoyaltyTransaction {
+  id: string;
+  user_id: string;
+  points: number;
+  type: LoyaltyTransactionType;
+  booking_id: string | null;
+  description: string | null;
+  created_at: string;
+}
+
+export interface LoyaltyBalance {
+  user_id: string;
+  total_points: number;
+  total_earned: number;
+  total_spent: number;
+  earn_count: number;
+  last_activity_at: string | null;
+}
+
+export interface Referral {
+  id: string;
+  referrer_id: string;
+  referee_id: string;
+  status: 'pending' | 'qualified' | 'rewarded' | 'cancelled';
+  first_booking_id: string | null;
+  reward_points: number;
+  rewarded_at: string | null;
+  created_at: string;
 }
 
 export interface Country {
