@@ -22,7 +22,7 @@ export default defineConfig({
   },
 
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:4173',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -44,10 +44,12 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: 'npm run preview -- --port 4173',
-        port: 4173,
+        command: 'npx vite preview --port 4173 --host 127.0.0.1 --strictPort',
+        url: 'http://127.0.0.1:4173/',
         timeout: 120_000,
         reuseExistingServer: !process.env.CI,
+        stdout: 'pipe',
+        stderr: 'pipe',
         env: {
           VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co',
           VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key',

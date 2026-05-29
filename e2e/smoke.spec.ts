@@ -13,12 +13,14 @@ import { test, expect, Page } from '@playwright/test';
  * Përdor `load` ne vend te `domcontentloaded` qe te presë per te gjitha chunks.
  */
 async function gotoAndWaitForApp(page: Page, path: string): Promise<void> {
-  // Capture console errors per debugging nese test fails.
-  const consoleErrors: string[] = [];
+  // Capture TE GJITHA console messages + request failures per debugging.
+  const consoleAll: string[] = [];
+  const failedRequests: string[] = [];
   page.on('console', msg => {
-    if (msg.type() === 'error') consoleErrors.push(msg.text());
+    consoleAll.push(`[${msg.type()}] ${msg.text()}`);
   });
-  page.on('pageerror', err => consoleErrors.push(`pageerror: ${err.message}`));
+  page.on('pageerror', err => consoleAll.push(`[pageerror] ${err.message}\n${err.stack || ''}`));
+  page.on('requestfailed', req => failedRequests.push(`${req.method()} ${req.url()} — ${req.failure()?.errorText || 'unknown'}`));
 
   await page.goto(path, { waitUntil: 'load' });
 
@@ -26,12 +28,19 @@ async function gotoAndWaitForApp(page: Page, path: string): Promise<void> {
   try {
     await page.waitForSelector('#root > *', { state: 'attached', timeout: 20_000 });
   } catch (e) {
-    // Diagnostik: log se cfare ka body dhe console errors per debugging.
+    // Diagnostik EXHAUSTIVE per debugging CI failures.
     const html = await page.content();
-    console.error('[e2e diag] App did not mount within 20s. Path:', path);
-    console.error('[e2e diag] Console errors:', consoleErrors.slice(0, 20).join('\n'));
+    const rootHtml = await page.locator('#root').innerHTML().catch(() => '<unavailable>');
+    console.error('============== [e2e diag] APP DID NOT MOUNT ==============');
+    console.error('[e2e diag] Path:', path);
+    console.error('[e2e diag] Page URL:', page.url());
     console.error('[e2e diag] HTML length:', html.length);
-    console.error('[e2e diag] Body excerpt:', html.slice(0, 2000));
+    console.error('[e2e diag] #root innerHTML:', rootHtml);
+    console.error('[e2e diag] Console messages (' + consoleAll.length + '):');
+    consoleAll.slice(0, 50).forEach(m => console.error('  ' + m));
+    console.error('[e2e diag] Failed requests (' + failedRequests.length + '):');
+    failedRequests.slice(0, 20).forEach(r => console.error('  ' + r));
+    console.error('============== END [e2e diag] ==============');
     throw e;
   }
 }
