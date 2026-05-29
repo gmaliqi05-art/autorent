@@ -509,6 +509,8 @@
     "fullName": "Emri i plote",
     "phone": "Numri i telefonit",
     "forgotPassword": "Keni harruar fjalekalimin?",
+    "hidePassword": "Fshih fjalekalimin",
+    "showPassword": "Shfaq fjalekalimin",
     "loginButton": "Kycu",
     "loggingIn": "Duke u kyqur...",
     "registerButton": "Regjistrohu",
@@ -930,7 +932,18 @@
         "statusPending": "Ne verifikim",
         "statusVerified": "Verifikuar",
         "statusRejected": "Refuzuar",
-        "rejectionTitle": "Arsyeja e refuzimit"
+        "statusRequiresAction": "Kerkohet veprim",
+        "rejectionTitle": "Arsyeja e refuzimit",
+        "stripeIdentityTitle": "Verifikim automatik me Stripe Identity",
+        "stripeIdentityDesc": "Skanim automatik i patentes me OCR + match i fytyres. Verifikim ne 2 minuta — pa pritje per admin.",
+        "stripeProcessing": "Verifikimi po procesohet. Do njoftoheni kur te perfundoje.",
+        "stripeRequiresAction": "Stripe kerkon veprim shtese. Klikoni 'Vazhdo verifikimin' me poshte per te perfunduar (psh re-upload i dokumenteve me cilesi me te mire).",
+        "stripeCanceled": "Verifikimi u anulua. Provoni perseri.",
+        "stripeReturnMsg": "Verifikimi po procesohet. Statusi do perditesohet automatikisht ne disa sekonda.",
+        "stripeVerifiedBadge": "Verifikuar nga Stripe Identity",
+        "startStripeVerification": "Verifiko tani",
+        "continueStripeVerification": "Vazhdo verifikimin",
+        "retryStripeVerification": "Riprovo verifikimin"
       }
     },
     "paymentMethod": {
@@ -2568,5 +2581,36 @@
     "testTitle": "Test njoftim",
     "testBody": "Ky eshte nje test. Nese e merr push-in, gjithcka funksionon.",
     "testSent": "U dergua. Kontrollo zilen lart djathtas + njoftimin push."
+  },
+  "price": {
+    "basePerDay": "Cmimi baze per dite",
+    "daysShort": "dite",
+    "insurance": "Sigurim",
+    "extras": "Shtesa",
+    "youngDriverFee": "Tarife shoferi i ri (< 25 vjeç)",
+    "oneWayFee": "Dorzimi ne nje vendndodhje tjeter",
+    "discount": "Zbritja",
+    "tax": "TVSH",
+    "totalToPay": "Totali per pagese",
+    "depositRefundable": "Depozita (kthehet pas kthimit te automjetit)"
+  },
+  "insurance": {
+    "noPlansAvailable": "Nuk ka plane sigurimi te konfiguruara. Vazhdo me sigurimin baze te pergjegjesise.",
+    "theft": "Vjedhje",
+    "glassTire": "Xhama/Goma",
+    "roadside": "Asistenca rrugore",
+    "personalAccident": "Aksident personal",
+    "deductible": "Depozita ne risk:",
+    "zeroDeductible": "Zero depozite",
+    "perDay": "/ dite"
+  },
+  "extras": {
+    "noneAvailable": "Nuk ka shtesa te disponueshme per kete kompani.",
+    "perDay": "/ dite",
+    "add": "Shto",
+    "requiresLicense": "Kerkohet patente shtese gjate marrjes."
+  },
+  "uploader": {
+    "uploadImage": "Ngarko imazh"
   }
 }

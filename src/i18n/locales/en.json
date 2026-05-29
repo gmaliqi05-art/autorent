@@ -509,6 +509,8 @@
     "fullName": "Full name",
     "phone": "Phone number",
     "forgotPassword": "Forgot your password?",
+    "hidePassword": "Hide password",
+    "showPassword": "Show password",
     "loginButton": "Sign in",
     "loggingIn": "Signing in...",
     "registerButton": "Sign up",
@@ -930,7 +932,18 @@
         "statusPending": "Pending verification",
         "statusVerified": "Verified",
         "statusRejected": "Rejected",
-        "rejectionTitle": "Rejection reason"
+        "statusRequiresAction": "Action required",
+        "rejectionTitle": "Rejection reason",
+        "stripeIdentityTitle": "Automatic verification with Stripe Identity",
+        "stripeIdentityDesc": "Automatic license OCR scan + face match. Verification in 2 minutes — no admin wait.",
+        "stripeProcessing": "Verification in progress. You'll be notified when it's done.",
+        "stripeRequiresAction": "Stripe requires additional action. Click 'Continue verification' below to finish (e.g. re-upload higher-quality documents).",
+        "stripeCanceled": "Verification was canceled. Please try again.",
+        "stripeReturnMsg": "Verification in progress. Status will update automatically in a few seconds.",
+        "stripeVerifiedBadge": "Verified by Stripe Identity",
+        "startStripeVerification": "Verify now",
+        "continueStripeVerification": "Continue verification",
+        "retryStripeVerification": "Retry verification"
       }
     },
     "paymentMethod": {
@@ -2568,5 +2581,36 @@
     "testTitle": "Test notification",
     "testBody": "This is a test. If you received this push, everything works.",
     "testSent": "Sent. Check the bell icon top right + push notification."
+  },
+  "price": {
+    "basePerDay": "Base price per day",
+    "daysShort": "days",
+    "insurance": "Insurance",
+    "extras": "Extras",
+    "youngDriverFee": "Young driver fee (< 25 yrs)",
+    "oneWayFee": "One-way drop-off fee",
+    "discount": "Discount",
+    "tax": "VAT",
+    "totalToPay": "Total to pay",
+    "depositRefundable": "Deposit (refunded after return)"
+  },
+  "insurance": {
+    "noPlansAvailable": "No insurance plans configured. Continuing with basic liability coverage.",
+    "theft": "Theft",
+    "glassTire": "Glass/Tires",
+    "roadside": "Roadside assistance",
+    "personalAccident": "Personal accident",
+    "deductible": "Deductible:",
+    "zeroDeductible": "Zero deductible",
+    "perDay": "/ day"
+  },
+  "extras": {
+    "noneAvailable": "No extras available for this company.",
+    "perDay": "/ day",
+    "add": "Add",
+    "requiresLicense": "Requires additional license at pickup."
+  },
+  "uploader": {
+    "uploadImage": "Upload image"
   }
 }
