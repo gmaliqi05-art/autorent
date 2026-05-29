@@ -32,6 +32,11 @@ export default function VehicleDetailPage() {
   const { user, profile } = useAuth();
   const invoiceSettings = useInvoiceSettings();
   const taxPercent = getEffectiveTaxPercent(invoiceSettings);
+  // Llogarit moshen e shoferit nga profile.date_of_birth (per young driver fee).
+  // Nese DOB s'eshte set, calculator fee = 0 sic me pare.
+  const driverAge = profile?.date_of_birth
+    ? Math.floor((Date.now() - new Date(profile.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    : undefined;
   const localeMap: Record<string, string> = { sq: 'sq-AL', en: 'en-US', de: 'de-DE' };
   const dateLocale = localeMap[i18n.language?.split('-')[0]] || 'sq-AL';
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -160,6 +165,7 @@ export default function VehicleDetailPage() {
       days,
       insurance: selectedInsurance,
       extras: extrasSelections,
+      driverAge,
       taxPercent,
     });
 
@@ -373,6 +379,7 @@ export default function VehicleDetailPage() {
     days: totalDays,
     insurance: selectedInsurance,
     extras: extrasSelections,
+    driverAge,
     taxPercent,
   });
   const totalPrice = liveBreakdown.total;

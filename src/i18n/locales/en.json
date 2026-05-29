@@ -860,6 +860,8 @@
       "fullName": "Full name",
       "phone": "Phone number",
       "phonePlaceholder": "+383 4X XXX XXX",
+      "dateOfBirth": "Date of birth",
+      "dateOfBirthHint": "Used to calculate fees (driver < 25 yrs).",
       "country": "Country",
       "city": "City",
       "selectCountry": "Select country",

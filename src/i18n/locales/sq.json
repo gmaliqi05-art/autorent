@@ -860,6 +860,8 @@
       "fullName": "Emri i plote",
       "phone": "Numri i telefonit",
       "phonePlaceholder": "+383 4X XXX XXX",
+      "dateOfBirth": "Data e lindjes",
+      "dateOfBirthHint": "Perdoret per llogaritjen e tarifave (shofer < 25 vjeç).",
       "country": "Shteti",
       "city": "Qyteti",
       "selectCountry": "Zgjidhni shtetin",

@@ -860,6 +860,8 @@
       "fullName": "Vollständiger Name",
       "phone": "Telefonnummer",
       "phonePlaceholder": "+383 4X XXX XXX",
+      "dateOfBirth": "Geburtsdatum",
+      "dateOfBirthHint": "Wird für Gebührenberechnung verwendet (Fahrer < 25 J.).",
       "country": "Land",
       "city": "Stadt",
       "selectCountry": "Land auswählen",
