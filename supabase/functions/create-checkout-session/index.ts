@@ -121,8 +121,11 @@ Deno.serve(async (req: Request) => {
           });
         }
       } catch (err) {
-        // Session id i ruajtur por jovalid ne Stripe (deleted, test mode swap, etj.) — vazhdo me te ri
-        console.warn("Failed to retrieve existing session, creating new:", err);
+        // Session id i ruajtur por jovalid ne Stripe (deleted, test mode swap, etj.)
+        // Pastroji nga DB para se te krijojme te ri qe te shmangim ri-retrying
+        // permanent te te njejtit id te vdekur ne thirrjet e ardhshme.
+        console.warn("Failed to retrieve existing session, clearing stale id:", err);
+        await admin.from("bookings").update({ stripe_session_id: null }).eq("id", booking.id);
       }
     }
 

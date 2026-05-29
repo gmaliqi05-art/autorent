@@ -1380,10 +1380,11 @@
   },
   "uploader": {
     "emptyText": "Klicken zum Hochladen",
-    "sizeTooLarge": "Bild überschreitet {{max}} MB",
+    "sizeTooLarge": "Bild überschreitet {{size}} MB",
     "invalidType": "Ungültiger Typ (nur JPG/PNG/WebP)",
     "change": "Ändern",
-    "sizeNote": "JPG / PNG / WebP, max {{max}} MB"
+    "sizeNote": "JPG / PNG / WebP, max {{size}} MB",
+    "uploadImage": "Bild hochladen"
   },
   "cashHold": {
     "creationFailed": "Sicherheitsleistung konnte nicht erstellt werden",
@@ -2611,8 +2612,5 @@
     "perDay": "/ Tag",
     "add": "Hinzufügen",
     "requiresLicense": "Erfordert zusätzlichen Führerschein bei Abholung."
-  },
-  "uploader": {
-    "uploadImage": "Bild hochladen"
   }
 }
