@@ -38,6 +38,7 @@ export default function ClientProfile() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [phone, setPhone] = useState(profile?.phone || '');
+  const [dateOfBirth, setDateOfBirth] = useState(profile?.date_of_birth || '');
   const [selectedCountryId, setSelectedCountryId] = useState(profile?.country_id || '');
   const [selectedCityId, setSelectedCityId] = useState(profile?.city_id || '');
   const [countries, setCountries] = useState<Country[]>([]);
@@ -68,6 +69,7 @@ export default function ClientProfile() {
     if (profile) {
       setFullName(profile.full_name || '');
       setPhone(profile.phone || '');
+      setDateOfBirth(profile.date_of_birth || '');
       setSelectedCountryId(profile.country_id || '');
       setSelectedCityId(profile.city_id || '');
     }
@@ -101,6 +103,7 @@ export default function ClientProfile() {
     const { error } = await supabase.from('profiles').update({
       full_name: fullName,
       phone,
+      date_of_birth: dateOfBirth || null,
       country_id: selectedCountryId || null,
       city_id: selectedCityId || null,
       updated_at: new Date().toISOString(),
@@ -249,6 +252,24 @@ export default function ClientProfile() {
             <div>
               <label htmlFor="profile-phone" className="block text-sm font-medium text-dark-700 mb-1.5">{t('clientDash.profile.phone')}</label>
               <input id="profile-phone" name="phone" type="tel" autoComplete="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder={t('clientDash.profile.phonePlaceholder')} className={`${inputClass} placeholder:text-dark-300`} />
+            </div>
+            <div>
+              <label htmlFor="profile-dob" className="block text-sm font-medium text-dark-700 mb-1.5">
+                {t('clientDash.profile.dateOfBirth', 'Data e lindjes')}
+              </label>
+              <input
+                id="profile-dob"
+                name="date_of_birth"
+                type="date"
+                autoComplete="bday"
+                value={dateOfBirth}
+                onChange={e => setDateOfBirth(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+                className={inputClass}
+              />
+              <p className="text-xs text-dark-400 mt-1">
+                {t('clientDash.profile.dateOfBirthHint', 'Perdoret per llogaritjen e tarifave (shofer < 25 vjeç).')}
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
