@@ -203,23 +203,39 @@ export default function ClientBookings() {
     }
     const fee = computeCancellationFee(booking);
     setCancelling(true);
-    const { error: cancelError } = await supabase
-      .from('bookings')
-      .update({
-        status: 'cancelled',
-        cancellation_fee: fee,
-        cancelled_at: new Date().toISOString(),
-        cancelled_by: user.id,
-      })
-      .eq('id', id)
-      .eq('client_id', user.id);
-    setCancelling(false);
-    setCancellationPreview(null);
-    if (cancelError) {
+
+    // Thirr edge function-in qe handluje Stripe refund + DB update atomically
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setCancelling(false);
+      setCancellationPreview(null);
       setError(t('clientDash.bookings.cancelError'));
       return;
     }
-    loadBookings();
+
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/refund-booking`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ bookingId: id, cancellationFee: fee }),
+      });
+      const data = await resp.json();
+      setCancelling(false);
+      setCancellationPreview(null);
+      if (!resp.ok || data.error) {
+        setError(data.error || t('clientDash.bookings.cancelError'));
+        return;
+      }
+      // Sukses — refresh bookings (status do jete cancelled tashme)
+      loadBookings();
+    } catch (err) {
+      setCancelling(false);
+      setCancellationPreview(null);
+      setError(err instanceof Error ? err.message : t('clientDash.bookings.cancelError'));
+    }
   }
 
   return (
