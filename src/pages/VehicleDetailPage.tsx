@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, Star, MapPin, Calendar, Fuel, Cog, Users, DoorOpen, Gauge, Shield, CheckCircle2, Loader2, Car, Building2, Phone, ArrowRight, ShieldCheck, Package } from 'lucide-react';
@@ -21,7 +21,8 @@ import { startPaypalCheckout } from '../lib/paypalService';
 import { calculateBookingPrice, type ExtraSelection } from '../lib/bookingCalculator';
 import { useInvoiceSettings, getEffectiveTaxPercent } from '../lib/useInvoiceSettings';
 import { formatCurrency } from '../lib/currency';
-import CashHoldForm from '../components/booking/CashHoldForm';
+// Lazy import — Stripe.js (~150KB) ngarkohet vetem kur user mberrijne ne 'cash_hold' step
+const CashHoldForm = lazy(() => import('../components/booking/CashHoldForm'));
 
 type BookingStep = 'dates' | 'customize' | 'invoice' | 'payment' | 'cash_hold' | 'success';
 
@@ -579,11 +580,17 @@ export default function VehicleDetailPage() {
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
             <h2 className="text-xl font-bold text-dark-950 mb-2">{t('vehicleDetail.cashHoldTitle')}</h2>
             <p className="text-sm text-dark-500 mb-6">{t('vehicleDetail.cashHoldDesc')}</p>
-            <CashHoldForm
-              bookingId={cashBookingId}
-              onSuccess={() => setStep('success')}
-              onError={(msg) => setBookingError(msg)}
-            />
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
+              </div>
+            }>
+              <CashHoldForm
+                bookingId={cashBookingId}
+                onSuccess={() => setStep('success')}
+                onError={(msg) => setBookingError(msg)}
+              />
+            </Suspense>
             {bookingError && (
               <p className="mt-4 text-sm text-red-600">{bookingError}</p>
             )}

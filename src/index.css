@@ -3,9 +3,11 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-}
+/*
+  Inter font ngarkohet permes <link rel="preload" as="style"> ne index.html
+  per te shmangur render-blocking ne CSSOM. Hequr nga @layer base ku
+  @import-i bllokoji tailwind layer-at deri sa fonts u shkarkuan.
+*/
 
 * {
   margin: 0;

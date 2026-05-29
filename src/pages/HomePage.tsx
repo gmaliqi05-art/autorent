@@ -610,6 +610,11 @@ function HeroSection({ settings, isAppMode }: { settings: ReturnType<typeof useH
           <img
             src={hero.image_url || 'https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop'}
             alt="Premium car"
+            width={1920}
+            height={1080}
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
             className="w-full h-full object-cover hero-image-responsive"
             style={{
               ['--hero-pos-mobile' as string]: hero.image_position_mobile || '70% center',

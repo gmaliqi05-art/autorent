@@ -9,9 +9,22 @@
     <!-- Preconnect to critical origins per Core Web Vitals (LCP, FCP) -->
     <link rel="preconnect" href="https://anpspyrowaukdriwsdbs.supabase.co" crossorigin />
     <link rel="preconnect" href="https://js.stripe.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://api.resend.com" />
     <link rel="dns-prefetch" href="https://images.pexels.com" />
 
+    <!-- Fonts: preload + display=swap per FCP. Mehet jashte CSS @import (qe bllokon CSSOM)
+         per t'i ngarkuar paralel me JS/CSS bundle. -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
+    </noscript>
     <!-- PWA -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="application-name" content="RentaKar" />
