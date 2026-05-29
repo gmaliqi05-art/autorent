@@ -72,7 +72,7 @@ Deno.serve(async (req: Request) => {
       .from("bookings")
       .select(`
         id, client_id, total_price, deposit_amount, status, payment_status, payment_method,
-        pickup_date, return_date, total_days,
+        pickup_date, return_date, total_days, stripe_session_id,
         vehicle:vehicles(id, brand, model, year, main_image_url),
         company:companies(id, name)
       `)
@@ -100,8 +100,31 @@ Deno.serve(async (req: Request) => {
     const vehicleName = vehicle ? `${vehicle.brand} ${vehicle.model} ${vehicle.year}` : "Automjet";
     const companyName = company?.name || "RentaKar";
     const totalAmount = Number(booking.total_price); // ne EUR
+    const totalAmountCents = Math.round(totalAmount * 100);
 
     const stripe = new Stripe(stripeSecret, { apiVersion: "2024-12-18.acacia" });
+
+    // Reuse i nje session-i ekzistues nese eshte ende valid:
+    //  - Useri klikon 2 here 'Vazhdo te Stripe' -> kthen URL-en e te njejtit session
+    //  - Pa duplikim, pa orphan sessions ne Stripe Dashboard
+    //  - Idempotency edhe kur DB update i pas-thirrjes deshton
+    const existingSessionId = (booking as any).stripe_session_id;
+    if (existingSessionId) {
+      try {
+        const existing = await stripe.checkout.sessions.retrieve(existingSessionId);
+        // Session i hapur dhe i papaguar -> ri-perdor (s'eshte expired/complete/canceled)
+        if (existing.status === "open" && existing.payment_status === "unpaid" && existing.url) {
+          return jsonResponse(req, {
+            sessionId: existing.id,
+            url: existing.url,
+            reused: true,
+          });
+        }
+      } catch (err) {
+        // Session id i ruajtur por jovalid ne Stripe (deleted, test mode swap, etj.) — vazhdo me te ri
+        console.warn("Failed to retrieve existing session, creating new:", err);
+      }
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -115,7 +138,7 @@ Deno.serve(async (req: Request) => {
               description: `${booking.total_days} dite | ${booking.pickup_date} → ${booking.return_date}`,
               ...(vehicle?.main_image_url ? { images: [vehicle.main_image_url] } : {}),
             },
-            unit_amount: Math.round(totalAmount * 100), // ne cents
+            unit_amount: totalAmountCents, // ne cents
           },
           quantity: 1,
         },
@@ -130,16 +153,28 @@ Deno.serve(async (req: Request) => {
       },
       success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}&booking_id=${booking.id}`,
       cancel_url: `${cancelUrl}?booking_id=${booking.id}`,
+    }, {
+      // Idempotency key i lidhur me bookingId + amount + retry-bucket prej koh-it
+      // perafert (15-min bucket): brenda nje dritareje 15min, retries kthejne
+      // te njejtin session; pas 15min mund te krijohet nje i ri (psh klienti
+      // u kthye dite me vone me 'Vazhdo pagesen').
+      idempotencyKey: `checkout-${booking.id}-${totalAmountCents}-${Math.floor(Date.now() / (15 * 60 * 1000))}`,
     });
 
-    // Ruaj session.id ne booking per tracking
-    await admin
+    // Ruaj session.id ne booking per tracking. Nese update deshton (psh
+    // network), reuse-logjika ne fillim te request-it tjeter do gjeje
+    // session-in e ri ne Stripe permes idempotency (te njejtin response).
+    const { error: updateErr } = await admin
       .from("bookings")
       .update({
         stripe_session_id: session.id,
         payment_method: "stripe",
       })
       .eq("id", booking.id);
+    if (updateErr) {
+      console.error("Failed to save stripe_session_id:", updateErr);
+      // S'kthen 500 sepse session eshte krijuar ne Stripe — useri mund te paguaje
+    }
 
     return jsonResponse(req, {
       sessionId: session.id,
