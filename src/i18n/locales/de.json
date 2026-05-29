@@ -509,6 +509,8 @@
     "fullName": "Vollständiger Name",
     "phone": "Telefonnummer",
     "forgotPassword": "Passwort vergessen?",
+    "hidePassword": "Passwort ausblenden",
+    "showPassword": "Passwort anzeigen",
     "loginButton": "Anmelden",
     "loggingIn": "Anmelden...",
     "registerButton": "Registrieren",
@@ -930,7 +932,18 @@
         "statusPending": "Wird überprüft",
         "statusVerified": "Verifiziert",
         "statusRejected": "Abgelehnt",
-        "rejectionTitle": "Ablehnungsgrund"
+        "statusRequiresAction": "Aktion erforderlich",
+        "rejectionTitle": "Ablehnungsgrund",
+        "stripeIdentityTitle": "Automatische Überprüfung mit Stripe Identity",
+        "stripeIdentityDesc": "Automatischer OCR-Scan des Führerscheins + Gesichtserkennung. Verifizierung in 2 Minuten — ohne Admin-Wartezeit.",
+        "stripeProcessing": "Überprüfung läuft. Sie werden benachrichtigt, sobald sie abgeschlossen ist.",
+        "stripeRequiresAction": "Stripe erfordert eine zusätzliche Aktion. Klicken Sie unten auf 'Überprüfung fortsetzen', um abzuschließen (z. B. Dokumente in besserer Qualität erneut hochladen).",
+        "stripeCanceled": "Überprüfung wurde abgebrochen. Bitte erneut versuchen.",
+        "stripeReturnMsg": "Überprüfung läuft. Der Status wird in wenigen Sekunden automatisch aktualisiert.",
+        "stripeVerifiedBadge": "Verifiziert durch Stripe Identity",
+        "startStripeVerification": "Jetzt verifizieren",
+        "continueStripeVerification": "Überprüfung fortsetzen",
+        "retryStripeVerification": "Überprüfung wiederholen"
       }
     },
     "paymentMethod": {
@@ -2568,5 +2581,36 @@
     "testTitle": "Testbenachrichtigung",
     "testBody": "Dies ist ein Test. Wenn du diesen Push erhalten hast, funktioniert alles.",
     "testSent": "Gesendet. Prüfe die Glocke oben rechts + die Push-Benachrichtigung."
+  },
+  "price": {
+    "basePerDay": "Grundpreis pro Tag",
+    "daysShort": "Tage",
+    "insurance": "Versicherung",
+    "extras": "Extras",
+    "youngDriverFee": "Junger-Fahrer-Gebühr (< 25 J.)",
+    "oneWayFee": "Einweg-Rückgabegebühr",
+    "discount": "Rabatt",
+    "tax": "MwSt.",
+    "totalToPay": "Zu zahlender Gesamtbetrag",
+    "depositRefundable": "Kaution (rückerstattet nach Rückgabe)"
+  },
+  "insurance": {
+    "noPlansAvailable": "Keine Versicherungspläne konfiguriert. Fortgesetzt mit grundlegendem Haftpflichtschutz.",
+    "theft": "Diebstahl",
+    "glassTire": "Glas/Reifen",
+    "roadside": "Pannenhilfe",
+    "personalAccident": "Insassenunfall",
+    "deductible": "Selbstbeteiligung:",
+    "zeroDeductible": "Keine Selbstbeteiligung",
+    "perDay": "/ Tag"
+  },
+  "extras": {
+    "noneAvailable": "Keine Extras für dieses Unternehmen verfügbar.",
+    "perDay": "/ Tag",
+    "add": "Hinzufügen",
+    "requiresLicense": "Erfordert zusätzlichen Führerschein bei Abholung."
+  },
+  "uploader": {
+    "uploadImage": "Bild hochladen"
   }
 }
