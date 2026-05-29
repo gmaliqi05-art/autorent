@@ -117,8 +117,18 @@ jobs:
           pkill -f "vite preview" || true
           sleep 1
 
+      - name: Manual boot debug — chromium captures everything
+        run: |
+          (npx vite preview --port 4175 --host 127.0.0.1 --strictPort &) > /tmp/preview-debug.log 2>&1
+          sleep 5
+          DEBUG_URL=http://127.0.0.1:4175/ node scripts/debug-app-boot.mjs 2>&1 | tee debug-app-boot.log
+          echo "===== Preview server log ====="
+          cat /tmp/preview-debug.log || true
+          pkill -f "vite preview" || true
+          sleep 1
+
       - name: Run Playwright smoke tests
-        run: npm run test:e2e -- --project=chromium --reporter=list
+        run: npx playwright test --project=chromium
         env:
           CI: 'true'
 
@@ -141,6 +151,18 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload debug artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-output
+          path: |
+            debug-output.json
+            debug-app-boot.log
+          retention-days: 7
+          if-no-files-found: ignore
 
   migrations-validate:
     name: Validate Supabase migrations
