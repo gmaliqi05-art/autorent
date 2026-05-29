@@ -703,15 +703,21 @@
   },
   "notFound": {
     "title": "Page not found",
-    "desc": "The page you are looking for does not exist or has been moved.",
+    "desc": "The page you are looking for does not exist or has been moved. Maybe the link is outdated or the URL has a typo.",
     "backHome": "Back to home",
-    "browseVehicles": "Browse vehicles"
+    "browseVehicles": "Browse vehicles",
+    "popularLinks": "Or visit",
+    "signUp": "Sign up",
+    "signIn": "Sign in"
   },
   "errorPage": {
     "title": "Something went wrong",
     "desc": "An unexpected server error occurred. Our team has been notified — please try again shortly.",
+    "maintenanceTitle": "We're doing maintenance",
+    "maintenanceDesc": "We're improving the platform. Check back soon — this shouldn't take more than a few minutes.",
     "retry": "Reload page",
-    "backHome": "Back to home"
+    "backHome": "Back to home",
+    "persistText": "Problem persists?"
   },
   "chat": {
     "title": "Chat with us",

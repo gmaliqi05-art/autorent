@@ -703,15 +703,21 @@
   },
   "notFound": {
     "title": "Seite nicht gefunden",
-    "desc": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "desc": "Die gesuchte Seite existiert nicht oder wurde verschoben. Möglicherweise ist der Link veraltet oder die URL enthält einen Tippfehler.",
     "backHome": "Zurück zur Startseite",
-    "browseVehicles": "Fahrzeuge durchsuchen"
+    "browseVehicles": "Fahrzeuge durchsuchen",
+    "popularLinks": "Oder besuche",
+    "signUp": "Registrieren",
+    "signIn": "Anmelden"
   },
   "errorPage": {
     "title": "Etwas ist schiefgelaufen",
     "desc": "Ein unerwarteter Serverfehler ist aufgetreten. Unser Team wurde benachrichtigt — bitte versuche es gleich noch einmal.",
+    "maintenanceTitle": "Wir warten gerade",
+    "maintenanceDesc": "Wir verbessern die Plattform. Schau in ein paar Minuten wieder vorbei.",
     "retry": "Seite neu laden",
-    "backHome": "Zurück zur Startseite"
+    "backHome": "Zurück zur Startseite",
+    "persistText": "Problem besteht weiter?"
   },
   "chat": {
     "title": "Chatten Sie mit uns",
