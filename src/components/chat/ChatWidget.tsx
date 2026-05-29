@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageSquare, X, Send, Loader2, Car, ChevronRight } from 'lucide-react';
+import { MessageSquare, X, Send, Loader2, Car, ChevronRight, UserCog } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { findBestMatch, getSuggestedQuestions } from '../../lib/chatMatcher';
 import { useStandaloneMode } from '../../lib/useStandaloneMode';
-import type { ChatResponse } from '../../lib/types';
+import { useAuth } from '../../contexts/AuthContext';
+import type { ChatResponse, ChatMessage as DbChatMessage } from '../../lib/types';
 
 interface Message {
   id: string;
-  type: 'bot' | 'user';
+  type: 'bot' | 'user' | 'admin';
   text: string;
   timestamp: Date;
 }
@@ -32,6 +33,7 @@ function clampToViewport(x: number, y: number): Pos {
 
 export default function ChatWidget() {
   const { isAppMode } = useStandaloneMode();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -39,7 +41,11 @@ export default function ChatWidget() {
   const [responses, setResponses] = useState<ChatResponse[]>([]);
   const [suggestions, setSuggestions] = useState<ChatResponse[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [isEscalated, setIsEscalated] = useState(false);
+  const [escalating, setEscalating] = useState(false);
   const messagesEnd = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // Pozicioni i butonit fluturues — i ruajtur ne localStorage, draggable.
   const [pos, setPos] = useState<Pos | null>(null);
@@ -131,6 +137,124 @@ export default function ChatWidget() {
       text: 'Pershendetje! Jam asistenti virtual i RentaKar. Si mund t\'ju ndihmoj sot?',
       timestamp: new Date(),
     }]);
+
+    // Per useri te loguar, krijo (ose riperdor) konvesacionin per persistencë + escalim.
+    if (user) {
+      await ensureConversation();
+    }
+  }
+
+  async function ensureConversation(): Promise<string | null> {
+    if (!user) return null;
+    if (conversationId) return conversationId;
+
+    // Riperdor konvesacionin me te fundit aktiv te perdoruesit, ose krijo nje te ri.
+    const { data: existing } = await supabase
+      .from('chat_conversations')
+      .select('id, is_escalated')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .order('last_message_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      setConversationId(existing.id);
+      setIsEscalated(existing.is_escalated);
+      await loadHistory(existing.id);
+      return existing.id;
+    }
+
+    const { data: created, error } = await supabase
+      .from('chat_conversations')
+      .insert({ user_id: user.id, visitor_id: `user-${user.id.slice(0, 8)}`, status: 'active' })
+      .select('id')
+      .single();
+    if (error || !created) return null;
+    setConversationId(created.id);
+    return created.id;
+  }
+
+  async function loadHistory(convId: string) {
+    const { data } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('conversation_id', convId)
+      .order('created_at', { ascending: true })
+      .limit(100);
+    const rows = (data || []) as DbChatMessage[];
+    if (rows.length === 0) return;
+    setMessages(rows.map(r => ({
+      id: r.id,
+      type: r.sender_type === 'visitor' ? 'user' : r.sender_type === 'admin' ? 'admin' : 'bot',
+      text: r.message,
+      timestamp: new Date(r.created_at),
+    })));
+  }
+
+  async function persistMessage(convId: string, senderType: 'visitor' | 'bot' | 'admin', text: string, matchedResponseId?: string | null) {
+    await supabase.from('chat_messages').insert({
+      conversation_id: convId,
+      sender_type: senderType,
+      message: text,
+      matched_response_id: matchedResponseId || null,
+    });
+  }
+
+  // Subscribe ne admin replies kur konvesacioni eshte i escalated.
+  useEffect(() => {
+    if (!conversationId || !isEscalated) return;
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+    const ch = supabase
+      .channel(`chat:${conversationId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `conversation_id=eq.${conversationId}`,
+      }, payload => {
+        const row = payload.new as DbChatMessage;
+        if (row.sender_type !== 'admin') return;
+        setMessages(prev => prev.some(m => m.id === row.id) ? prev : [...prev, {
+          id: row.id,
+          type: 'admin',
+          text: row.message,
+          timestamp: new Date(row.created_at),
+        }]);
+      })
+      .subscribe();
+    channelRef.current = ch;
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [conversationId, isEscalated]);
+
+  async function handleEscalate() {
+    if (!user || !conversationId || isEscalated) return;
+    setEscalating(true);
+    const { error } = await supabase
+      .from('chat_conversations')
+      .update({ is_escalated: true })
+      .eq('id', conversationId);
+    if (!error) {
+      setIsEscalated(true);
+      const notice: Message = {
+        id: `esc-${Date.now()}`,
+        type: 'bot',
+        text: 'Ju jeni lidhur me ekipin tone. Nje agjent do tju pergjigjet sa me shpejt.',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, notice]);
+      // Persistojme notification-in si bot message qe agjenti ta shohe.
+      await persistMessage(conversationId, 'bot', '[Visitor escalated to live agent]');
+    }
+    setEscalating(false);
   }
 
   async function handleSend(text?: string) {
@@ -142,25 +266,33 @@ export default function ChatWidget() {
     setInput('');
     setLoading(true);
 
+    const convId = await ensureConversation();
+    if (convId) {
+      persistMessage(convId, 'visitor', msg).catch(() => { /* non-fatal */ });
+    }
+
+    // Ne mode live, agjenti pergjigjet vete — mos hap bot-in.
+    if (isEscalated) {
+      setLoading(false);
+      return;
+    }
+
     await new Promise(r => setTimeout(r, 400 + Math.random() * 400));
 
     const match = findBestMatch(msg, responses);
 
     if (match) {
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        type: 'bot',
-        text: match.answer,
-        timestamp: new Date(),
-      }]);
+      const botMsg = { id: (Date.now() + 1).toString(), type: 'bot' as const, text: match.answer, timestamp: new Date() };
+      setMessages(prev => [...prev, botMsg]);
+      if (convId) persistMessage(convId, 'bot', match.answer, match.id).catch(() => { /* non-fatal */ });
       supabase.from('chat_responses').update({ usage_count: (match.usage_count || 0) + 1 }).eq('id', match.id).then();
     } else {
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        type: 'bot',
-        text: 'Nuk gjeta nje pergjigje te sakte per pyetjen tuaj. Provoni te pyesni ndryshe, ose kontaktoni ekipin tone:\n\nTelefon: +383 44 000 000\nEmail: info@rentakar.com',
-        timestamp: new Date(),
-      }]);
+      const fallback = user
+        ? 'Nuk gjeta nje pergjigje te sakte. Mund ta lidhni me nje agjent njerezor permes butonit me poshte.'
+        : 'Nuk gjeta nje pergjigje te sakte. Provoni te pyesni ndryshe ose kontaktoni:\n\nTelefon: +383 44 000 000\nEmail: info@rentakar.com';
+      const botMsg = { id: (Date.now() + 1).toString(), type: 'bot' as const, text: fallback, timestamp: new Date() };
+      setMessages(prev => [...prev, botMsg]);
+      if (convId) persistMessage(convId, 'bot', fallback).catch(() => { /* non-fatal */ });
     }
     setLoading(false);
   }
@@ -200,10 +332,10 @@ export default function ChatWidget() {
                 <Car className="w-4.5 h-4.5 text-white" />
               </div>
               <div>
-                <h3 className="text-white text-sm font-semibold">RentaKar Asistent</h3>
+                <h3 className="text-white text-sm font-semibold">{isEscalated ? 'RentaKar Agjent' : 'RentaKar Asistent'}</h3>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-                  <span className="text-gray-400 text-[11px]">Online</span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isEscalated ? 'bg-blue-400' : 'bg-green-400'}`} />
+                  <span className="text-gray-400 text-[11px]">{isEscalated ? 'Lidhur me agjent' : 'Online'}</span>
                 </div>
               </div>
             </div>
@@ -218,8 +350,15 @@ export default function ChatWidget() {
                 <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                   msg.type === 'user'
                     ? 'bg-primary-600 text-white rounded-br-md'
+                    : msg.type === 'admin'
+                    ? 'bg-blue-50 text-blue-900 border border-blue-100 rounded-bl-md'
                     : 'bg-gray-100 text-dark-800 rounded-bl-md'
                 }`}>
+                  {msg.type === 'admin' && (
+                    <div className="flex items-center gap-1 mb-1 text-[10px] font-semibold text-blue-600 uppercase tracking-wider">
+                      <UserCog className="w-3 h-3" /> Agjent
+                    </div>
+                  )}
                   {msg.text}
                 </div>
               </div>
@@ -234,6 +373,19 @@ export default function ChatWidget() {
                     <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
+              </div>
+            )}
+
+            {user && conversationId && !isEscalated && messages.length > 1 && !loading && (
+              <div className="pt-1">
+                <button
+                  onClick={handleEscalate}
+                  disabled={escalating}
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium rounded-lg border border-blue-100 transition-colors disabled:opacity-50"
+                >
+                  {escalating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCog className="w-3.5 h-3.5" />}
+                  Lidhu me nje agjent
+                </button>
               </div>
             )}
 

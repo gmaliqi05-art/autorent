@@ -137,6 +137,7 @@
     "emailTemplates": "Email management",
     "legalPages": "Legal & static pages",
     "chat": "AI Chat",
+    "liveChat": "Live Chat (Conversations)",
     "emailHistory": "Email history",
     "financialReports": "Financial reports",
     "settings": "Settings"
