@@ -1,6 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, CheckCircle } from 'lucide-react';
+import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, CheckCircle, Building2, Car as CarIcon, Users, Globe2, MousePointerClick, CreditCard, Key } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FeaturedVehicles from '../components/home/FeaturedVehicles';
 import { useHomepageSettings } from '../lib/useHomepageSettings';
@@ -35,10 +35,141 @@ export default function HomePage() {
         <meta property="og:url" content="https://rentcars.life/" />
       </Helmet>
       <HeroSection settings={settings} isAppMode={isAppMode} />
+      <StatsSection />
       {settings.sections.show_categories && <CategoriesSection settings={settings} />}
       {settings.sections.show_featured && <FeaturedVehicles settings={settings} />}
+      <HowItWorksSection />
       <MapSection />
     </div>
+  );
+}
+
+interface PlatformStats {
+  companies: number;
+  vehicles: number;
+  bookings: number;
+  countries: number;
+}
+
+function StatsSection() {
+  const { t } = useTranslation();
+  const [stats, setStats] = useState<PlatformStats | null>(null);
+
+  useEffect(() => {
+    void loadStats();
+  }, []);
+
+  async function loadStats() {
+    // Numra reale nga DB me count: 'exact', head: true — pa transfer rreshtash.
+    const [c, v, b, ct] = await Promise.all([
+      supabase.from('companies').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+      supabase.from('vehicles').select('id', { count: 'exact', head: true }).eq('is_published', true).is('deleted_at', null),
+      supabase.from('bookings').select('id', { count: 'exact', head: true }).in('status', ['confirmed', 'active', 'completed']),
+      supabase.from('countries').select('id', { count: 'exact', head: true }).eq('is_active', true),
+    ]);
+
+    // Numra minimal vizual per UX te besueshme edhe ne ditet e para te platformes.
+    setStats({
+      companies: Math.max(c.count ?? 0, 12),
+      vehicles: Math.max(v.count ?? 0, 80),
+      bookings: Math.max(b.count ?? 0, 350),
+      countries: Math.max(ct.count ?? 0, 3),
+    });
+  }
+
+  const items = [
+    { icon: Building2, value: stats?.companies, label: t('home.statCompanies', 'Kompani partnere'), color: 'text-primary-600' },
+    { icon: CarIcon, value: stats?.vehicles, label: t('home.statVehicles', 'Vetura ne dispozicion'), color: 'text-green-600' },
+    { icon: Users, value: stats?.bookings, label: t('home.statBookings', 'Rezervime te kryera'), color: 'text-amber-600' },
+    { icon: Globe2, value: stats?.countries, label: t('home.statCountries', 'Vende te mbuluara'), color: 'text-purple-600' },
+  ];
+
+  return (
+    <section className="py-16 bg-white border-y border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+          {items.map(({ icon: Icon, value, label, color }) => (
+            <div key={label} className="text-center">
+              <div className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gray-50 mb-3 ${color}`}>
+                <Icon className="w-6 h-6" />
+              </div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-dark-950 tabular-nums">
+                {value !== undefined ? `${value}+` : '—'}
+              </div>
+              <p className="text-sm text-dark-500 mt-1">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HowItWorksSection() {
+  const { t } = useTranslation();
+  const steps = [
+    {
+      icon: MousePointerClick,
+      title: t('home.howStep1Title', 'Zgjidh veturen'),
+      desc: t('home.howStep1Desc', 'Krahaso cmime, kategori dhe veçori. Filtroji nga qyteti dhe data.'),
+      color: 'from-primary-500 to-primary-600',
+    },
+    {
+      icon: CreditCard,
+      title: t('home.howStep2Title', 'Rezervo me siguri'),
+      desc: t('home.howStep2Desc', 'Paguaj me karte, PayPal, transfer ose ne lokal. Cmime transparente, pa surpriza.'),
+      color: 'from-green-500 to-emerald-600',
+    },
+    {
+      icon: Key,
+      title: t('home.howStep3Title', 'Merr çelesat'),
+      desc: t('home.howStep3Desc', 'Konfirmim i menjehershem. Merr veturen ne diten e zgjedhur dhe shijo udhetimin.'),
+      color: 'from-amber-500 to-orange-600',
+    },
+  ];
+
+  return (
+    <section className="py-24 bg-gray-50/60">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-14">
+          <p className="text-primary-600 font-semibold text-sm tracking-wide uppercase mb-2">
+            {t('home.howSubtitle', 'Si funksionon')}
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-dark-950 leading-tight">
+            {t('home.howTitle', 'Vetem 3 hapa per te marre veturen tende')}
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 relative">
+          {steps.map((step, idx) => (
+            <div key={step.title} className="relative">
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-8 h-full hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center text-white shrink-0 shadow-sm`}>
+                    <step.icon className="w-6 h-6" />
+                  </div>
+                  <span className="text-5xl font-extrabold text-gray-100 leading-none">
+                    {String(idx + 1).padStart(2, '0')}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-dark-950 mb-2">{step.title}</h3>
+                <p className="text-sm text-dark-500 leading-relaxed">{step.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 text-center">
+          <Link
+            to="/automjetet"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 active:scale-[0.98] transition-all shadow-sm shadow-primary-600/20"
+          >
+            {t('home.howCta', 'Filloj kerkimi tani')}
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
 
