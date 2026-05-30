@@ -33,7 +33,15 @@ export interface LoyaltyTransaction {
   type: LoyaltyTransactionType;
   booking_id: string | null;
   description: string | null;
+  expires_at: string | null;
   created_at: string;
+}
+
+export interface LoyaltyExpiringSoon {
+  user_id: string;
+  expiring_in_30d: number | null;
+  expiring_in_90d: number | null;
+  next_expiry_date: string | null;
 }
 
 export interface LoyaltyBalance {

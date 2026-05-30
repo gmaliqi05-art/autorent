@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trophy, Gift, Copy, Check, Share2, Users, TrendingUp, Loader2 } from 'lucide-react';
+import { Trophy, Gift, Copy, Check, Share2, Users, TrendingUp, Loader2, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLoyalty } from '../../lib/useLoyalty';
 import type { LoyaltyTransaction, Referral } from '../../lib/types';
@@ -35,7 +35,7 @@ const referralStatusLabels: Record<Referral['status'], string> = {
 
 export default function LoyaltyCard({ userId, referralCode }: LoyaltyCardProps) {
   const { t } = useTranslation();
-  const { balance, tier, transactions, referrals, loading } = useLoyalty(userId);
+  const { balance, tier, expiringSoon, transactions, referrals, loading } = useLoyalty(userId);
   const [copied, setCopied] = useState(false);
 
   const referralUrl = typeof window !== 'undefined' && referralCode
@@ -83,11 +83,31 @@ export default function LoyaltyCard({ userId, referralCode }: LoyaltyCardProps) 
   const totalEarned = balance?.total_earned || 0;
   const equivalentEur = (totalPoints / 10).toFixed(2);
 
+  const expiring30 = expiringSoon?.expiring_in_30d || 0;
+  const nextExpiryDate = expiringSoon?.next_expiry_date;
+
   return (
     <div className="space-y-4">
       {/* Tier badge */}
       {tier && (
         <TierBadge tier={tier} variant="full" />
+      )}
+
+      {/* Expiring soon warning */}
+      {expiring30 > 0 && nextExpiryDate && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+          <div className="flex-1 text-xs">
+            <p className="font-semibold text-amber-900">
+              {t('loyalty.expiringSoonTitle', '{{points}} pikë skadojnë së shpejti', { points: expiring30 })}
+            </p>
+            <p className="text-amber-700 mt-0.5">
+              {t('loyalty.expiringSoonDesc', 'Skadimi i parë: {{date}}', {
+                date: new Date(nextExpiryDate).toLocaleDateString('sq-AL', { day: '2-digit', month: 'long', year: 'numeric' }),
+              })}
+            </p>
+          </div>
+        </div>
       )}
 
       {/* Hero: Points balance + referral code */}
