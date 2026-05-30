@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Car, Eye, EyeOff, Loader2, CheckCircle2, User, Building2, Check, Star } from 'lucide-react';
+import { Car, Eye, EyeOff, Loader2, CheckCircle2, User, Building2, Check, Star, Gift, X as XIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -46,6 +46,10 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');
+  const [referralCode, setReferralCode] = useState(referralFromUrl);
+  const [referralStatus, setReferralStatus] = useState<'idle' | 'valid' | 'invalid' | 'checking'>(
+    referralFromUrl ? 'valid' : 'idle'
+  );
 
   useEffect(() => {
     if (user && profile && !success) {
@@ -64,6 +68,24 @@ export default function RegisterPage() {
       }
     }
   }, [activeTab]);
+
+  // Validon kodin e referimit me debounce 500ms (vetëm prezenca, jo eligibility full).
+  useEffect(() => {
+    if (!referralCode || referralCode.length < 4) {
+      setReferralStatus('idle');
+      return;
+    }
+    setReferralStatus('checking');
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('referral_code', referralCode.trim().toUpperCase())
+        .maybeSingle();
+      setReferralStatus(data ? 'valid' : 'invalid');
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [referralCode]);
 
   useEffect(() => {
     if (selectedCountryId && cities.length > 0) {
@@ -213,11 +235,11 @@ export default function RegisterPage() {
         setLoading(false);
         return;
       }
-      // Apliko kodin e referimit nese ka ne URL (silent — mos blloko signup-in).
-      if (referralFromUrl) {
+      // Apliko kodin e referimit (nga URL ose nga input) silent — mos blloko signup-in.
+      if (referralCode) {
         try {
           const { applyReferralCode } = await import('../lib/useLoyalty');
-          await applyReferralCode(referralFromUrl);
+          await applyReferralCode(referralCode);
         } catch { /* ignore — useri mund ta apliko me vone */ }
       }
       setSuccess(true);
@@ -640,6 +662,46 @@ export default function RegisterPage() {
                     </button>
                   </div>
                 </div>
+
+                {activeTab === 'client' && (
+                  <div>
+                    <label htmlFor="reg-referral" className="block text-sm font-medium text-dark-700 mb-1.5 flex items-center gap-1.5">
+                      <Gift className="w-3.5 h-3.5 text-amber-500" />
+                      {t('auth.referralCode', 'Kodi i referimit')}
+                      <span className="text-[10px] font-normal text-dark-400">
+                        {t('auth.optional', '(opsionale)')}
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="reg-referral"
+                        name="referral"
+                        type="text"
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                        maxLength={20}
+                        className={`${inputClass} pr-10 font-mono tracking-wider uppercase`}
+                        placeholder="RKXXXXXX"
+                      />
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                        {referralStatus === 'checking' && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />}
+                        {referralStatus === 'valid' && <Check className="w-4 h-4 text-green-600" />}
+                        {referralStatus === 'invalid' && <XIcon className="w-4 h-4 text-red-500" />}
+                      </div>
+                    </div>
+                    {referralStatus === 'valid' && (
+                      <p className="text-xs text-green-700 mt-1.5 flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        {t('auth.referralValid', 'Kodi vlefshëm! Do marrësh 50 pikë mirëseardhjeje pas booking-ut te parë.')}
+                      </p>
+                    )}
+                    {referralStatus === 'invalid' && (
+                      <p className="text-xs text-red-600 mt-1.5">
+                        {t('auth.referralInvalid', 'Ky kod nuk gjendet. Mund të vazhdosh pa kod.')}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <TurnstileWidget
                   onVerify={setCaptchaToken}
