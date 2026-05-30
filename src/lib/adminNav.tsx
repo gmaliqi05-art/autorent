@@ -4,7 +4,7 @@ import {
   DollarSign, FileText, Settings, CreditCard, Landmark, Tag,
   Megaphone, Plus, Zap,
   Mail, Scale,
-  MessageSquare, Receipt
+  MessageSquare, Receipt, Trophy
 } from 'lucide-react';
 
 export interface NavItem {
@@ -74,6 +74,7 @@ export const adminNavGroups: NavGroup[] = [
       { labelKey: 'adminNav.ads', label: 'Reklamat', path: '/admin/reklamat', icon: <Megaphone className="w-4 h-4" /> },
       { labelKey: 'adminNav.createAd', label: 'Krijo Reklame', path: '/admin/reklamat/krijo', icon: <Plus className="w-4 h-4" /> },
       { labelKey: 'adminNav.dailyOffers', label: 'Oferta Ditore', path: '/admin/oferta-ditore', icon: <Zap className="w-4 h-4" /> },
+      { labelKey: 'adminNav.loyalty', label: 'Loyalty & Referime', path: '/admin/loyalty', icon: <Trophy className="w-4 h-4" /> },
     ],
   },
   {
