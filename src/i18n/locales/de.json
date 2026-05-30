@@ -396,6 +396,8 @@
     "sortNewest": "Neueste",
     "results": "Fahrzeuge",
     "searching": "Suche läuft...",
+    "loadMore": "Mehr laden",
+    "loadingMore": "Lädt...",
     "searchPlaceholder": "z.B. BMW X5...",
     "all": "Alle",
     "categories": {

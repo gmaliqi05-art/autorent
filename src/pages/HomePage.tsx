@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar, Shield, Clock, ArrowRight, HeartHandshake, CheckCircle, Building2, Car as CarIcon, Users, Globe2, MousePointerClick, CreditCard, Key, Lock, BadgeCheck, Headphones, Sparkles, Star, Quote, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -164,8 +164,9 @@ type ReviewRow = {
 
 function TestimonialsSection() {
   const { t } = useTranslation();
-  const [items, setItems] = useState<Testimonial[]>([]);
+  const [realItems, setRealItems] = useState<Testimonial[] | null>(null);
 
+  // Ngarko vetëm një herë — nuk varet nga `t` (do refetch ne ndryshim gjuhe).
   useEffect(() => {
     async function load() {
       const { data } = await supabase
@@ -195,46 +196,45 @@ function TestimonialsSection() {
         })
         .filter((r) => r.comment.length >= 30);
 
-      if (real.length >= 3) {
-        setItems(real.slice(0, 3));
-        return;
-      }
-
-      // Fallback me placeholders nga i18n — social proof edhe ne ditet e para.
-      setItems([
-        {
-          id: 'demo-1',
-          rating: 5,
-          comment: t('home.testimonialDemo1', 'Cmime te qarta, asnje surprize ne fund. Veturat ishin te paster dhe ne kohe.'),
-          client_name: t('home.testimonialDemoName1', 'Endrit S.'),
-          client_initial: 'E',
-          vehicle_brand: 'Volkswagen Golf',
-          company_name: null,
-        },
-        {
-          id: 'demo-2',
-          rating: 5,
-          comment: t('home.testimonialDemo2', 'Procesi me i shpejte ne Ballkan. Bera rezervimin per 2 minuta nga celulari.'),
-          client_name: t('home.testimonialDemoName2', 'Arta M.'),
-          client_initial: 'A',
-          vehicle_brand: 'Toyota Yaris',
-          company_name: null,
-        },
-        {
-          id: 'demo-3',
-          rating: 5,
-          comment: t('home.testimonialDemo3', 'Kompanite jane profesionale. Patenten ma verifikuan online — zero burokraci.'),
-          client_name: t('home.testimonialDemoName3', 'Liridon B.'),
-          client_initial: 'L',
-          vehicle_brand: 'Ford Focus',
-          company_name: null,
-        },
-      ]);
+      setRealItems(real);
     }
     void load();
-  }, [t]);
+  }, []);
 
-  if (items.length === 0) return null;
+  // Fallback testimonials — perkthehen kur ndryshon gjuha pa refetch.
+  const fallbackItems = useMemo<Testimonial[]>(() => [
+    {
+      id: 'demo-1',
+      rating: 5,
+      comment: t('home.testimonialDemo1', 'Cmime te qarta, asnje surprize ne fund. Veturat ishin te paster dhe ne kohe.'),
+      client_name: t('home.testimonialDemoName1', 'Endrit S.'),
+      client_initial: 'E',
+      vehicle_brand: 'Volkswagen Golf',
+      company_name: null,
+    },
+    {
+      id: 'demo-2',
+      rating: 5,
+      comment: t('home.testimonialDemo2', 'Procesi me i shpejte ne Ballkan. Bera rezervimin per 2 minuta nga celulari.'),
+      client_name: t('home.testimonialDemoName2', 'Arta M.'),
+      client_initial: 'A',
+      vehicle_brand: 'Toyota Yaris',
+      company_name: null,
+    },
+    {
+      id: 'demo-3',
+      rating: 5,
+      comment: t('home.testimonialDemo3', 'Kompanite jane profesionale. Patenten ma verifikuan online — zero burokraci.'),
+      client_name: t('home.testimonialDemoName3', 'Liridon B.'),
+      client_initial: 'L',
+      vehicle_brand: 'Ford Focus',
+      company_name: null,
+    },
+  ], [t]);
+
+  const items: Testimonial[] = (realItems && realItems.length >= 3) ? realItems.slice(0, 3) : fallbackItems;
+
+  if (realItems === null) return null;
 
   return (
     <section className="py-24 bg-gray-50/60">

@@ -143,7 +143,7 @@ export default function AvailabilityCalendar({
     for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
     return (
-      <div key={monthOffset} className="flex-1 min-w-[280px]">
+      <div key={monthOffset} className="flex-1 min-w-0 sm:min-w-[280px]">
         <p className="text-center font-semibold text-dark-900 text-sm mb-3">
           {MONTHS[month]} {year}
         </p>
