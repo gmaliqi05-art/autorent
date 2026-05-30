@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
   Plus, Trash2, Check, X, Loader2, Star, Zap, Crown, Gem,
-  Building2, DollarSign, Users, CreditCard, Eye, Download,
-  ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Pencil,
-  TrendingUp, Calendar, ArrowUpRight,
-} from 'lucide-react';
+  Building2, DollarSign, Users, Eye, Download,
+  ToggleLeft, ToggleRight, Pencil,
+  TrendingUp, Calendar, ArrowUpRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import type { SubscriptionPlan, Company } from '../../lib/types';

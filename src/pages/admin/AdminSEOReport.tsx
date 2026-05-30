@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, Search, Eye, MousePointerClick, BarChart2, ArrowUpRight, ArrowDownRight, Globe, ExternalLink } from 'lucide-react';
+import { TrendingUp, Search, Eye, Globe } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';

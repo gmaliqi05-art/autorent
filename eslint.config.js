@@ -23,6 +23,19 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      // `any` është inevitable kur punojme me payload-e te Supabase (response data PostgrestResponse),
+      // event handlers DOM dhe biblioteka te jashtme pa types. Mbahet warning per visibility por
+      // jo error qe te bllokoje CI/dev flow.
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
+  },
+  // Supabase Edge Functions (Deno runtime): Stripe SDK + Resend SDK + Deno globals
+  // nuk kane type definitions te plota — `any` lejohet eksplicit ne kete kontekst.
+  {
+    files: ['supabase/functions/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'warn',
     },
   }
 );

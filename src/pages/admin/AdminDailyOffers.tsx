@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Zap, Plus, Trash2, CreditCard as Edit3, Search, Eye, EyeOff, Calendar, Percent, Loader2, Star } from 'lucide-react';
+import { Zap, Plus, Trash2, CreditCard as Edit3, Search, Eye, EyeOff, Calendar, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
@@ -36,7 +36,6 @@ export default function AdminDailyOffers() {
   const dateLocale = localeFromI18n(i18n.language);
   const [offers, setOffers] = useState<DailyOffer[]>([]);
   const [vehicles, setVehicles] = useState<{ id: string; brand: string; model: string; company_name: string }[]>([]);
-  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<Partial<DailyOffer>>(empty);
   const [editing, setEditing] = useState<string | null>(null);
@@ -64,7 +63,6 @@ export default function AdminDailyOffers() {
       company_name: o.company_id ? companyMap[o.company_id] : null,
     })));
     setVehicles(vehiclesList);
-    setCompanies(companiesData || []);
     setLoading(false);
   }
 

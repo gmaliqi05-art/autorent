@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Lock, Save, Loader2, CheckCircle, AlertTriangle, Trash2, Eye, EyeOff, Search, X } from 'lucide-react';
+import { Shield, Lock, Save, Loader2, CheckCircle, Trash2, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';

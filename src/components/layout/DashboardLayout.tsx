@@ -96,7 +96,6 @@ export default function DashboardLayout({ children, title, navItems, navGroups }
             {resolvedGroups ? (
               resolvedGroups.map((group) => {
                 const collapsed = collapsedGroups[group.label];
-                const hasActive = group.items.some(i => i.path === location.pathname);
                 return (
                   <div key={group.label} className="mb-1">
                     <button

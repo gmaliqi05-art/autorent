@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Save, Loader2, Globe, FileText, Tag, TrendingUp, ExternalLink, RefreshCw, CheckCircle } from 'lucide-react';
+import { Search, Save, Loader2, Globe, FileText, Tag, TrendingUp, CheckCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';
