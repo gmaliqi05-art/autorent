@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Send, CheckCircle, Loader2, User, AlertTriangle, Info, Zap } from 'lucide-react';
+import { Bell, Send, CheckCircle, Loader2, AlertTriangle, Info, Zap } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import DashboardLayout from '../../components/layout/DashboardLayout';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Save, Loader2, CheckCircle, Link, AlignLeft, Calendar, Eye, EyeOff } from 'lucide-react';
+import { Save, Loader2, CheckCircle, Link, AlignLeft, Calendar, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';

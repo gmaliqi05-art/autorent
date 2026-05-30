@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Tag, Plus, Trash2, CreditCard as Edit3, Search, Copy, CheckCircle, X, Loader2, Calendar, Percent, DollarSign } from 'lucide-react';
+import { Tag, Plus, Trash2, CreditCard as Edit3, Search, Copy, CheckCircle, Loader2, Percent, DollarSign } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';

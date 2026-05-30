@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Car, DollarSign, CreditCard, Wallet, Building, Banknote, FileText, Download, ArrowUpRight, Clock, ChevronLeft, ChevronRight, AlertTriangle, FileDown, Loader2 } from 'lucide-react';
+import { Car, DollarSign, CreditCard, Wallet, Building, Banknote, FileText, Download, Clock, ChevronLeft, ChevronRight, AlertTriangle, FileDown, Loader2 } from 'lucide-react';
 import { downloadInvoicePdf } from '../../lib/invoiceService';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';

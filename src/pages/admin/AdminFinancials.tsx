@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, Building2, CalendarDays, CreditCard, ArrowUpRight, Building, Car, Users, TrendingUp, MapPin, Award, Target, FileText, Receipt } from 'lucide-react';
+import { DollarSign, Building2, CalendarDays, CreditCard, ArrowUpRight, Building, Car, Users, TrendingUp, MapPin, Award, Target, Receipt } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import type { Booking, Company, SubscriptionPlan, Vehicle, Profile, City, Invoice } from '../../lib/types';

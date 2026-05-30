@@ -42,7 +42,6 @@ export default function AdminBankDetails() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
-  const [editing, setEditing] = useState<string | null>(null);
   const [newAccount, setNewAccount] = useState<Partial<BankAccount>>({});
   const [addingNew, setAddingNew] = useState(false);
 

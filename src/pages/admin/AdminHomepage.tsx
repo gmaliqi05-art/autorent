@@ -88,7 +88,7 @@ export default function AdminHomepage() {
   const heroMobileFileRef = useRef<HTMLInputElement | null>(null);
   const logoFileRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => { loadAll(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [currentLang]);
+  useEffect(() => { loadAll();   }, [currentLang]);
 
   async function loadAll() {
     const { data } = await supabase.from('homepage_settings').select('key, value');
@@ -123,7 +123,7 @@ export default function AdminHomepage() {
   async function saveTab() {
     setSaving(true);
     setSaveError(null);
-    let key = activeTab as string;
+    const key = activeTab as string;
     let value: Record<string, unknown> = {};
     if (activeTab === 'hero') value = mergeLocalized(hero as unknown as Record<string, unknown>, rawData.hero, currentLang);
     if (activeTab === 'logo') value = mergeLocalized(logo as unknown as Record<string, unknown>, rawData.logo, currentLang);

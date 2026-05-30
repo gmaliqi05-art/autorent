@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Scale, Save, Loader2, CheckCircle, FileText, Eye, CreditCard as Edit3 } from 'lucide-react';
+import { Save, Loader2, CheckCircle, FileText, Eye, CreditCard as Edit3 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
@@ -93,8 +93,7 @@ export default function AdminLegalPages() {
         ) : (
           <div className="grid grid-cols-4 gap-6">
             <div className="col-span-1 bg-white rounded-xl border border-gray-100 p-4 h-fit">
-              {defaultPages.map(({ key, title, route }) => {
-                const page = pages.find(p => p.key === key);
+              {defaultPages.map(({ key, title }) => {
                 return (
                   <button key={key} onClick={() => setSelected(key)}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors mb-1 text-left ${selected === key ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50'}`}>

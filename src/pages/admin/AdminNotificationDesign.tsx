@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Save, Loader2, CheckCircle, Palette, Smartphone, Monitor, Eye } from 'lucide-react';
+import { Bell, Save, Loader2, CheckCircle, Palette, Smartphone, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminNavItems, adminNavGroups } from '../../lib/adminNav';

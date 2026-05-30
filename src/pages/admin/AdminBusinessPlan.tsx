@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, Target, BarChart2, Building2, Users, Car, CreditCard, ArrowUpRight, Calendar, Download, RefreshCw } from 'lucide-react';
+import { DollarSign, Target, BarChart2, Building2, Users, Car, CreditCard, ArrowUpRight, Calendar, Download, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import DashboardLayout from '../../components/layout/DashboardLayout';
@@ -47,12 +47,11 @@ export default function AdminBusinessPlan() {
     }
     setMonthlyData(months);
 
-    const [{ data: allBookings }, { data: allCompanies }, { data: allUsers }, { data: allVehicles }, { data: subscriptions }] = await Promise.all([
+    const [{ data: allBookings }, { data: allCompanies }, { data: allUsers }, { data: allVehicles }] = await Promise.all([
       supabase.from('bookings').select('total_price, payment_status'),
       supabase.from('companies').select('id, subscription_plan_id, subscription_status'),
       supabase.from('profiles').select('id'),
       supabase.from('vehicles').select('id'),
-      supabase.from('subscription_plans').select('price_monthly').eq('is_active', true),
     ]);
 
     const totalRev = (allBookings || []).filter((b: any) => b.payment_status === 'paid').reduce((s: number, b: any) => s + (b.total_price || 0), 0);
