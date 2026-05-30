@@ -326,6 +326,8 @@ export interface ChatConversation {
   visitor_id: string;
   user_id: string | null;
   status: string;
+  is_escalated: boolean;
+  last_message_at: string;
   created_at: string;
   updated_at: string;
 }

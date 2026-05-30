@@ -83,6 +83,7 @@ export const adminNavGroups: NavGroup[] = [
       { labelKey: 'adminNav.emailTemplates', label: 'Email Management', path: '/admin/email-templates', icon: <Mail className="w-4 h-4" /> },
       { labelKey: 'adminNav.legalPages', label: 'Faqet Ligjore & Statike', path: '/admin/ligjore', icon: <Scale className="w-4 h-4" /> },
       { labelKey: 'adminNav.chat', label: 'Chat AI', path: '/admin/chat', icon: <MessageSquare className="w-4 h-4" /> },
+      { labelKey: 'adminNav.liveChat', label: 'Live Chat (Bisedat)', path: '/admin/live-chat', icon: <MessageSquare className="w-4 h-4" /> },
       { labelKey: 'adminNav.emailHistory', label: 'Historiku Emaileve', path: '/admin/emailet', icon: <Mail className="w-4 h-4" /> },
       { labelKey: 'adminNav.financialReports', label: 'Raportet Financiare', path: '/admin/raportet', icon: <BarChart3 className="w-4 h-4" /> },
       { labelKey: 'adminNav.settings', label: 'Cilesimet', path: '/admin/cilesimet', icon: <Settings className="w-4 h-4" /> },
