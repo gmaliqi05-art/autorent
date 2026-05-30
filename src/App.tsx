@@ -9,12 +9,14 @@ import CookieConsent from './components/CookieConsent';
 import ChatWidget from './components/chat/ChatWidget';
 import { useStandaloneMode } from './lib/useStandaloneMode';
 
-// Eager pages (used on initial load — homepage + listings + auth)
+// Eager pages (used on initial load — homepage + listings)
 import HomePage from './pages/HomePage';
 import VehicleListPage from './pages/VehicleListPage';
 import VehicleDetailPage from './pages/VehicleDetailPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+
+// Auth pages — lazy (qa s'jane entry route ne shumicen e seancave)
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 
 // Lazy: client dashboard
 const ClientDashboard = lazy(() => import('./pages/dashboard/ClientDashboard'));
