@@ -87,7 +87,11 @@ export default function DashboardLayout({ children, title, navItems, navGroups }
               </div>
               <span className="text-lg font-bold text-dark-950">RentaKar</span>
             </Link>
-            <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-400 hover:text-gray-600 transition-colors">
+            <button
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Mbyll menune"
+              className="lg:hidden text-gray-400 hover:text-gray-600 transition-colors focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none rounded"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -152,7 +156,12 @@ export default function DashboardLayout({ children, title, navItems, navGroups }
 
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 h-14 bg-white/80 backdrop-blur-xl border-b border-gray-100/80 flex items-center px-4 sm:px-6">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden mr-3 p-1 text-gray-500 hover:text-gray-700 transition-colors">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Hap menune"
+            aria-expanded={sidebarOpen}
+            className="lg:hidden mr-3 p-1 text-gray-500 hover:text-gray-700 transition-colors focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none rounded"
+          >
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-1.5 text-sm text-gray-400">

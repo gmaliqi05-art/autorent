@@ -339,7 +339,11 @@ export default function ChatWidget() {
                 </div>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-white transition-colors p-1">
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Mbyll chat-in"
+              className="text-gray-400 hover:text-white transition-colors p-1 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none rounded"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>

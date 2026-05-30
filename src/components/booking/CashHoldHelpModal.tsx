@@ -30,7 +30,11 @@ export default function CashHoldHelpModal({ open, onClose }: Props) {
               <p className="text-sm text-dark-500 mt-0.5">{t('cashHoldModal.subtitle')}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg shrink-0">
+          <button
+            onClick={onClose}
+            aria-label={t('cashHoldModal.close', 'Mbyll')}
+            className="p-2 hover:bg-gray-100 rounded-lg shrink-0 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none"
+          >
             <X className="w-5 h-5 text-dark-500" />
           </button>
         </div>

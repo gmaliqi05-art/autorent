@@ -554,7 +554,7 @@ export default function VehicleDetailPage() {
               <div className="flex items-center gap-3">
                 <div className="w-14 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0">
                   {vehicle.main_image_url ? (
-                    <img src={vehicle.main_image_url} alt="" className="w-full h-full object-cover" />
+                    <img src={vehicle.main_image_url} alt={`${vehicle.brand} ${vehicle.model}`} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center"><Car className="w-4 h-4 text-gray-300" /></div>
                   )}

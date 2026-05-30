@@ -101,10 +101,17 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Skip-to-content link (a11y) — i fshehur derisa fokusohet me Tab */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg"
+      >
+        Kalo tek permbajtja kryesore
+      </a>
       {!isAppMode && <Navbar />}
       {/* Ne app mode shtojme padding-top per status bar/notch.
           Padding-bottom aplikohet automatikisht ne body permes index.css. */}
-      <div className={`flex-1 ${isAppMode ? 'pt-safe pb-20' : ''}`}>{children}</div>
+      <main id="main-content" className={`flex-1 ${isAppMode ? 'pt-safe pb-20' : ''}`}>{children}</main>
       {!isAppMode && <Footer />}
     </div>
   );
