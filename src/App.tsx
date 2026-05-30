@@ -38,6 +38,7 @@ const AdminSubscriptions = lazy(() => import('./pages/admin/AdminSubscriptions')
 const AdminHomepage = lazy(() => import('./pages/admin/AdminHomepage'));
 const AdminChat = lazy(() => import('./pages/admin/AdminChat'));
 const AdminLiveChat = lazy(() => import('./pages/admin/AdminLiveChat'));
+const AdminLoyalty = lazy(() => import('./pages/admin/AdminLoyalty'));
 const AdminEmails = lazy(() => import('./pages/admin/AdminEmails'));
 const AdminFinancials = lazy(() => import('./pages/admin/AdminFinancials'));
 const AdminTransactions = lazy(() => import('./pages/admin/AdminTransactions'));
@@ -143,6 +144,7 @@ export default function App() {
             <Route path="/admin/hero" element={<SA><AdminHomepage /></SA>} />
             <Route path="/admin/chat" element={<SA><AdminChat /></SA>} />
             <Route path="/admin/live-chat" element={<SA><AdminLiveChat /></SA>} />
+            <Route path="/admin/loyalty" element={<SA><AdminLoyalty /></SA>} />
             <Route path="/admin/emailet" element={<SA><AdminEmails /></SA>} />
             <Route path="/admin/push-logs" element={<SA><AdminPushLogs /></SA>} />
             <Route path="/admin/raportet" element={<SA><AdminFinancials /></SA>} />
