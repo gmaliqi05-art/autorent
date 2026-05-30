@@ -178,7 +178,7 @@ function AdminMapView() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-lg bg-gray-100 shrink-0 overflow-hidden flex items-center justify-center">
-                        {c.logo_url ? <img src={c.logo_url} alt="" className="w-9 h-9 object-cover" loading="lazy" /> : <Building2 className="w-4 h-4 text-gray-400" />}
+                        {c.logo_url ? <img src={c.logo_url} alt="" className="w-9 h-9 object-cover" /> : <Building2 className="w-4 h-4 text-gray-400" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-dark-900 truncate">{c.name}</p>
@@ -213,7 +213,7 @@ function AdminMapView() {
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-9 h-9 rounded-lg bg-gray-100 shrink-0 overflow-hidden flex items-center justify-center">
-                        {selected.logo_url ? <img src={selected.logo_url} alt="" className="w-9 h-9 object-cover" loading="lazy" /> : <Building2 className="w-4 h-4 text-gray-400" />}
+                        {selected.logo_url ? <img src={selected.logo_url} alt="" className="w-9 h-9 object-cover" /> : <Building2 className="w-4 h-4 text-gray-400" />}
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-dark-950 truncate">{selected.name}</p>

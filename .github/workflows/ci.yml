@@ -53,24 +53,6 @@ jobs:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
 
-      - name: Sentry status
-        run: |
-          if [ -n "${{ secrets.SENTRY_AUTH_TOKEN }}" ] && [ -n "${{ secrets.SENTRY_ORG }}" ] && [ -n "${{ secrets.SENTRY_PROJECT }}" ]; then
-            echo "## Sentry release i krijuar ✓" >> $GITHUB_STEP_SUMMARY
-            echo "- Release: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-            echo "- Org: \`${{ secrets.SENTRY_ORG }}\`" >> $GITHUB_STEP_SUMMARY
-            echo "- Project: \`${{ secrets.SENTRY_PROJECT }}\`" >> $GITHUB_STEP_SUMMARY
-            echo "- Source maps: te ngarkuar automatik nga sentry-vite-plugin" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "## Sentry: jo i konfiguruar" >> $GITHUB_STEP_SUMMARY
-            echo "Per aktivizim, shto sekretet ne GitHub Actions:" >> $GITHUB_STEP_SUMMARY
-            echo "- \`SENTRY_AUTH_TOKEN\` (Sentry → User Settings → Auth Tokens, scope: \`project:releases\`)" >> $GITHUB_STEP_SUMMARY
-            echo "- \`SENTRY_ORG\` (org slug)" >> $GITHUB_STEP_SUMMARY
-            echo "- \`SENTRY_PROJECT\` (project slug)" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Path: Settings → Secrets and variables → Actions → New repository secret" >> $GITHUB_STEP_SUMMARY
-          fi
-
       - name: Check build output size
         run: |
           echo "## Build output sizes" >> $GITHUB_STEP_SUMMARY

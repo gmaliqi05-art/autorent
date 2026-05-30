@@ -215,7 +215,7 @@ export default function AdminAds() {
           <div key={ad.id} className={`bg-white rounded-lg border border-gray-200 overflow-hidden group ${!ad.is_active ? 'opacity-60' : ''}`}>
             {ad.image_url && (
               <div className="h-36 bg-gray-100 relative overflow-hidden">
-                <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover" loading="lazy" />
+                <img src={ad.image_url} alt={ad.title} className="w-full h-full object-cover" />
                 {!ad.is_active && (
                   <div className="absolute inset-0 bg-dark-950/40 flex items-center justify-center">
                     <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full">{t('adminDash.ads.inactiveBadge')}</span>

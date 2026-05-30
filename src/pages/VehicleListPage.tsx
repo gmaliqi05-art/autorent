@@ -21,16 +21,12 @@ type VehicleWithCompany = Vehicle & {
 
 const PRICE_MIN = 0;
 const PRICE_MAX = 500;
-const PAGE_SIZE = 20;
 
 export default function VehicleListPage() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [vehicles, setVehicles] = useState<VehicleWithCompany[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [category, setCategory] = useState(searchParams.get('category') || '');
@@ -89,14 +85,9 @@ export default function VehicleListPage() {
     return () => clearTimeout(id);
   }, [searchQuery]);
 
-  // Reset page kur filtrat ndryshojne (parë cdo filter change rikthen ne page 0).
   useEffect(() => {
-    setPage(0);
+    loadVehicles();
   }, [category, transmission, fuel, sort, priceRange, selectedCountryId, selectedCityId, debouncedSearch, pickupDate, returnDate]);
-
-  useEffect(() => {
-    loadVehicles(page);
-  }, [page, category, transmission, fuel, sort, priceRange, selectedCountryId, selectedCityId, debouncedSearch, pickupDate, returnDate]);
 
   useEffect(() => {
     if (selectedCountryId && cities.length > 0) {
@@ -136,11 +127,8 @@ export default function VehicleListPage() {
     setCities((citiesData || []) as City[]);
   }
 
-  async function loadVehicles(pageNum: number) {
-    const isInitial = pageNum === 0;
-    if (isInitial) setLoading(true);
-    else setLoadingMore(true);
-
+  async function loadVehicles() {
+    setLoading(true);
     let query = supabase
       .from('vehicles')
       .select('*, company:companies(id, name, slug, city, rating, country_id, city_id)')
@@ -159,12 +147,8 @@ export default function VehicleListPage() {
     else if (sort === 'price_desc') query = query.order('price_per_day', { ascending: false });
     else query = query.order('created_at', { ascending: false });
 
-    const from = pageNum * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
-    const { data } = await query.range(from, to);
+    const { data } = await query.limit(100);
     let results = (data || []) as VehicleWithCompany[];
-    // Nese mori me pak se PAGE_SIZE, nuk ka me te tjera.
-    const fetchedFullPage = results.length === PAGE_SIZE;
 
     if (selectedCountryId) {
       results = results.filter(v => v.company?.country_id === selectedCountryId);
@@ -195,10 +179,8 @@ export default function VehicleListPage() {
       results = results.filter(v => !blocked.has(v.id));
     }
 
-    setVehicles(prev => isInitial ? results : [...prev, ...results]);
-    setHasMore(fetchedFullPage);
+    setVehicles(results);
     setLoading(false);
-    setLoadingMore(false);
   }
 
   function clearFilters() {
@@ -476,24 +458,9 @@ export default function VehicleListPage() {
                 </button>
               </div>
             ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                  {vehicles.map(v => <VehicleCard key={v.id} vehicle={v} />)}
-                </div>
-                {hasMore && (
-                  <div className="mt-8 flex justify-center">
-                    <button
-                      type="button"
-                      onClick={() => setPage(p => p + 1)}
-                      disabled={loadingMore}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-sm font-semibold text-dark-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none"
-                    >
-                      {loadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                      {loadingMore ? t('vehicles.loadingMore', 'Po ngarkohet...') : t('vehicles.loadMore', 'Ngarko me shume')}
-                    </button>
-                  </div>
-                )}
-              </>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                {vehicles.map(v => <VehicleCard key={v.id} vehicle={v} />)}
+              </div>
             )}
           </div>
         </div>

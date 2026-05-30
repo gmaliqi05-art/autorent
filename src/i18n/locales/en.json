@@ -128,7 +128,6 @@
     "notificationDesign": "Badge & push design",
     "testNotifications": "Test notifications",
     "sendNotifications": "Send notifications",
-    "pushLogs": "Push logs",
     "businessPlan": "Business plan & finance",
     "invoices": "Invoices",
     "invoiceSettings": "Invoice settings",
@@ -396,8 +395,6 @@
     "sortNewest": "Newest",
     "results": "vehicles",
     "searching": "Searching...",
-    "loadMore": "Load more",
-    "loadingMore": "Loading...",
     "searchPlaceholder": "e.g. BMW X5...",
     "all": "All",
     "categories": {
@@ -2625,35 +2622,5 @@
     "perDay": "/ day",
     "add": "Add",
     "requiresLicense": "Requires additional license at pickup."
-  },
-  "loyalty": {
-    "title": "Loyalty programme",
-    "pointsBalance": "available points",
-    "equivalent": "value (1 point = €0.10)",
-    "referFriends": "Refer friends",
-    "referralExplain": "Earn 100 points for every person who signs up with your code and completes their first booking.",
-    "codeGenerating": "Generating code...",
-    "copy": "Copy",
-    "share": "Share link",
-    "shareText": "Join RentaKar and get welcome points:",
-    "earned": "Earned",
-    "referrals": "Referrals",
-    "rewarded": "Rewarded",
-    "recentActivity": "Recent activity",
-    "yourReferrals": "Your referrals",
-    "emptyTitle": "Start earning points!",
-    "emptyDescr": "Make your first booking or invite a friend to get started.",
-    "expiringSoonTitle": "{{points}} points expiring soon",
-    "expiringSoonDesc": "First expiry: {{date}}"
-  },
-  "loyaltyRedeem": {
-    "loading": "Loading balance...",
-    "tooSmall": "Booking is too small to use points.",
-    "title": "Use loyalty points",
-    "balance": "Balance: {{points}} points (≈ €{{eur}})",
-    "useMax": "Use maximum",
-    "applied": "Applied",
-    "points": "points",
-    "discount": "Discount"
   }
 }

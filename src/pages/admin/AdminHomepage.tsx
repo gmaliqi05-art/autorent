@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import DOMPurify from 'dompurify';
 import {
   Save, Loader2, Globe, Image, Monitor, LayoutGrid, Eye,
   Upload, X, Check, ChevronDown, ChevronUp, RefreshCw, Palette,
@@ -205,7 +204,7 @@ export default function AdminHomepage() {
             <Globe className="w-3.5 h-3.5 text-amber-700" />
             <span
               className="text-xs text-amber-800"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t('adminDash.homepage.editingLanguage', { lang: currentLang.toUpperCase() }), { ALLOWED_TAGS: ['strong', 'em', 'b'], ALLOWED_ATTR: [] }) }}
+              dangerouslySetInnerHTML={{ __html: t('adminDash.homepage.editingLanguage', { lang: currentLang.toUpperCase() }) }}
             />
           </div>
         </div>
@@ -368,7 +367,7 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
         <div className="space-y-4">
           {hero.image_url ? (
             <div className="relative rounded-xl overflow-hidden bg-gray-100 mb-3" style={{ aspectRatio: '21/9' }}>
-              <img src={hero.image_url} alt="Hero" className="w-full h-full object-cover" loading="lazy" />
+              <img src={hero.image_url} alt="Hero" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-dark-950/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => heroFileRef.current?.click()}
@@ -448,7 +447,7 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
           <p className="text-xs text-dark-500 -mt-1">{t('adminDash.homepage.mobileImageDesc')}</p>
           {hero.image_url_mobile ? (
             <div className="relative rounded-xl overflow-hidden bg-gray-100 mb-3 mx-auto" style={{ aspectRatio: '9/16', maxWidth: '220px' }}>
-              <img src={hero.image_url_mobile} alt="Hero Mobile" className="w-full h-full object-cover" style={{ objectPosition: hero.image_position_mobile || '70% center' }} loading="lazy" />
+              <img src={hero.image_url_mobile} alt="Hero Mobile" className="w-full h-full object-cover" style={{ objectPosition: hero.image_position_mobile || '70% center' }} />
               <div className="absolute inset-0 bg-dark-950/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => heroMobileFileRef.current?.click()}
@@ -593,7 +592,7 @@ function HeroEditor({ hero, setHero, uploadingHero, heroFileRef, onUpload, uploa
         </div>
         <div className="relative" style={{ height: '220px' }}>
           {hero.image_url && (
-            <img src={hero.image_url} alt="Preview" className="w-full h-full object-cover" loading="lazy" />
+            <img src={hero.image_url} alt="Preview" className="w-full h-full object-cover" />
           )}
           <div className="absolute inset-0" style={{ background: `rgba(5,5,15,${hero.overlay_opacity / 100})` }} />
           <div className="absolute inset-0 flex flex-col justify-center px-8">
@@ -637,7 +636,7 @@ function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, input
               <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden relative group">
                 {logo.logo_url ? (
                   <>
-                    <img src={logo.logo_url} alt="Logo" className="w-full h-full object-contain p-3" loading="lazy" />
+                    <img src={logo.logo_url} alt="Logo" className="w-full h-full object-contain p-3" />
                     <button
                       onClick={() => setLogo(l => ({ ...l, logo_url: '' }))}
                       className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -713,7 +712,7 @@ function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, input
             <div className="bg-dark-950 rounded-xl px-5 py-3 flex items-center gap-2.5">
               {logo.show_icon && (
                 logo.logo_url ? (
-                  <img src={logo.logo_url} alt="Logo" className="w-7 h-7 object-contain" loading="lazy" />
+                  <img src={logo.logo_url} alt="Logo" className="w-7 h-7 object-contain" />
                 ) : (
                   <div className="p-1.5 rounded-lg bg-white/10">
                     <Car className="w-4 h-4 text-white" />
@@ -730,7 +729,7 @@ function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, input
             <div className="bg-white border border-gray-200 rounded-xl px-5 py-3 flex items-center gap-2.5">
               {logo.show_icon && (
                 logo.logo_url ? (
-                  <img src={logo.logo_url} alt="Logo" className="w-7 h-7 object-contain" loading="lazy" />
+                  <img src={logo.logo_url} alt="Logo" className="w-7 h-7 object-contain" />
                 ) : (
                   <div className="p-1.5 rounded-lg bg-primary-600">
                     <Car className="w-4 h-4 text-white" />
@@ -747,7 +746,7 @@ function LogoEditor({ logo, setLogo, uploadingLogo, logoFileRef, onUpload, input
             <div className="bg-dark-950 rounded-xl px-5 py-3 flex items-center gap-2.5">
               {logo.show_icon && (
                 logo.logo_url ? (
-                  <img src={logo.logo_url} alt="Logo" className="w-6 h-6 object-contain" loading="lazy" />
+                  <img src={logo.logo_url} alt="Logo" className="w-6 h-6 object-contain" />
                 ) : (
                   <div className="p-1.5 rounded-lg bg-primary-600">
                     <Car className="w-4 h-4 text-white" />
@@ -1142,7 +1141,7 @@ function CategoriesEditor({ inputClass, labelClass }: { inputClass: string; labe
           <div key={row.key} className="bg-white rounded-lg border border-gray-200 p-5">
             <div className="flex items-start gap-4">
               <div className="w-24 h-20 rounded-xl bg-gray-100 overflow-hidden shrink-0">
-                {row.image_url && <img src={row.image_url} alt={row.label_sq} className="w-full h-full object-cover" loading="lazy" />}
+                {row.image_url && <img src={row.image_url} alt={row.label_sq} className="w-full h-full object-cover" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1 flex-wrap">

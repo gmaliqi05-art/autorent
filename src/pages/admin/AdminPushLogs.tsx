@@ -40,19 +40,16 @@ export default function AdminPushLogs() {
   useEffect(() => { void loadCounts(); }, []);
 
   async function loadCounts() {
-    // Single query qe kthen te gjitha status counts, agreguar client-side
-    // (PostgREST nuk mbeshtet GROUP BY direkt, por kjo eshte 1 query vs 6).
+    // Count per status (last 7 days) — perdor 6 thirrje per status, ne paralele
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { data } = await supabase
-      .from('push_send_log')
-      .select('status')
-      .gte('created_at', since);
-    const next: Record<string, number> = {
-      sent: 0, partial: 0, failed: 0, no_subscriptions: 0, push_disabled: 0, no_vapid: 0,
-    };
-    (data || []).forEach((row: { status: string }) => {
-      if (row.status in next) next[row.status]++;
-    });
+    const statuses: PushLog['status'][] = ['sent', 'partial', 'failed', 'no_subscriptions', 'push_disabled', 'no_vapid'];
+    const results = await Promise.all(
+      statuses.map(s =>
+        supabase.from('push_send_log').select('id', { count: 'exact', head: true }).eq('status', s).gte('created_at', since),
+      ),
+    );
+    const next: Record<string, number> = {};
+    statuses.forEach((s, i) => { next[s] = results[i].count ?? 0; });
     setCounts(next);
   }
 

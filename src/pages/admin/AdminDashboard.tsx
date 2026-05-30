@@ -177,7 +177,7 @@ export default function AdminDashboard() {
                 <div key={c.id} className="px-5 py-3.5 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
-                      {c.logo_url ? <img src={c.logo_url} alt="" className="w-10 h-10 object-cover" loading="lazy" /> : <Building2 className="w-4 h-4 text-gray-400" />}
+                      {c.logo_url ? <img src={c.logo_url} alt="" className="w-10 h-10 object-cover" /> : <Building2 className="w-4 h-4 text-gray-400" />}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-dark-900">{c.name}</p>

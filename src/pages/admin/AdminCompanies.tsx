@@ -309,7 +309,7 @@ export default function AdminCompanies() {
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden shrink-0 border border-gray-200">
-                              {c.logo_url ? <img src={c.logo_url} alt="" className="w-10 h-10 object-cover" loading="lazy" /> : <Building2 className="w-4 h-4 text-gray-400" />}
+                              {c.logo_url ? <img src={c.logo_url} alt="" className="w-10 h-10 object-cover" /> : <Building2 className="w-4 h-4 text-gray-400" />}
                             </div>
                             <div className="min-w-0">
                               <p className="text-sm font-semibold text-dark-900 truncate">{c.name}</p>
@@ -391,7 +391,7 @@ export default function AdminCompanies() {
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden border border-gray-200 flex items-center justify-center shrink-0">
-                  {detailCompany.logo_url ? <img src={detailCompany.logo_url} alt="" className="w-12 h-12 object-cover" loading="lazy" /> : <Building2 className="w-6 h-6 text-gray-400" />}
+                  {detailCompany.logo_url ? <img src={detailCompany.logo_url} alt="" className="w-12 h-12 object-cover" /> : <Building2 className="w-6 h-6 text-gray-400" />}
                 </div>
                 <div>
                   <h2 className="font-bold text-dark-950 text-lg leading-tight">{detailCompany.name}</h2>
@@ -567,7 +567,7 @@ function DetailVehicles({ vehicles, t }: { vehicles: CompanyVehicle[]; t: TFunct
       {vehicles.map(v => (
         <div key={v.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
           <div className="w-14 h-10 rounded-lg bg-gray-200 overflow-hidden shrink-0">
-            {v.main_image_url ? <img src={v.main_image_url} alt="" className="w-14 h-10 object-cover" loading="lazy" /> : <Car className="w-4 h-4 text-gray-400 mx-auto mt-3" />}
+            {v.main_image_url ? <img src={v.main_image_url} alt="" className="w-14 h-10 object-cover" /> : <Car className="w-4 h-4 text-gray-400 mx-auto mt-3" />}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-dark-900">{v.brand} {v.model} <span className="text-dark-400 font-normal">({v.year})</span></p>

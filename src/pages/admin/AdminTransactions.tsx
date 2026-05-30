@@ -281,7 +281,7 @@ export default function AdminTransactions() {
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
                             {booking.company?.logo_url ? (
-                              <img src={booking.company.logo_url} alt="" className="w-8 h-8 object-cover" loading="lazy" />
+                              <img src={booking.company.logo_url} alt="" className="w-8 h-8 object-cover" />
                             ) : (
                               <Building2 className="w-3.5 h-3.5 text-gray-400" />
                             )}

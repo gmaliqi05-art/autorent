@@ -542,7 +542,7 @@ export default function CompanyVehicles() {
 
               {imagePreview || form.main_image_url ? (
                 <div className="relative w-full max-w-md">
-                  <img src={imagePreview || form.main_image_url} alt="Preview" className="w-full h-48 object-cover rounded-xl border border-gray-200" loading="lazy" />
+                  <img src={imagePreview || form.main_image_url} alt="Preview" className="w-full h-48 object-cover rounded-xl border border-gray-200" />
                   <button
                     type="button"
                     onClick={clearImage}
@@ -576,7 +576,7 @@ export default function CompanyVehicles() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {form.images.map(url => (
                   <div key={url} className="relative group aspect-[4/3] rounded-lg overflow-hidden border border-gray-200">
-                    <img src={url} alt="gallery" className="w-full h-full object-cover" loading="lazy" />
+                    <img src={url} alt="gallery" className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => removeGalleryImage(url)}
@@ -675,7 +675,7 @@ export default function CompanyVehicles() {
               <div key={v.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-sm transition-shadow">
                 <div className="aspect-[16/10] bg-gray-100 relative">
                   {v.main_image_url ? (
-                    <img src={v.main_image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    <img src={v.main_image_url} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center"><Car className="w-8 h-8 text-gray-300" /></div>
                   )}
