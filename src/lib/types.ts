@@ -273,6 +273,7 @@ export interface Booking {
   tax_total: number;
   discount_total: number;
   discount_code_id: string | null;
+  loyalty_points_redeemed: number;
   // Mileage
   included_km: number;
   extra_km_price: number;

@@ -21,6 +21,7 @@ import { startPaypalCheckout } from '../lib/paypalService';
 import { calculateBookingPrice, type ExtraSelection } from '../lib/bookingCalculator';
 import { useInvoiceSettings, getEffectiveTaxPercent } from '../lib/useInvoiceSettings';
 import { formatCurrency } from '../lib/currency';
+import LoyaltyRedeemWidget from '../components/loyalty/LoyaltyRedeemWidget';
 // Lazy import — Stripe.js (~150KB) ngarkohet vetem kur user mberrijne ne 'cash_hold' step
 const CashHoldForm = lazy(() => import('../components/booking/CashHoldForm'));
 
@@ -62,6 +63,8 @@ export default function VehicleDetailPage() {
   // Step 'customize': sigurim + extras
   const [selectedInsurance, setSelectedInsurance] = useState<InsurancePlan | null>(null);
   const [extrasSelections, setExtrasSelections] = useState<ExtraSelection[]>([]);
+  // Step 'invoice': loyalty points te perdorur (€0.10 per pikë)
+  const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState<number>(0);
 
   useEffect(() => {
     if (!id) return;
@@ -168,6 +171,7 @@ export default function VehicleDetailPage() {
       extras: extrasSelections,
       driverAge,
       taxPercent,
+      discountAmount: loyaltyPointsToRedeem / 10,
     });
 
     const { data: bookingData, error } = await supabase.from('bookings').insert({
@@ -189,6 +193,7 @@ export default function VehicleDetailPage() {
       one_way_fee: breakdown.oneWayFee,
       tax_total: breakdown.tax,
       discount_total: breakdown.discount,
+      loyalty_points_redeemed: loyaltyPointsToRedeem,
       included_km: (vehicle.included_km_per_day ?? 0) * days,
       extra_km_price: Number(vehicle.extra_km_price ?? 0),
       status: 'pending',
@@ -369,6 +374,7 @@ export default function VehicleDetailPage() {
   }
 
   const totalDays = getTotalDays();
+  const loyaltyDiscount = loyaltyPointsToRedeem / 10;
   const liveBreakdown = calculateBookingPrice({
     vehicle: {
       price_per_day: Number(vehicle.price_per_day),
@@ -382,6 +388,7 @@ export default function VehicleDetailPage() {
     extras: extrasSelections,
     driverAge,
     taxPercent,
+    discountAmount: loyaltyDiscount,
   });
   const totalPrice = liveBreakdown.total;
   const features = Array.isArray(vehicle.features) ? vehicle.features : [];
@@ -484,6 +491,17 @@ export default function VehicleDetailPage() {
             totalDays={totalDays}
             totalPrice={totalPrice}
           />
+
+          {user && (
+            <div className="mt-6">
+              <LoyaltyRedeemWidget
+                userId={user.id}
+                bookingTotal={liveBreakdown.subtotal + liveBreakdown.tax}
+                redeemedPoints={loyaltyPointsToRedeem}
+                onChange={setLoyaltyPointsToRedeem}
+              />
+            </div>
+          )}
 
           <div className="mt-6">
             <PriceBreakdown
