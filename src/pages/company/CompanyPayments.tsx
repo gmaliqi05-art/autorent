@@ -377,7 +377,7 @@ export default function CompanyPayments() {
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
                             {booking.vehicle?.main_image_url ? (
-                              <img src={booking.vehicle.main_image_url} alt="" className="w-8 h-8 object-cover" />
+                              <img src={booking.vehicle.main_image_url} alt="" className="w-8 h-8 object-cover" loading="lazy" />
                             ) : (
                               <Car className="w-3.5 h-3.5 text-gray-400" />
                             )}

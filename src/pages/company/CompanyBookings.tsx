@@ -586,7 +586,7 @@ export default function CompanyBookings() {
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
-                        {b.vehicle?.main_image_url ? <img src={b.vehicle.main_image_url} alt="" className="w-12 h-12 object-cover" /> : <Car className="w-5 h-5 text-gray-400" />}
+                        {b.vehicle?.main_image_url ? <img src={b.vehicle.main_image_url} alt="" className="w-12 h-12 object-cover" loading="lazy" /> : <Car className="w-5 h-5 text-gray-400" />}
                       </div>
                       <div>
                         <p className="font-semibold text-dark-900">{b.vehicle ? `${b.vehicle.brand} ${b.vehicle.model}` : t('companyDash.common.vehicleFallback')}</p>

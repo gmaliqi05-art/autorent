@@ -594,7 +594,7 @@ export default function AdminFinancials() {
                     <td className="px-6 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
-                          {company.logo_url ? <img src={company.logo_url} alt="" className="w-8 h-8 object-cover" /> : <Building2 className="w-3.5 h-3.5 text-gray-400" />}
+                          {company.logo_url ? <img src={company.logo_url} alt="" className="w-8 h-8 object-cover" loading="lazy" /> : <Building2 className="w-3.5 h-3.5 text-gray-400" />}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-dark-900">{company.name}</p>

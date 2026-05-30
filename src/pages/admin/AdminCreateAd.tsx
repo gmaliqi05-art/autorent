@@ -159,7 +159,7 @@ export default function AdminCreateAd() {
                 <h3 className="font-semibold text-gray-900 mb-3 text-sm">{t('adminDash.createAd.previewTitle')}</h3>
                 <div className="rounded-xl overflow-hidden border border-gray-200">
                   {form.image_url ? (
-                    <img src={form.image_url} alt={form.title} className="w-full h-24 object-cover" />
+                    <img src={form.image_url} alt={form.title} className="w-full h-24 object-cover" loading="lazy" />
                   ) : (
                     <div className="w-full h-24 bg-white border border-gray-200 flex items-center justify-center">
                       <span className="text-primary-400 text-sm">{t('adminDash.createAd.noImage')}</span>
