@@ -128,6 +128,7 @@
     "notificationDesign": "Dizajni Badge & Push",
     "testNotifications": "Test Njoftimet",
     "sendNotifications": "Dergo Njoftime",
+    "pushLogs": "Push Logs",
     "businessPlan": "Business Plan & Financat",
     "invoices": "Faturat",
     "invoiceSettings": "Cilesimet e Fatures",
@@ -2622,5 +2623,35 @@
     "perDay": "/ dite",
     "add": "Shto",
     "requiresLicense": "Kerkohet patente shtese gjate marrjes."
+  },
+  "loyalty": {
+    "title": "Programi i besnikërisë",
+    "pointsBalance": "pikë të disponueshme",
+    "equivalent": "vlerë (1 pikë = €0.10)",
+    "referFriends": "Refero shokët",
+    "referralExplain": "Merr 100 pikë për çdo person që krijon llogari me kodin tënd dhe kryen booking-un e parë.",
+    "codeGenerating": "Kodi po gjenerohet...",
+    "copy": "Kopjo",
+    "share": "Shpërndaj linkun",
+    "shareText": "Më bashkohu në RentaKar dhe merr pikë mirëseardhjeje:",
+    "earned": "Fituar",
+    "referrals": "Referimet",
+    "rewarded": "Shpërblyer",
+    "recentActivity": "Aktiviteti i fundit",
+    "yourReferrals": "Referimet e tua",
+    "emptyTitle": "Filloni të mblidhni pikë!",
+    "emptyDescr": "Bëni booking-un tuaj të parë ose ftoni një shok për të filluar.",
+    "expiringSoonTitle": "{{points}} pikë skadojnë së shpejti",
+    "expiringSoonDesc": "Skadimi i parë: {{date}}"
+  },
+  "loyaltyRedeem": {
+    "loading": "Po ngarkohet balanca...",
+    "tooSmall": "Booking-u eshte shumë i vogel për te perdorur pikë.",
+    "title": "Përdor pikët e besnikërisë",
+    "balance": "Balanca: {{points}} pikë (≈ €{{eur}})",
+    "useMax": "Përdor maksimumin",
+    "applied": "Aplikuar",
+    "points": "pikë",
+    "discount": "Zbritja"
   }
 }

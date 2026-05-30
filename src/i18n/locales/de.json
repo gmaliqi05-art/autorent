@@ -128,6 +128,7 @@
     "notificationDesign": "Badge & Push Design",
     "testNotifications": "Benachrichtigungen testen",
     "sendNotifications": "Benachrichtigungen senden",
+    "pushLogs": "Push-Protokolle",
     "businessPlan": "Businessplan & Finanzen",
     "invoices": "Rechnungen",
     "invoiceSettings": "Rechnungseinstellungen",
@@ -2622,5 +2623,35 @@
     "perDay": "/ Tag",
     "add": "Hinzufügen",
     "requiresLicense": "Erfordert zusätzlichen Führerschein bei Abholung."
+  },
+  "loyalty": {
+    "title": "Treueprogramm",
+    "pointsBalance": "verfügbare Punkte",
+    "equivalent": "Wert (1 Punkt = €0,10)",
+    "referFriends": "Freunde empfehlen",
+    "referralExplain": "Erhalten Sie 100 Punkte für jede Person, die sich mit Ihrem Code anmeldet und die erste Buchung abschließt.",
+    "codeGenerating": "Code wird generiert...",
+    "copy": "Kopieren",
+    "share": "Link teilen",
+    "shareText": "Trete RentaKar bei und erhalte Willkommenspunkte:",
+    "earned": "Verdient",
+    "referrals": "Empfehlungen",
+    "rewarded": "Belohnt",
+    "recentActivity": "Letzte Aktivität",
+    "yourReferrals": "Deine Empfehlungen",
+    "emptyTitle": "Beginnen Sie Punkte zu sammeln!",
+    "emptyDescr": "Buchen Sie zum ersten Mal oder laden Sie einen Freund ein, um zu starten.",
+    "expiringSoonTitle": "{{points}} Punkte verfallen bald",
+    "expiringSoonDesc": "Erstes Ablaufdatum: {{date}}"
+  },
+  "loyaltyRedeem": {
+    "loading": "Guthaben wird geladen...",
+    "tooSmall": "Buchung zu klein, um Punkte einzulösen.",
+    "title": "Treuepunkte einlösen",
+    "balance": "Guthaben: {{points}} Punkte (≈ €{{eur}})",
+    "useMax": "Maximum verwenden",
+    "applied": "Angewendet",
+    "points": "Punkte",
+    "discount": "Rabatt"
   }
 }

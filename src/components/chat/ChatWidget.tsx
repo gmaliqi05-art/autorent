@@ -204,34 +204,29 @@ export default function ChatWidget() {
   // Subscribe ne admin replies kur konvesacioni eshte i escalated.
   useEffect(() => {
     if (!conversationId || !isEscalated) return;
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
-    const ch = supabase
-      .channel(`chat:${conversationId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'chat_messages',
-        filter: `conversation_id=eq.${conversationId}`,
-      }, payload => {
-        const row = payload.new as DbChatMessage;
-        if (row.sender_type !== 'admin') return;
-        setMessages(prev => prev.some(m => m.id === row.id) ? prev : [...prev, {
-          id: row.id,
-          type: 'admin',
-          text: row.message,
-          timestamp: new Date(row.created_at),
-        }]);
-      })
-      .subscribe();
+    // Assign channelRef PARA .on() chain qe te mbroje nga race condition kur
+    // komponenti unmount-on para .subscribe() te kompletohet.
+    const ch = supabase.channel(`chat:${conversationId}`);
     channelRef.current = ch;
+    ch.on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'chat_messages',
+      filter: `conversation_id=eq.${conversationId}`,
+    }, payload => {
+      const row = payload.new as DbChatMessage;
+      if (row.sender_type !== 'admin') return;
+      setMessages(prev => prev.some(m => m.id === row.id) ? prev : [...prev, {
+        id: row.id,
+        type: 'admin',
+        text: row.message,
+        timestamp: new Date(row.created_at),
+      }]);
+    }).subscribe();
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
+      // Perdor ch lokal jo channelRef.current (mund te jete ndryshuar nese effect refires-i).
+      supabase.removeChannel(ch);
+      if (channelRef.current === ch) channelRef.current = null;
     };
   }, [conversationId, isEscalated]);
 

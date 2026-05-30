@@ -77,11 +77,11 @@ export default function NotificationBell({ isTransparent = false }: Notification
             if (!newNotif.is_read) setUnreadCount(c => c + 1);
           } else if (payload.eventType === 'UPDATE') {
             const updated = payload.new as Notification;
-            setNotifications(prev => prev.map(n => n.id === updated.id ? updated : n));
-            // rifresko unread count
+            // Single state update: map + recompute count nga lista e re (jo stale).
             setNotifications(prev => {
-              setUnreadCount(prev.filter(n => !n.is_read).length);
-              return prev;
+              const next = prev.map(n => n.id === updated.id ? updated : n);
+              setUnreadCount(next.filter(n => !n.is_read).length);
+              return next;
             });
           } else if (payload.eventType === 'DELETE') {
             const oldId = (payload.old as { id: string }).id;

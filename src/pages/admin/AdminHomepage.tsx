@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import DOMPurify from 'dompurify';
 import {
   Save, Loader2, Globe, Image, Monitor, LayoutGrid, Eye,
   Upload, X, Check, ChevronDown, ChevronUp, RefreshCw, Palette,
@@ -204,7 +205,7 @@ export default function AdminHomepage() {
             <Globe className="w-3.5 h-3.5 text-amber-700" />
             <span
               className="text-xs text-amber-800"
-              dangerouslySetInnerHTML={{ __html: t('adminDash.homepage.editingLanguage', { lang: currentLang.toUpperCase() }) }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t('adminDash.homepage.editingLanguage', { lang: currentLang.toUpperCase() }), { ALLOWED_TAGS: ['strong', 'em', 'b'], ALLOWED_ATTR: [] }) }}
             />
           </div>
         </div>
