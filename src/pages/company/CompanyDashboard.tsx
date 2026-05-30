@@ -241,7 +241,7 @@ export default function CompanyDashboard() {
                 <div key={v.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
-                      {v.main_image_url ? <img src={v.main_image_url} alt="" className="w-10 h-10 object-cover" /> : <Car className="w-4 h-4 text-gray-400" />}
+                      {v.main_image_url ? <img src={v.main_image_url} alt="" className="w-10 h-10 object-cover" loading="lazy" /> : <Car className="w-4 h-4 text-gray-400" />}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-dark-900">{v.brand} {v.model}</p>

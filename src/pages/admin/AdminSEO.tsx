@@ -156,7 +156,7 @@ export default function AdminSEO() {
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <p className="text-sm font-medium text-gray-700 mb-2">Preview Social Card</p>
                     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                      {settings.og_image_url && <img src={settings.og_image_url} alt="OG" className="w-full h-32 object-cover" />}
+                      {settings.og_image_url && <img src={settings.og_image_url} alt="OG" className="w-full h-32 object-cover" loading="lazy" />}
                       <div className="p-3">
                         <p className="text-xs text-gray-400 uppercase">yourdomain.com</p>
                         <p className="font-semibold text-gray-900 text-sm mt-1">{settings.og_title || settings.site_title}</p>
