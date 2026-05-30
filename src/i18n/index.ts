@@ -4,26 +4,20 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import sq from './locales/sq.json';
 import en from './locales/en.json';
 import de from './locales/de.json';
-import it from './locales/it.json';
-import fr from './locales/fr.json';
-import nl from './locales/nl.json';
-import pl from './locales/pl.json';
 
-export const SUPPORTED_LANGUAGES = ['sq', 'en', 'de', 'it', 'fr', 'nl', 'pl'] as const;
+// Locale komplet — sq/en/de jane plotesisht te perkthyera.
+// fr/it/nl/pl u hoqen ne 20260606 sepse mbahesh me <30% coverage;
+// useritr me ato locales auto-fallback ne 'en' permes browser locale detection.
+export const SUPPORTED_LANGUAGES = ['sq', 'en', 'de'] as const;
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
 
-// Locale plotesisht te perkthyera; vetem keto shfaqen ne LanguageSwitcher.
-// fr/it/nl/pl mbahen ne resources per fallback gradual deri sa te kompletohen.
-export const VISIBLE_LANGUAGES: readonly SupportedLanguage[] = ['sq', 'en', 'de'];
+// Te gjitha gjuhet e mbeshtetura jane gjuhet e dukshme — sinkronizim me LanguageSwitcher.
+export const VISIBLE_LANGUAGES: readonly SupportedLanguage[] = SUPPORTED_LANGUAGES;
 
 export const LANGUAGE_LABELS: Record<SupportedLanguage, { native: string; flag: string; english: string }> = {
   sq: { native: 'Shqip', flag: 'AL', english: 'Albanian' },
   en: { native: 'English', flag: 'GB', english: 'English' },
   de: { native: 'Deutsch', flag: 'DE', english: 'German' },
-  it: { native: 'Italiano', flag: 'IT', english: 'Italian' },
-  fr: { native: 'Français', flag: 'FR', english: 'French' },
-  nl: { native: 'Nederlands', flag: 'NL', english: 'Dutch' },
-  pl: { native: 'Polski', flag: 'PL', english: 'Polish' },
 };
 
 i18n
@@ -34,10 +28,6 @@ i18n
       sq: { translation: sq },
       en: { translation: en },
       de: { translation: de },
-      it: { translation: it },
-      fr: { translation: fr },
-      nl: { translation: nl },
-      pl: { translation: pl },
     },
     fallbackLng: 'en',
     supportedLngs: SUPPORTED_LANGUAGES as unknown as string[],
@@ -70,10 +60,6 @@ const DATE_LOCALES: Record<SupportedLanguage, string> = {
   sq: 'sq-AL',
   en: 'en-GB',
   de: 'de-DE',
-  it: 'it-IT',
-  fr: 'fr-FR',
-  nl: 'nl-NL',
-  pl: 'pl-PL',
 };
 
 export function getDateLocale(lang: string): string {

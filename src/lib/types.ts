@@ -11,7 +11,7 @@ export interface Profile {
   city_id: string | null;
   is_active: boolean;
   date_of_birth: string | null;
-  preferred_language?: 'sq' | 'en' | 'de' | 'it' | 'fr' | 'nl' | 'pl';
+  preferred_language?: 'sq' | 'en' | 'de';
   referral_code?: string | null;
   referred_by?: string | null;
   created_at: string;
