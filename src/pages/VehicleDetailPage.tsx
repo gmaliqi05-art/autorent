@@ -7,11 +7,13 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Vehicle, Company, Review, InsurancePlan } from '../lib/types';
 import BookingInvoice from '../components/booking/BookingInvoice';
-import PaymentMethodSelector, { type PaymentMethodType } from '../components/booking/PaymentMethodSelector';
+import { type PaymentMethodType } from '../components/booking/PaymentMethodSelector';
 import AvailabilityCalendar from '../components/booking/AvailabilityCalendar';
-import InsurancePlanSelector from '../components/booking/InsurancePlanSelector';
-import ExtrasSelector from '../components/booking/ExtrasSelector';
 import PriceBreakdown from '../components/booking/PriceBreakdown';
+// Lazy: keto komponente nuk shfaqen ne render-in fillestar (dates step), vetëm pas.
+const InsurancePlanSelector = lazy(() => import('../components/booking/InsurancePlanSelector'));
+const ExtrasSelector = lazy(() => import('../components/booking/ExtrasSelector'));
+const PaymentMethodSelector = lazy(() => import('../components/booking/PaymentMethodSelector'));
 import { getOptimizedImageUrl } from '../lib/imageOptimizer';
 import { sendBookingConfirmationToClient, sendBookingNotificationToCompany } from '../lib/emailService';
 import { createInvoice } from '../lib/invoiceService';
@@ -411,13 +413,15 @@ export default function VehicleDetailPage() {
                 <p className="text-sm text-dark-500 mb-4">
                   {t('customize.insuranceDesc', 'Mbron veturen dhe ty gjate qerase. Rekomandojme CDW Standard ose me lart.')}
                 </p>
-                <InsurancePlanSelector
-                  companyId={company.id}
-                  totalDays={totalDays}
-                  selectedId={selectedInsurance?.id ?? null}
-                  onSelect={setSelectedInsurance}
-                  displayCurrency={vehicle.currency ?? 'EUR'}
-                />
+                <Suspense fallback={<div className="h-32 bg-gray-50 rounded-xl animate-pulse" />}>
+                  <InsurancePlanSelector
+                    companyId={company.id}
+                    totalDays={totalDays}
+                    selectedId={selectedInsurance?.id ?? null}
+                    onSelect={setSelectedInsurance}
+                    displayCurrency={vehicle.currency ?? 'EUR'}
+                  />
+                </Suspense>
               </section>
 
               <section>
@@ -428,13 +432,15 @@ export default function VehicleDetailPage() {
                 <p className="text-sm text-dark-500 mb-4">
                   {t('customize.extrasDesc', 'Bej qiren me te rehatshme — sjellese, GPS, Wi-Fi e me shume.')}
                 </p>
-                <ExtrasSelector
-                  companyId={company.id}
-                  totalDays={totalDays}
-                  selections={extrasSelections}
-                  onChange={setExtrasSelections}
-                  displayCurrency={vehicle.currency ?? 'EUR'}
-                />
+                <Suspense fallback={<div className="h-32 bg-gray-50 rounded-xl animate-pulse" />}>
+                  <ExtrasSelector
+                    companyId={company.id}
+                    totalDays={totalDays}
+                    selections={extrasSelections}
+                    onChange={setExtrasSelections}
+                    displayCurrency={vehicle.currency ?? 'EUR'}
+                  />
+                </Suspense>
               </section>
             </div>
 
@@ -543,10 +549,12 @@ export default function VehicleDetailPage() {
               <p className="text-lg font-bold text-primary-600">{formatCurrency(totalPrice, liveBreakdown.currency)}</p>
             </div>
 
-            <PaymentMethodSelector
-              selected={paymentMethod}
-              onSelect={setPaymentMethod}
-            />
+            <Suspense fallback={<div className="h-24 bg-gray-50 rounded-xl animate-pulse" />}>
+              <PaymentMethodSelector
+                selected={paymentMethod}
+                onSelect={setPaymentMethod}
+              />
+            </Suspense>
           </div>
 
           {bookingError && (

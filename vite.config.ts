@@ -30,7 +30,9 @@ export default defineConfig({
     exclude: ['lucide-react'],
   },
   build: {
-    chunkSizeWarningLimit: 600,
+    // 700KB threshold: main bundle aktualisht ~585KB pas code-split-it.
+    // Vendor chunks (vendor-react 178KB, vendor-maps 149KB) jane te ndara qe me pare.
+    chunkSizeWarningLimit: 700,
     sourcemap: true,
     rollupOptions: {
       output: {
