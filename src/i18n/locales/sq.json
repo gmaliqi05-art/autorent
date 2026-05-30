@@ -87,7 +87,11 @@
     "notifications": "Njoftimet",
     "bookings": "Rezervime",
     "about": "Rreth",
-    "settings": "Cilësimet"
+    "settings": "Cilësimet",
+    "signUp": "Regjistrohu",
+    "userMenu": "Menuja e perdoruesit",
+    "toggleMenu": "Hap menune",
+    "company": "Kompania"
   },
   "clientNav": {
     "overview": "Pamja e pergjithshme",

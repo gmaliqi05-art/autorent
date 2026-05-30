@@ -87,7 +87,11 @@
     "notifications": "Notifications",
     "bookings": "Bookings",
     "about": "About",
-    "settings": "Settings"
+    "settings": "Settings",
+    "signUp": "Sign up",
+    "userMenu": "User menu",
+    "toggleMenu": "Toggle menu",
+    "company": "Company"
   },
   "clientNav": {
     "overview": "Overview",
