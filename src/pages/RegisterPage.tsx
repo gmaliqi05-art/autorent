@@ -19,6 +19,7 @@ export default function RegisterPage() {
   const initialTab = searchParams.get('role') === 'company' ? 'company' : 'client';
   const initialPlanId = searchParams.get('plan') || '';
   const initialBilling = (searchParams.get('billing') === 'yearly' ? 'yearly' : 'monthly') as BillingCycle;
+  const referralFromUrl = searchParams.get('ref') || '';
 
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [billing, setBilling] = useState<BillingCycle>(initialBilling);
@@ -211,6 +212,13 @@ export default function RegisterPage() {
         setError(result.error);
         setLoading(false);
         return;
+      }
+      // Apliko kodin e referimit nese ka ne URL (silent — mos blloko signup-in).
+      if (referralFromUrl) {
+        try {
+          const { applyReferralCode } = await import('../lib/useLoyalty');
+          await applyReferralCode(referralFromUrl);
+        } catch { /* ignore — useri mund ta apliko me vone */ }
       }
       setSuccess(true);
       setLoading(false);

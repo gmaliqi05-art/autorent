@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Booking, Vehicle, Notification } from '../../lib/types';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import LoyaltyCard from '../../components/loyalty/LoyaltyCard';
 import { clientNavItems } from '../../lib/clientNav';
 import { markNotificationRead, markAllNotificationsRead } from '../../lib/notificationService';
 import { formatTimeAgo, formatDate, bookingStatusColors, bookingStatusLabel } from '../../lib/clientDashHelpers';
@@ -178,6 +179,12 @@ export default function ClientDashboard() {
           <p className="text-sm text-white/80">{t('clientDash.overview.pendingPayments')}</p>
         </div>
       </div>
+
+      {user && (
+        <div className="mb-8">
+          <LoyaltyCard userId={user.id} referralCode={profile?.referral_code} />
+        </div>
+      )}
 
       {notifications.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 mb-6">
