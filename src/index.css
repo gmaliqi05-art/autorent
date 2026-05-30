@@ -199,6 +199,61 @@ input:focus, select:focus, textarea:focus {
   outline: none;
 }
 
+/* ============================================================================
+   A11y: focus visible per keyboard nav.
+   Browser-i tregon focus ring vetëm kur fokusi vjen nga keyboard (jo mouse).
+   Per accessibility, mbeshtetin keyboard users.
+   ============================================================================ */
+*:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Default focus per inputs/selects/textareas — keto kane stilizim te vetin
+   permes Tailwind focus:ring ne komponente. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+/* sr-only utility per screen readers (skip links etj.) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Honor user preference: reduce motion per useritr qe e kane vendosur
+   ne OS settings (prefers-reduced-motion). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }

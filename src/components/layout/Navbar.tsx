@@ -210,7 +210,8 @@ function NavLink({ to, isTransparent, active, children }: { to: string; isTransp
   return (
     <Link
       to={to}
-      className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+      aria-current={active ? 'page' : undefined}
+      className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none ${
         active
           ? isTransparent ? 'text-white bg-white/15' : 'text-primary-700 bg-primary-50'
           : isTransparent ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-dark-600 hover:text-dark-950 hover:bg-gray-50'
