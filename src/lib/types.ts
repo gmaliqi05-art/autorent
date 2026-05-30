@@ -45,6 +45,18 @@ export interface LoyaltyBalance {
   last_activity_at: string | null;
 }
 
+export type LoyaltyTier = 'bronze' | 'silver' | 'gold' | 'platinum';
+
+export interface LoyaltyTierInfo {
+  user_id: string;
+  total_earned: number;
+  tier: LoyaltyTier;
+  tier_min: number;
+  tier_max: number | null;
+  points_to_next: number;
+  progress_pct: number;
+}
+
 export interface Referral {
   id: string;
   referrer_id: string;

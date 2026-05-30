@@ -3,6 +3,7 @@ import { Trophy, Gift, Copy, Check, Share2, Users, TrendingUp, Loader2 } from 'l
 import { useTranslation } from 'react-i18next';
 import { useLoyalty } from '../../lib/useLoyalty';
 import type { LoyaltyTransaction, Referral } from '../../lib/types';
+import TierBadge from './TierBadge';
 
 interface LoyaltyCardProps {
   userId: string;
@@ -34,7 +35,7 @@ const referralStatusLabels: Record<Referral['status'], string> = {
 
 export default function LoyaltyCard({ userId, referralCode }: LoyaltyCardProps) {
   const { t } = useTranslation();
-  const { balance, transactions, referrals, loading } = useLoyalty(userId);
+  const { balance, tier, transactions, referrals, loading } = useLoyalty(userId);
   const [copied, setCopied] = useState(false);
 
   const referralUrl = typeof window !== 'undefined' && referralCode
@@ -84,6 +85,11 @@ export default function LoyaltyCard({ userId, referralCode }: LoyaltyCardProps) 
 
   return (
     <div className="space-y-4">
+      {/* Tier badge */}
+      {tier && (
+        <TierBadge tier={tier} variant="full" />
+      )}
+
       {/* Hero: Points balance + referral code */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-gradient-to-br from-amber-400 via-amber-500 to-orange-600 rounded-2xl p-6 text-white relative overflow-hidden">
