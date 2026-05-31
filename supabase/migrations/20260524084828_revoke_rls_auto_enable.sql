@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated;
+COMMENT ON FUNCTION public.rls_auto_enable() IS 'Internal event trigger function: auto-enables RLS on new tables. Not directly callable.';;\n
